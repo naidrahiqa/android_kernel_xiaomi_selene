@@ -1,0 +1,193 @@
+name: Update Kernel 4.14.x
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_version:
+        description: 'Target kernel version (e.g. 4.14.349)'
+        required: true
+        default: '4.14.349'
+        type: string
+
+jobs:
+  update-kernel:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Parse target version
+        id: parse
+        run: |
+          TARGET="${{ github.event.inputs.target_version }}"
+          MAJOR=$(echo "$TARGET" | cut -d. -f1)
+          MINOR=$(echo "$TARGET" | cut -d. -f2)
+          SUBLEVEL=$(echo "$TARGET" | cut -d. -f3)
+
+          if [ "$MAJOR" != "4" ] || [ "$MINOR" != "14" ]; then
+            echo "::error::Only 4.14.x versions are supported"
+            exit 1
+          fi
+          if [ "$SUBLEVEL" -gt 350 ]; then
+            echo "::error::4.14.357+ has blank screen issue on MTK. Use ≤4.14.349."
+            exit 1
+          fi
+
+          echo "version=$TARGET" >> $GITHUB_OUTPUT
+          echo "sublevel=$SUBLEVEL" >> $GITHUB_OUTPUT
+          echo "## Target: Linux $TARGET" >> $GITHUB_STEP_SUMMARY
+
+      - name: Download kernel tarballs
+        run: |
+          cd /tmp
+          SUBLEVEL="${{ steps.parse.outputs.sublevel }}"
+
+          download_with_retry() {
+            local url="$1"
+            local output="$2"
+            local max_retries=3
+            for i in $(seq 1 $max_retries); do
+              echo "  Download attempt $i/$max_retries..."
+              if curl -sL --retry 3 --retry-delay 5 -o "$output" "$url"; then
+                if [ -s "$output" ]; then
+                  return 0
+                fi
+              fi
+              echo "  Retry $i failed, waiting 10s..."
+              sleep 10
+            done
+            echo "::error::Failed to download $url after $max_retries attempts"
+            return 1
+          }
+
+          echo "Downloading vanilla 4.14.186..."
+          download_with_retry \
+            "https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.186.tar.xz" \
+            "linux-4.14.186.tar.xz"
+          tar xf linux-4.14.186.tar.xz
+
+          echo "Downloading target ${{ steps.parse.outputs.version }}..."
+          if [ "$SUBLEVEL" -le 336 ]; then
+            # Upstream kernel.org (≤4.14.336)
+            download_with_retry \
+              "https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-${{ steps.parse.outputs.version }}.tar.xz" \
+              "target.tar.xz"
+            tar xf target.tar.xz
+            TARGET_DIR="linux-${{ steps.parse.outputs.version }}"
+          else
+            # OpenELA LTS (>4.14.336)
+            download_with_retry \
+              "https://codeload.github.com/openela/kernel-lts/tar.gz/refs/heads/linux-4.14.y" \
+              "openela.tar.gz"
+            tar xzf openela.tar.gz
+            rm -f openela.tar.gz
+            TARGET_DIR="kernel-lts-linux-4.14.y"
+
+            # Verify SUBLEVEL matches
+            ACTUAL=$(grep '^SUBLEVEL' "$TARGET_DIR/Makefile" | awk '{print $3}')
+            if [ "$ACTUAL" != "$SUBLEVEL" ]; then
+              echo "::warning::OpenELA HEAD is 4.14.$ACTUAL, not ${{ steps.parse.outputs.version }}."
+              echo "Using HEAD version. Manual checkout of specific tag may be needed."
+            fi
+          fi
+
+          echo "OLD:"; head -4 /tmp/linux-4.14.186/Makefile | grep SUBLEVEL
+          echo "NEW:"; head -4 /tmp/$TARGET_DIR/Makefile | grep SUBLEVEL
+
+      - name: Selective update — replace vanilla-identical files
+        run: |
+          OLD="/tmp/linux-4.14.186"
+          TARGET_DIR=$(ls -d /tmp/linux-${{ steps.parse.outputs.version }} /tmp/kernel-lts-linux-4.14.y 2>/dev/null | head -1)
+          NEW="$TARGET_DIR"
+          REPO="${{ github.workspace }}"
+          TARGET="${{ steps.parse.outputs.version }}"
+
+          # Skip patterns — files we added or Xiaomi modified
+          SKIP_PATTERNS=(
+            "net/wireguard/"
+            "backslash-ksu/"
+            "fs/nomount.c"
+            "fs/nomount.h"
+            "lib/string.c"
+            "arch/arm64/configs/selene_defconfig"
+            "arch/arm64/lib/memcpy.S"
+            "arch/arm64/lib/memmove.S"
+            "arch/arm64/lib/memset.S"
+            "arch/arm64/crypto/aes-modes.S"
+            "include/uapi/linux/netfilter/xt_connmark.h"
+            "include/uapi/linux/netfilter/xt_mark.h"
+            "include/uapi/linux/netfilter/xt_dscp.h"
+            "include/uapi/linux/netfilter/xt_DSCP.h"
+            "drivers/goodix/"
+            "drivers/fpc1020/"
+            "drivers/misc/mediatek/"
+            "drivers/misc/mediatek_l2/"
+          )
+
+          should_skip() {
+            local file="$1"
+            for pat in "${SKIP_PATTERNS[@]}"; do
+              [[ "$file" == $pat || "$file" == */$pat ]] && return 0
+            done
+            return 1
+          }
+
+          REPLACED=0; SKIPPED=0; DELETED=0; TOTAL=0
+
+          UPDATE_DIRS="block certs crypto Documentation drivers fs include init ipc kernel lib mm net samples scripts security sound tools usr virt arch/arm64/lib arch/arm64/crypto arch/arm64/kernel arch/arm64/mm arch/arm64/net arch/arm64/sound"
+
+          for dir in $UPDATE_DIRS; do
+            [ -d "$OLD/$dir" ] || continue
+            [ -d "$NEW/$dir" ] || continue
+            while IFS= read -r -d '' f; do
+              rel="${f#$OLD/}"
+              TOTAL=$((TOTAL+1))
+
+              [ -f "$REPO/$rel" ] || { SKIPPED=$((SKIPPED+1)); continue; }
+              should_skip "$rel" && { SKIPPED=$((SKIPPED+1)); continue; }
+
+              # Normalize CRLF for comparison
+              if diff <(tr -d '\r' < "$REPO/$rel") <(tr -d '\r' < "$f") >/dev/null 2>&1; then
+                if [ -f "$NEW/$rel" ]; then
+                  cp "$NEW/$rel" "$REPO/$rel"
+                  REPLACED=$((REPLACED+1))
+                else
+                  rm -f "$REPO/$rel"
+                  DELETED=$((DELETED+1))
+                fi
+              else
+                SKIPPED=$((SKIPPED+1))
+              fi
+            done < <(find "$OLD/$dir" -type f -print0 2>/dev/null)
+          done
+
+          # Update SUBLEVEL in Makefile
+          sed -i "s/^SUBLEVEL = 186/SUBLEVEL = $(echo "$TARGET" | cut -d. -f3)/" "$REPO/Makefile"
+
+          echo "## Kernel Update Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Target version | $TARGET |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total files compared | $TOTAL |" >> $GITHUB_STEP_SUMMARY
+          echo "| Replaced (vanilla-identical) | $REPLACED |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deleted (removed upstream) | $DELETED |" >> $GITHUB_STEP_SUMMARY
+          echo "| Skipped (Xiaomi modified) | $SKIPPED |" >> $GITHUB_STEP_SUMMARY
+
+          echo "replaced=$REPLACED" >> $GITHUB_OUTPUT
+          echo "deleted=$DELETED" >> $GITHUB_OUTPUT
+          echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+
+      - name: Commit changes
+        run: |
+          TARGET="${{ steps.parse.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "kernel: update 4.14.186 → ${TARGET} - Selective update: files identical to vanilla 4.14.186 were replaced with their ${TARGET} counterparts. Xiaomi-modified files preserved."
+          git push

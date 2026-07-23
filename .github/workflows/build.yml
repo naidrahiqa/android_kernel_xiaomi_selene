@@ -1,0 +1,193 @@
+name: Build Selene Kernel
+
+on:
+  push:
+    branches: [selene-r-oss-update, m1-cherrypick, phrolova]
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: 'Build variant'
+        required: true
+        default: '0'
+        type: choice
+        options:
+          - '0 — Nightly'
+          - '1 — Stable'
+          - '2 — Hotfix'
+      base_version:
+        description: 'Base version (e.g. 0.1.0, 0.2.0, 1.0.0)'
+        required: false
+        default: '0.3.0'
+        type: string
+
+env:
+  PHROLOVA_VARIANT: ${{ inputs.variant || '0' }}
+  PHROLOVA_BASE: ${{ inputs.base_version || '0.3.0' }}
+  TOOLCHAIN_NAME: "Greenforce Clang 23.0.0"
+  KERNELSU_VERSION: "KernelSU (backslashxx)"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.version.outputs.PHROLOVA_VERSION }}
+      tag: ${{ steps.version.outputs.PHROLOVA_TAG }}
+      status: ${{ steps.final-check.outputs.status }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate version
+        id: version
+        run: |
+          source .github/scripts/version.sh "${{ env.PHROLOVA_VARIANT }}" "${{ env.PHROLOVA_BASE }}"
+          echo "PHROLOVA_VERSION=${PHROLOVA_VERSION}" >> $GITHUB_OUTPUT
+          echo "PHROLOVA_TAG=${PHROLOVA_TAG}" >> $GITHUB_OUTPUT
+          echo "version=${PHROLOVA_VERSION}" >> $GITHUB_ENV
+          echo "tag=${PHROLOVA_TAG}" >> $GITHUB_ENV
+
+      - name: Notify start
+        run: |
+          bash .github/scripts/notify-telegram.sh \
+            start \
+            "${{ steps.version.outputs.PHROLOVA_VERSION }}" \
+            "${{ steps.version.outputs.PHROLOVA_TAG }}"
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+        continue-on-error: true
+
+      - name: Cache Greenforce Clang
+        id: cache-clang
+        uses: actions/cache@v4
+        with:
+          path: greenforce-clang
+          key: greenforce-clang-23.0.0
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            bc bison build-essential flex \
+            libssl-dev libelf-dev zstd \
+            python3 \
+            binutils-aarch64-linux-gnu \
+            zip
+          if [ "${{ steps.cache-clang.outputs.cache-hit }}" != "true" ]; then
+            bash <(wget -qO- https://raw.githubusercontent.com/greenforce-project/greenforce_clang/refs/heads/main/get_clang.sh)
+          fi
+          echo "$(pwd)/greenforce-clang/bin" >> $GITHUB_PATH
+
+      - name: Setup KernelSU symlink
+        run: |
+          ln -sf "$(realpath backslash-ksu/kernel)" drivers/kernelsu
+          test -L drivers/kernelsu && echo "Symlink OK" || { echo "Symlink failed"; exit 1; }
+
+      - name: Build kernel (selene_defconfig)
+        id: build
+        run: |
+          set +e
+          make O=out ARCH=arm64 \
+            CC=clang HOSTCC=gcc \
+            CROSS_COMPILE=aarch64-linux-gnu- \
+            selene_defconfig 2>&1 | tee build.log
+          make O=out ARCH=arm64 \
+            CC=clang HOSTCC=gcc \
+            CROSS_COMPILE=aarch64-linux-gnu- \
+            -j$(nproc) 2>&1 | tee -a build.log
+          MAKE_EXIT=${PIPESTATUS[0]}
+          echo "MAKE_EXIT_CODE=${MAKE_EXIT}" >> $GITHUB_ENV
+          exit $MAKE_EXIT
+
+      - name: Package AnyKernel3
+        if: success() && (hashFiles('out/arch/arm64/boot/Image*') != '')
+        run: |
+          git clone https://github.com/osm0sis/AnyKernel3 ak3 || { echo "::error::AnyKernel3 clone failed"; exit 1; }
+          cp scripts/anykernel.sh ak3/anykernel.sh
+          cp out/arch/arm64/boot/Image.gz-dtb ak3/ 2>/dev/null || \
+          cp out/arch/arm64/boot/Image.gz ak3/ 2>/dev/null || \
+          cp out/arch/arm64/boot/Image ak3/
+          cd ak3 && zip -r9 ../Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}.zip . -x .git/\*
+
+      - name: Upload artifact
+        if: success() && steps.final-check.outputs.status == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Phrolova-selene
+          path: Phrolova-selene-*.zip
+
+      - name: Final check
+        id: final-check
+        if: always()
+        run: |
+          HAS_ERROR=0
+          if [ -f build.log ] && grep -qiE "(\.c:[0-9]+:.*error:|clang: error:|error:.*failed)" build.log 2>/dev/null; then
+            echo "::error::Compilation error found"
+            HAS_ERROR=1
+          fi
+          if [ "${MAKE_EXIT_CODE:-0}" -ne 0 ]; then
+            echo "::error::make exited with code ${MAKE_EXIT_CODE}"
+            HAS_ERROR=1
+          fi
+          if [ ! -f out/arch/arm64/boot/Image.gz ] && [ ! -f out/arch/arm64/boot/Image ] && [ ! -f out/arch/arm64/boot/Image.gz-dtb ]; then
+            echo "::error::No kernel image found"
+            HAS_ERROR=1
+          fi
+          echo "status=$([ "$HAS_ERROR" -eq 1 ] && echo "failed" || echo "success")" >> $GITHUB_OUTPUT
+
+      - name: Generate Changelog
+        if: steps.final-check.outputs.status == 'success'
+        run: |
+          bash .github/scripts/generate-changelog.sh \
+            "${{ steps.version.outputs.PHROLOVA_VERSION }}" \
+            "${{ steps.version.outputs.PHROLOVA_TAG }}" \
+            "${{ env.PHROLOVA_VARIANT }}" > changelog.md
+
+      - name: Notify result
+        if: always()
+        run: |
+          STATUS="${{ steps.final-check.outputs.status }}"
+          if [ "$STATUS" = "success" ]; then
+            bash .github/scripts/notify-telegram.sh \
+              success \
+              "${{ steps.version.outputs.PHROLOVA_VERSION }}" \
+              "${{ steps.version.outputs.PHROLOVA_TAG }}" \
+              "changelog.md"
+          else
+            bash .github/scripts/notify-telegram.sh \
+              failed \
+              "${{ steps.version.outputs.PHROLOVA_VERSION }}" \
+              "${{ steps.version.outputs.PHROLOVA_TAG }}" \
+              "build.log"
+          fi
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          TELEGRAM_ERROR_CHANNEL_ID: ${{ secrets.TELEGRAM_ERROR_CHANNEL_ID }}
+
+      - name: Prepare release body
+        if: steps.final-check.outputs.status == 'success'
+        run: |
+          BANNER_URL="https://raw.githubusercontent.com/${{ github.repository }}/phrolova/docs/assets/banner_landscape.jpg"
+          {
+            echo "<p align=\"center\">"
+            echo "  <img src=\"${BANNER_URL}\" alt=\"Phrolova\" width=\"100%\"/>"
+            echo "</p>"
+            echo ""
+            cat changelog.md
+          } > release_body.md
+
+      - name: Create GitHub Release
+        if: steps.final-check.outputs.status == 'success'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.PHROLOVA_TAG }}
+          name: Phrolova ${{ steps.version.outputs.PHROLOVA_VERSION }}
+          body_path: release_body.md
+          files: Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}.zip
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

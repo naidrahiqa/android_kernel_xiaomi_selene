@@ -1,0 +1,155 @@
+# CHANGELOG
+
+Catatan cherry-pick wajib (sesuai PRD §5 & AGENTS.md prinsip #2):
+setiap patch yang diambil dari `ronald826/xiaomi_kernel_selene` (atau source
+lain) HARUS dicatat di sini dengan commit hash asal + alasan.
+
+Format:
+```
+- [commit hash asal] file/path: deskripsi singkat
+  Alasan: ...
+  Sumber: ronald826 / upstream / ref kernel MT6768 lain
+```
+
+---
+
+## M0 — Repo setup
+- Repo di-init sebagai git. Base of truth = `micode` remote (branch `selene-r-oss-update`).
+- `ronald826` remote ditambahkan sebagai reference-only (JANGAN di-merge mentah).
+- AGENTS.md, PRD.md, PROMPT.md, .opencode/skills terpasang dari scaffold.
+- Push target = `origin` -> `naidrahiqa/phrolova_kernel_xiaomi_selene`.
+- ReSukiSU: `resukisu` -> fork `naidrahiqa/ReSukiSU`, `resukisu-upstream` -> `ReSukiSU/ReSukiSU`.
+- Fetch **shallow (--depth 1, latest only)** per instruksi Naidra — bukan full history.
+- Branch `selene-r-oss-update` -> MiCode tip `6a5cdd275` (bukan ronald826).
+
+### Known issue (Windows) — PENTING buat sesi berikutnya
+- Native Windows gak bisa checkout file reserved name (`aux.c`/`aux.h` di
+  `drivers/gpu/drm/nouveau/` & `include/soc/arc/`). Workaround:
+  - `core.protectNTFS=false` (biar git gak reject di verify_path).
+  - `core.sparseCheckout=true` + `.git/info/sparse-checkout` exclude
+    `drivers/gpu/drm/nouveau/` dan `include/soc/arc/` (gak dipakai buat selene build).
+- `git status` nampilin "M" di `net/netfilter/xt_*.{c,h}` — itu artifact
+  case-folding NTFS (CONNMARK vs connmark), konten identik, gak ngaruh build.
+- 💡 Rekomendasi: kerja git/checkout/build di WSL (fs Linux) kalau bentrok
+  nama reserved file lain muncul.
+
+## M1 — Source diff report (MiCode vs Ronald826, LATEST ONLY)
+> ⚠️ Kedua ref **shallow (depth 1)** → ini perbandingan *tree state* terbaru,
+> BUKAN per-commit history. Cherry-pick per-commit (step skill) butuh
+> `git fetch` lebih dalam untuk `ronald826` saat beneran apply nanti.
+> Status: **report only, belum ada yang di-apply.**
+
+### arch/arm64/configs/ (defconfig)
+- `cselene_defconfig` (Ronald826, +5193): custom selene defconfig.
+  Cek `KSU/SU/SELINUX/GKI` → **kosong** (gak ada root solution).
+  Rekomendasi: **REVIEW** sebagai referensi opsi/extra driver, bukan di-merge mentah.
+- `selene_defconfig` beda masif (+5022): kemungkinan reordering + tambahan.
+  Rekomendasi: **KEEP MiCode sebagai basis**, ambil `CONFIG_*` spesifik dari
+  Ronald826 selectively (terutama pas M4 butuh flag ReSukiSU).
+- `selene_debug_defconfig` → `selene.bak` (Ronald826, 138): **SKIP**.
+- defconfig device lain (lancelot/merlin/shiva/k69v1/cuttlefish/ranchu) dihapus
+  Ronald826: cleanup non-selene → **SKIP** (irrelevant).
+
+### arch/arm64/boot/dts/mediatek/ (device tree)
+- `selene.dts`: charger current 2000→1000mA, jeita thermal threshold diubah,
+  include path fix `<selene/cust.dtsi>` → `"mediatek/selene/cust.dtsi"`.
+  Rekomendasi: **REVIEW** (device-specific, include-path fix berguna).
+- `selene/cust.dtsi` (+614 baru): **REVIEW**.
+- `cust_mt6768_touch_1080x2400.dtsi` (+17), `touch_eos_1080x2400.dtsi` (−1905):
+  **REVIEW** (Ronald826 cabut eos touch?).
+- `mt6768.dts` (+13), `eos.dts` (+86), battery tables: **REVIEW ringan**.
+- dts non-selene (marvell/nvidia/qcom/renesas/rockchip/xilinx): base drift → **SKIP**.
+
+### drivers/ (⚠️ DIVERGEN BESAR)
+- Total: **5541 file, +1.7M / −70k baris** → ini base-version drift antar dua
+  tree, BUKAN kumpulan fix selene.
+- Rekomendasi: **JANGAN bulk-merge drivers.** Cherry-pick HANYA fix kecil
+  spesifik kalau ada isu build/runtime konkret.
+- Kandidat review-per-hunk (kalau perlu): `mtk_charger.c`(+95),
+  `bq2589x_charger.c`(+69), `mtk_battery*.c`(+14), `mtk_eth_soc.c`(+28),
+  `pcie-mediatek.c`(+7), `mtk-scpsys.c`(+6), watchdog mtk.
+- Mayoritas `1 +` di ratusan file = noise base drift → **SKIP**.
+
+### Catatan ReSukiSU (utk M4)
+- Ronald826 **TIDAK** punya trace KernelSU/ReSukiSU → integrasi M4 murni dari
+  remote `resukisu` / `resukisu-upstream`, bukan dari Ronald826.
+
+## M1 — Applied cherry-picks (branch: `m1-cherrypick`)
+> Base `selene-r-oss-update` (6a5cdd275) TIDAK diubah; semua CP ada di branch
+> `m1-cherrypick`. Status: **applied, COMPILE-PENDING** (toolchain M2/M3 belum
+> ada → belum ke-verify compile). Belum di-push.
+
+### Applied (clean, 4)
+- [c42c4fc6a] arch/arm64/configs/cselene_defconfig: tambah custom defconfig (referensi)
+  Sumber: ronald826 | Status: applied (a2e6560bc) | compile-pending
+- [a29340b7c] arch/arm64/configs/selene_defconfig: enable CONFIG_CPUFREQ_MTK
+  Sumber: ronald826 | Status: applied (3f6709136) | compile-pending
+- [cf311b63d] arch/arm64/configs/selene_defconfig: disable syncookies
+  Sumber: ronald826 | Status: applied (df6538b57) | compile-pending
+- [1b9f616fa] arch/arm64/configs/selene_defconfig: Disable HMP configs
+  Sumber: ronald826 | Status: applied (80db46d60) | compile-pending
+
+### Deferred (conflict / mixed commit / butuh build-verify)
+- [e55b59d18] disable PRINTK_MT_PREFIX → CONFLICT defconfig, tunda (merge manual M4)
+- [5d4369dd1] Enable LZ4 compression → CONFLICT defconfig, tunda
+- [7dd794dd5] Enable ZRAM Writeback → CONFLICT defconfig, tunda
+- [c1ed273f3] Update selene_defconfig → CONFLICT, tunda
+- [acb9c3912] Change selene_defconfig (rewrite 5070 baris) → bukan targeted, SKIP
+- [8a337721f] ThunderQuake vibrator driver → driver baru, konflik tree, tunda (per-hunk M4)
+- [fd7e5bef4] touchscreen TP interface → driver baru, konflik tree, tunda (per-hunk M4)
+- [9aa87e482] kallsyms + selene.dts + cust.dtsi (COMMIT MIXED) → tdk bisa CP utuh;
+  selene.dts/cust.dtsi akan di-apply per-hunk manual + kallsyms dipisah (relevan M4)
+
+## Reference — AK3 zips lokal (D:\ROM\CustomRom_Selene\Custom Krrnel)
+> Di-bedah pakai skill ak3-reverse-engineering. Zips = release flashable, BUKAN
+> source/toolchain. Toolchain binary TIDAK ada di disk → cuma jadi referensi
+> konfigurasi, bukan sumber compiler.
+
+- `HitoriBocchi-KSUN-20260320-182750-selene.zip`: berisi Image.gz + anykernel.sh
+  (device: selene). KSUN = KernelSU-variant.
+- `[A13+]ShockWave-selene-202605241352.zip`: brand "Proton Kernel", device
+  name1=merlin name2=lancelot name3=selene; `block=auto`, `is_slot_device=auto`,
+  `write_boot` (AK3 standar). Jadi REFERENSI buat `anykernel.sh` kita di M5.
+- Konfirmasi: kernel 4.14 selene yang SUDAH terbukti boot ada (merlin/lancelot/
+  selene shared tree) → build kita feasible. Compiler pasti GCC/Clang tapi gak
+  bisa di-extract dari binary image → ambil dari repo builder publik mereka.
+- ⚠️ JANGAN pakai Image/dtb biner mereka sebagai rilis final (prinsip skill:
+  maintain dari source sendiri).
+
+## M2 — Toolchain decision (FINAL)
+- **Proton Clang** (`kdrag0n/proton-clang`), **pin tag `20210522`** (Clang ~12,
+  stabil & terbukti untuk 4.14; ini toolchain yang dipakai "Proton Kernel"/
+  ShockWave selene — lihat AK3 ref di atas).
+- Clang + binutils bundled → `CC=clang CROSS_COMPILE=aarch64-linux-gnu-`
+  (`CROSS_COMPILE_ARM32=arm-linux-gnueabi-` utk vDSO 32-bit). Tidak perlu GCC
+  terpisah (sesuai catatan Proton Clang).
+- ⚠️ Local WSL Ubuntu **GAGAL di-install** (session ini bukan admin). Maka
+  compile-verify M3 dilakuin lewat **GitHub Actions CI** (ubuntu-latest runner,
+  fs Linux → bebas isu reserved-name Windows). Ini CI-first (AGENTS.md).
+- CATATAN: PRD M2 sebut "Clang/GCC hybrid"; Proton Clang udah include binutils
+  (GNU as/ld) jadi efektif hybrid tanpa GCC userspace. CyreneClang ditunda (v2).
+
+## M3 — CI baseline dengan GCC 13 (Proton Clang gagal cc-option)
+- Proton Clang (`kdrag0n/proton-clang` 20210522) gagal karena `cc-option`
+  tidak bisa mengevaluasi `-fstack-protector-strong` di 4.14.
+- Beralih ke **GCC 13** dari apt (ubuntu-24.04): `gcc-aarch64-linux-gnu` +
+  `binutils-aarch64-linux-gnu`.
+- GCC 13 error di `mm/page_alloc.c:6890` (`-Werror=array-compare`, baru di
+  GCC 11+). Fix: `KCFLAGS="-Wno-error=array-compare"` di workflow.
+- Workflow di `.github/workflows/build.yml`: install deps, make selene_defconfig,
+  build, package AnyKernel3 (Image.gz-dtb/Image.gz/Image), upload artifact.
+- `scripts/anykernel.sh` updated ke "Phrolova Kernel" branding.
+
+## M4 — ReSukiSU Manual Hook integration
+- Sumber: `resukisu/main:kernel/` dari fork `naidrahiqa/ReSukiSU`.
+- `resukisu/kernel/` ditempatkan di tree (bukan symlink, symlink dibuat di CI).
+- `drivers/Kconfig`: tambah `source "drivers/kernelsu/Kconfig"`.
+- `drivers/Makefile`: tambah `obj-$(CONFIG_KSU) += kernelsu/` + fix conflict marker.
+- `selene_defconfig`: `CONFIG_KSU=y`, `CONFIG_KSU_MANUAL_HOOK=y`,
+  `CONFIG_KSU_MULTI_MANAGER_SUPPORT` tidak di-set.
+- CI: step `Setup ReSukiSU symlink` — `ln -sf resukisu/kernel drivers/kernelsu`.
+- Hook mode: **Manual Hook** (bukan Tracepoint — GKI2-only ≥5.10). Sesuai
+  rekomendasi ReSukiSU untuk 4.14 non-GKI.
+- Auto-hook options default: `AUTO_SETUID`, `AUTO_INITRC`, `AUTO_INPUT`
+  (via LSM, tidak perlu patch manual ke kernel/sys.c / fs/read_write.c /
+  drivers/input/input.c).
