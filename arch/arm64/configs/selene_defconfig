@@ -468,3 +468,10 @@ CONFIG_NOMOUNT=y
 
 # WireGuard secure VPN tunnel
 CONFIG_WIREGUARD=y
+
+# Netfilter matches that only exist as uppercase targets (case-sensitive fix)
+# Use 'n' instead of 'is not set' for tristate to ensure no auto-enable
+CONFIG_NETFILTER_XT_MATCH_HL=n
+CONFIG_NETFILTER_XT_MATCH_DSCP=n
+CONFIG_NETFILTER_XT_MATCH_RATEEST=n
+CONFIG_NETFILTER_XT_MATCH_TCPMSS=n
