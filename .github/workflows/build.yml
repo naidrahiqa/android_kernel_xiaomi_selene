@@ -94,12 +94,10 @@ jobs:
           set +e
           make O=out ARCH=arm64 \
             CC=clang HOSTCC=gcc \
-            LD=ld.lld \
             CROSS_COMPILE=aarch64-linux-gnu- \
             selene_defconfig 2>&1 | tee build.log
           make O=out ARCH=arm64 \
             CC=clang HOSTCC=gcc \
-            LD=ld.lld \
             CROSS_COMPILE=aarch64-linux-gnu- \
             -j$(nproc) 2>&1 | tee -a build.log
           MAKE_EXIT=${PIPESTATUS[0]}
