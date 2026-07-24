@@ -11,6 +11,12 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.4.0 — Performance & Memory Optimizations + LTO Fix
+- **LTO Fix:** Disable `CONFIG_LTO_CLANG` di `selene_defconfig` untuk mengatasi bitcode mismatch antara LLVM 23 (compiler) dan LLVM 16 (system linker).
+- **TCP Congestion Control:** Enable Google BBR (`CONFIG_TCP_CONG_BBR=y`, `CONFIG_DEFAULT_TCP_CONG="bbr"`) + Fair Queueing (`CONFIG_NET_SCH_FQ=y`, `CONFIG_NET_SCH_FQ_CODEL=y`) untuk koneksi internet lebih responsif dan latency lebih rendah.
+- **ZRAM & Memory Compression:** Enable ZSTD algorithm (`CONFIG_CRYPTO_ZSTD=y`, `CONFIG_ZRAM_DEF_COMP_ZSTD=y`, `CONFIG_ZRAM_DEF_COMP="zstd"`) dan LZ4/XZ (`CONFIG_RD_LZ4=y`, `CONFIG_RD_XZ=y`) untuk efisiensi dan kecepatan swap RAM.
+- **I/O Scheduler:** Enable Budget Fair Queueing (`CONFIG_IOSCHED_BFQ=y`, `CONFIG_BFQ_GROUP_IOSCHED=y`) untuk kelancaran UI saat I/O disk tinggi.
+
 ---
 
 ## M0 — Repo setup

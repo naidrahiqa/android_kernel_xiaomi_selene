@@ -17,12 +17,12 @@ on:
       base_version:
         description: 'Base version (e.g. 0.1.0, 0.2.0, 1.0.0)'
         required: false
-        default: '0.3.0'
+        default: '0.4.0'
         type: string
 
 env:
   PHROLOVA_VARIANT: ${{ inputs.variant || '0' }}
-  PHROLOVA_BASE: ${{ inputs.base_version || '0.3.0' }}
+  PHROLOVA_BASE: ${{ inputs.base_version || '0.4.0' }}
   TOOLCHAIN_NAME: "Greenforce Clang 23.0.0"
   KERNELSU_VERSION: "KernelSU (backslashxx)"
 
@@ -39,6 +39,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Generate version
         id: version

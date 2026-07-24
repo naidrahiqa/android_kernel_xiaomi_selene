@@ -16,16 +16,18 @@ case "$VARIANT" in
     *) VARIANT_NAME="$VARIANT" ;;
 esac
 
-LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+LAST_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || git describe --tags --abbrev=0 2>/dev/null || echo "")
+RANGE="${LAST_TAG:+$LAST_TAG..}HEAD"
 DATE=$(date +"%d %B %Y")
 
-# Collect commits by type
-FEATURES=$(git log ${LAST_TAG:+$LAST_TAG..}HEAD --oneline --no-decorate --grep="^feat" -i 2>/dev/null | sed 's/^[a-f0-9]* //' || echo "")
-FIXES=$(git log ${LAST_TAG:+$LAST_TAG..}HEAD --oneline --no-decorate --grep="^fix" -i 2>/dev/null | sed 's/^[a-f0-9]* //' || echo "")
-IMPROVE=$(git log ${LAST_TAG:+$LAST_TAG..}HEAD --oneline --no-decorate --grep="wireguard\|defconfig\|zram\|bbr\|bfq\|ksm\|cpufreq\|wakelock\|ci:" -i 2>/dev/null | sed 's/^[a-f0-9]* //' || echo "")
+# Collect commits by category
+FEATURES=$(git log $RANGE --oneline --no-decorate --grep="^feat" -i 2>/dev/null | sed 's/^[a-f0-9]* //' || true)
+FIXES=$(git log $RANGE --oneline --no-decorate --grep="^fix" -i 2>/dev/null | sed 's/^[a-f0-9]* //' || true)
+IMPROVE=$(git log $RANGE --oneline --no-decorate --grep="^refactor\|^perf\|^impr\|wireguard\|defconfig\|zram\|bbr\|bfq\|ksm\|cpufreq\|wakelock\|ci:\|build:\|arch:" -i 2>/dev/null | sed 's/^[a-f0-9]* //' || true)
+ALL_COMMITS=$(git log $RANGE --oneline --no-decorate 2>/dev/null || true)
 
 cat << EOF
-## Phrolova Kernel — ${VARIANT_NAME} Build
+## Phrolova Kernel — ${VARIANT_NAME} Build (${VERSION})
 
 | | |
 |---|---|
@@ -42,43 +44,54 @@ cat << EOF
 
 EOF
 
-# Changelog section
-if [ -n "$FEATURES" ] || [ -n "$FIXES" ] || [ -n "$IMPROVE" ]; then
 echo "### Changelog"
 echo ""
+
+HAS_CATEGORIZED=0
+
 if [ -n "$FEATURES" ]; then
-    echo "**Features:**"
+    echo "#### 🚀 Features"
     echo "$FEATURES" | while IFS= read -r line; do
-        echo "- $line"
+        [ -n "$line" ] && echo "- $line"
     done
     echo ""
+    HAS_CATEGORIZED=1
 fi
+
 if [ -n "$FIXES" ]; then
-    echo "**Fixes:**"
+    echo "#### 🐛 Bug Fixes"
     echo "$FIXES" | while IFS= read -r line; do
-        echo "- $line"
+        [ -n "$line" ] && echo "- $line"
     done
     echo ""
+    HAS_CATEGORIZED=1
 fi
+
 if [ -n "$IMPROVE" ]; then
-    echo "**Improvements:**"
+    echo "#### ⚡ Improvements & Configs"
     echo "$IMPROVE" | while IFS= read -r line; do
-        echo "- $line"
+        [ -n "$line" ] && echo "- $line"
     done
     echo ""
+    HAS_CATEGORIZED=1
 fi
-else
-echo "### Changelog"
-echo ""
-echo "No notable changes."
+
+if [ "$HAS_CATEGORIZED" -eq 0 ] && [ -n "$ALL_COMMITS" ]; then
+    echo "#### 📝 Changes in this release"
+    echo "$ALL_COMMITS" | while IFS= read -r line; do
+        [ -n "$line" ] && echo "- ${line#* }"
+    done
+    echo ""
+elif [ -z "$ALL_COMMITS" ]; then
+    echo "No notable changes."
+    echo ""
 fi
 
 cat << EOF
-
 ---
 
 **How to flash:**
-1. Download the zip for your ROM type
+1. Download \`Phrolova-selene-${TAG}.zip\`
 2. Flash via custom recovery (TWRP / OrangeFox)
-3. Reboot and profit
+3. Reboot system
 EOF
