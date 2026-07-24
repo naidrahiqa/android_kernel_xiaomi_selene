@@ -144,7 +144,7 @@ function build_failed() {
 			failed_step="Build kernel (make error)"
 		fi
 
-		error_context=$(grep -i -B2 -A10 "error:" "$error_log" | tail -30)
+		error_context=$(grep -iE "(\.c:[0-9]+:|\.S:[0-9]+:|error:|fatal error:|clang: error:)" "$error_log" | grep -v "sub-make" | head -25)
 		if [ -z "$error_context" ]; then
 			error_context=$(tail -15 "$error_log")
 		fi
