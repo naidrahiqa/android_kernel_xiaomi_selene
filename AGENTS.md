@@ -35,6 +35,12 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 - KernelSU: `backslashxx/KernelSU` v3.2.5-26 (local copy di `backslash-ksu/kernel/`).
 - NoMount: `maxsteeel/nomount` (source di `fs/nomount.c` + `fs/nomount.h`).
 
+## Dokumentasi Project
+
+- [CHANGELOG.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/CHANGELOG.md) — Record cherry-pick & versi rilis kernel.
+- [docs/OPTIMIZATIONS.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/docs/OPTIMIZATIONS.md) — Detail optimasi BBR, ZSTD ZRAM, & BFQ I/O.
+- [FIX_PROMPT.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/FIX_PROMPT.md) — Panduan perbaikan cepat jika terjadi masalah kompilasi.
+
 ## Build Commands (Greenforce Clang 23.0.0)
 
 ```bash
@@ -99,6 +105,14 @@ Clang 23 optimizes `strcpy` + pointer arithmetic into `stpcpy()` calls.
 Kernel 4.14 doesn't provide `stpcpy` for arm64. Fix: added generic
 implementation in `lib/string.c` + declaration in `include/linux/string.h`.
 If switching to a different Clang version, check if this is still needed.
+
+### Clang 23 LTO Bitcode Mismatch
+- `CONFIG_LTO_CLANG=y` menyebabkan LLVM 23.0.0 (compiler) menghasilkan LTO bitcode `.o` yang gagal di-link oleh LLVM 16.0.6 system linker di CI.
+- Fix: `# CONFIG_LTO_CLANG is not set` di `selene_defconfig` dan hapus override `LD=ld.lld` di `.github/workflows/build.yml` agar menggunakan standard `aarch64-linux-gnu-ld`.
+
+### ZSTD_STATIC_ASSERT Clang 23 Fix
+- `lib/zstd/zstd_internal.h` memiliki macro `ZSTD_STATIC_ASSERT` dengan enum pembagian nol (`1 / 0`) yang ditolak oleh Clang 23.
+- Fix: diganti dengan C11 `_Static_assert((c), "ZSTD_STATIC_ASSERT")`.
 
 ### Clang + kernel 4.14 Compatibility
 - Greenforce Clang 23.0.0 (LLVM trunk) works with kernel 4.14 arm64 **only if**:
