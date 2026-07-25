@@ -113,6 +113,7 @@ jobs:
         if: success() && (hashFiles('out/arch/arm64/boot/Image*') != '')
         run: |
           git clone https://github.com/osm0sis/AnyKernel3 ak3 || { echo "::error::AnyKernel3 clone failed"; exit 1; }
+          cd ak3 && git checkout dca9dc3 && cd ..
           cp scripts/anykernel.sh ak3/anykernel.sh
           cp reference/banner ak3/banner 2>/dev/null || true
           cp out/arch/arm64/boot/Image.gz-dtb ak3/ 2>/dev/null || \
