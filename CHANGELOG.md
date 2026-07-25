@@ -17,6 +17,25 @@ Format:
 - **ZRAM & Memory Compression:** Enable ZSTD algorithm (`CONFIG_CRYPTO_ZSTD=y`, `CONFIG_ZRAM_DEF_COMP_ZSTD=y`, `CONFIG_ZRAM_DEF_COMP="zstd"`) dan LZ4/XZ (`CONFIG_RD_LZ4=y`, `CONFIG_RD_XZ=y`) untuk efisiensi dan kecepatan swap RAM.
 - **I/O Scheduler:** Enable Budget Fair Queueing (`CONFIG_IOSCHED_BFQ=y`, `CONFIG_BFQ_GROUP_IOSCHED=y`) untuk kelancaran UI saat I/O disk tinggi.
 
+## v0.4.0 Fixes — CI Build & Flash Failures
+
+### CI Build: `xt_hl.o` no rule to make target
+- **File:** `net/netfilter/xt_hl.c`
+- **Root cause:** File was accidentally deleted during rebase onto yuki-saisei (4.14.356). Kconfig `IP_NF_MATCH_TTL` and `IP6_NF_MATCH_HL` both `select NETFILTER_XT_MATCH_HL`, which force-enables compilation regardless of `CONFIG_NETFILTER_XT_MATCH_HL=n` in defconfig.
+- **Fix:** Restore `xt_hl.c` from parent commit `5b0b7cf324~1`.
+- **Commit:** `806cf866c6`
+
+### CI Build: `__tracepoint_*` undefined reference (link error)
+- **File:** `arch/arm64/configs/selene_defconfig`
+- **Root cause:** FPSGO GPU driver (`xgf.c`) uses kernel tracepoints but `CONFIG_TRACEPOINTS` was not enabled. Without it, tracepoint symbols are undefined → vmlinux link fails with 60+ errors.
+- **Fix:** Add `CONFIG_TRACEPOINTS=y` to `selene_defconfig`.
+
+### Flash: "Unable to determine partition. Aborting."
+- **File:** `scripts/anykernel.sh`
+- **Root cause:** `block=auto` fails on MTK MT6768 (selene). The auto-detection doesn't find the boot partition on this device's block layout. All prior releases (v0.1.0–v0.3.0) have this same broken config.
+- **Fix:** Set explicit `block=/dev/block/bootdevice/by-name/boot` and `is_slot_device=1` (Redmi 10 2022 is A/B device).
+- **Commit:** `806cf866c6`
+
 ---
 
 ## M0 — Repo setup

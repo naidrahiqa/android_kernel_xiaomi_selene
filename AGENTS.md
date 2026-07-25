@@ -6,14 +6,10 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 
 | Skill | File | Trigger |
 |---|---|---|
-| Kernel Update | `.opencode/skills/kernel-update/SKILL.md` | Upgrade/downgrade kernel version (4.14.x) |
-| Kernel Source Merge | `.opencode/skills/kernel-source-merge/SKILL.md` | Diff & cherry-pick MiCode vs Ronald826 |
-| CI/CD Pipeline | `.opencode/skills/ci-cd-github-actions/SKILL.md` | Build workflow, release, Telegram notif |
-| AnyKernel3 | `.opencode/skills/ak3-reverse-engineering/SKILL.md` | Bedah/repack AnyKernel3 zip |
-| KernelSU | `.opencode/skills/resukisu-integration/SKILL.md` | Legacy ReSukiSU (superseded by backslashxx) |
 | **Selene Kernel** | `.opencode/skills/selene-kernel/SKILL.md` | **Master skill** — build, update, merge, KSU, NoMount, CI/CD, AK3 |
+| Changelog Generator | `.opencode/skills/changelog-generator/SKILL.md` | Generate user-facing changelogs from commits |
 
-**Cara pakai:** Saat dapat task, identifikasi skill mana yang cocok, lalu baca SKILL.md-nya untuk instruksi detail. Prioritaskan **Selene Kernel** skill karena mencakup semua aspek project.
+**Cara pakai:** Saat dapat task, load **Selene Kernel** skill dulu — dia mencakup semua aspek project. Skill lain hanya untuk task spesifik.
 
 ## Konteks Project
 
@@ -148,6 +144,22 @@ If switching to a different Clang version, check if this is still needed.
 ### Missing UAPI Headers
 - `include/uapi/linux/netfilter/xt_connmark.h` dan `xt_mark.h` — harus dibuat manual.
 - `xt_dscp.h` / `xt_DSCP.h` — shared file (same on disk, NTFS case-insensitive). Contains all 4 structs.
+
+### xt_hl.c Deleted During Rebase
+- `net/netfilter/xt_hl.c` (hop limit match module) was accidentally deleted during rebase onto yuki-saisei.
+- This file is needed because `IP_NF_MATCH_TTL` and `IP6_NF_MATCH_HL` Kconfigs `select NETFILTER_XT_MATCH_HL`, which force-enables compilation of `xt_hl.o` regardless of `CONFIG_NETFILTER_XT_MATCH_HL=n` in defconfig.
+- Fix: restore `xt_hl.c` from parent commit (`5b0b7cf324~1`).
+- **Windows NTFS caveat:** `xt_hl.c` (lowercase, match module) and `xt_HL.c` (uppercase, target module) collide on case-insensitive NTFS. On Linux CI they're separate files. On Windows, only one can exist on disk at a time — use `git update-index --add --cacheinfo` to add `xt_hl.c` to git index without disk collision.
+
+### CONFIG_TRACEPOINTS Required for FPSGO
+- FPSGO GPU driver (`drivers/misc/mediatek/performance/fpsgo_v3/fbt/src/xgf.c`) uses kernel tracepoints (`__tracepoint_ipi_entry`, `__tracepoint_sched_switch`, `tracepoint_probe_register`, etc.).
+- Without `CONFIG_TRACEPOINTS=y`, these symbols are undefined → vmlinux link fails with 60+ `undefined reference` errors.
+- Fix: add `CONFIG_TRACEPOINTS=y` to `selene_defconfig`.
+
+### AnyKernel3 MTK Block Device
+- `block=auto` fails on MTK MT6768 (selene) with `Unable to determine partition. Aborting.`
+- Fix: `scripts/anykernel.sh` must use explicit `block=/dev/block/bootdevice/by-name/boot` and `is_slot_device=1` (Redmi 10 2022 is A/B device).
+- All prior releases (v0.1.0–v0.3.0) have the broken `block=auto` config.
 
 ### GOODIX_FINGERPRINT + FPC
 - GOODIX: Prebuilt `gf_spi_tee.o_shipped` depends on `__stack_chk_guard` → disabled via `# CONFIG_GOODIX_FINGERPRINT is not set`.
