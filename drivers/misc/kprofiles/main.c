@@ -2,6 +2,7 @@
 #include <linux/kobject.h>
 #include <linux/sysfs.h>
 #include <linux/notifier.h>
+#include <linux/delay.h>
 #include <linux/version.h>
 #include "version.h"
 
