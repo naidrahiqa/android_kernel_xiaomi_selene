@@ -12,7 +12,6 @@ STATUS="${1:-unknown}"
 VERSION="${2:-unknown}"
 TAG="${3:-$VERSION}"
 
-# Derive variant name from version string
 VARIANT_NAME="Stable"
 case "$VERSION" in
 	*nightly*) VARIANT_NAME="Nightly" ;;
@@ -45,44 +44,51 @@ BUILD_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_I
 REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
 DATE=$(date +%d/%m/%y 2>/dev/null || echo "??/??/??")
 
-function send_to_channel() {
-	local target="$1"
-	local message="$2"
-	curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+function tg_send() {
+	local target="$1" message="$2"
+	local resp
+	resp=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
 		-d chat_id="${target}" \
 		-d text="${message}" \
 		-d parse_mode="HTML" \
-		-d disable_web_page_preview=true > /dev/null
+		-d disable_web_page_preview=true)
+	if ! echo "$resp" | grep -q '"ok":true'; then
+		echo "Telegram API error: $(echo "$resp" | grep -o '"description":"[^"]*"' | cut -d\" -f4)"
+		return 1
+	fi
+	return 0
 }
 
-function send_photo_with_caption() {
-	local target="$1"
-	local photo_url="$2"
-	local caption="$3"
-	curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto" \
+function tg_photo() {
+	local target="$1" photo_url="$2" caption="$3"
+	local resp
+	resp=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto" \
 		-d chat_id="${target}" \
 		-d photo="${photo_url}" \
 		-d caption="${caption}" \
-		-d parse_mode="HTML" > /dev/null
+		-d parse_mode="HTML")
+	if ! echo "$resp" | grep -q '"ok":true'; then
+		echo "Telegram photo API error: $(echo "$resp" | grep -o '"description":"[^"]*"' | cut -d\" -f4)"
+		return 1
+	fi
+	return 0
 }
 
 function build_start() {
 	local msg="<b>🎻 Phrolova Kernel!</b>
 <b>Update:</b> ${DATE}
-<b>Version:</b> ${VERSION} · Linux 4.14 (Non-GKI)
+<b>Version:</b> ${VERSION} (${VARIANT_NAME}) · Linux 4.14 (Non-GKI)
 <b>Device:</b> Redmi 10 (selene)
 
 <b>Status:</b> Building...
 <b>Commit:</b> <code>${SHA}</code> — ${COMMIT_MSG}
 🔍 <a href='${BUILD_URL}'>Build Log</a>"
-	send_to_channel "$CHANNEL_ID" "$msg"
-	echo "Phrolova build-start notification sent."
+	tg_send "$CHANNEL_ID" "$msg" && echo "Start notification sent." || echo "Start notification FAILED."
 }
 
 function build_success() {
 	local changelog_file="${1:-}"
 	local changelog_items=""
-
 	if [ -n "$changelog_file" ] && [ -f "$changelog_file" ]; then
 		changelog_items=$(grep '^- ' "$changelog_file" 2>/dev/null | head -20)
 	fi
@@ -94,7 +100,7 @@ function build_success() {
 
 	local msg="<b>🎻 Phrolova Kernel!</b>
 <b>Update:</b> ${DATE}
-<b>Version:</b> ${VERSION} · Linux 4.14 (Non-GKI)
+<b>Version:</b> ${VERSION} (${VARIANT_NAME}) · Linux 4.14 (Non-GKI)
 <b>Device:</b> Redmi 10 (selene)
 <b>By:</b> <a href='https://github.com/naidrahiqa'>naidrahiqa</a>
 
@@ -107,18 +113,23 @@ ${changelog_items}
 <b>Credits:</b>
 backslashxx (<a href='https://github.com/backslashxx/KernelSU'>KernelSU</a>)
 maxsteeel (<a href='https://github.com/maxsteeel/nomount'>NoMount</a>)
-greenforce-project (<a href='https://github.com/greenforce-project/greenforce_clang'>Clang 23</a>)
+greenforce-project (<a href='https://github.com/greenforce-project/greenforce_clang'>Clang 24</a>)
 osm0sis (<a href='https://github.com/osm0sis/AnyKernel3'>AnyKernel3</a>)
 MiCode (<a href='https://github.com/MiCode/Xiaomi_Kernel_OpenSource'>Base kernel</a>)
 
 <b>Support me:</b>
 <a href='https://github.com/naidrahiqa'>GitHub</a>
 
-<a href='https://github.com/naidrahiqa/phrolova_kernel_xiaomi_selene'>Phrolova Kernel</a>
+<a href='${REPO_URL}'>Phrolova Kernel</a>
 
 #PhrolovaKernel #selene #Redmi10 #MT6768 #KernelSU #NoMount"
-	send_photo_with_caption "$CHANNEL_ID" "$BANNER_URL" "$msg"
-	echo "Phrolova build-success notification sent with banner."
+
+	if tg_photo "$CHANNEL_ID" "$BANNER_URL" "$msg"; then
+		echo "Success notification sent with banner."
+	else
+		echo "Photo failed, falling back to text..."
+		tg_send "$CHANNEL_ID" "$msg" && echo "Success notification sent (text fallback)." || echo "Success notification FAILED."
+	fi
 }
 
 function build_failed() {
@@ -152,7 +163,7 @@ function build_failed() {
 
 	local simple_msg="<b>🎻 Phrolova Kernel!</b>
 <b>Update:</b> ${DATE}
-<b>Version:</b> ${VERSION} · Linux 4.14 (Non-GKI)
+<b>Version:</b> ${VERSION} (${VARIANT_NAME}) · Linux 4.14 (Non-GKI)
 <b>Device:</b> Redmi 10 (selene)
 
 <b>Status:</b> ❌ BUILD FAILED
@@ -160,7 +171,7 @@ function build_failed() {
 <b>Step:</b> ${failed_step}
 
 🔍 <a href='${BUILD_URL}'>Check Actions Log</a>"
-	send_to_channel "$CHANNEL_ID" "$simple_msg"
+	tg_send "$CHANNEL_ID" "$simple_msg" && echo "Fail notification sent to channel." || echo "Fail notification to channel FAILED."
 
 	if [ -n "$ERROR_CHANNEL_ID" ]; then
 		local detail_msg="<b>🎻 Phrolova Kernel — Error Log</b>
@@ -173,10 +184,7 @@ function build_failed() {
 <pre><code>${error_context}</code></pre>
 
 🔍 <a href='${BUILD_URL}'>Check full log</a>"
-		send_to_channel "$ERROR_CHANNEL_ID" "$detail_msg"
-		echo "Phrolova build-failure: simple → channel, error log → error channel."
-	else
-		echo "Phrolova build-failure notif sent to channel (no error channel)."
+		tg_send "$ERROR_CHANNEL_ID" "$detail_msg" && echo "Error log sent to error channel." || echo "Error log to error channel FAILED."
 	fi
 }
 

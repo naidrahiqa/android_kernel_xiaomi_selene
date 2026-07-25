@@ -154,6 +154,23 @@ jobs:
             "${{ steps.version.outputs.PHROLOVA_TAG }}" \
             "${{ env.PHROLOVA_VARIANT }}" > changelog.md
 
+      - name: Prepare release body
+        if: steps.final-check.outputs.status == 'success'
+        run: |
+          cp changelog.md release_body.md
+
+      - name: Create GitHub Release
+        if: steps.final-check.outputs.status == 'success'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.PHROLOVA_TAG }}
+          name: Phrolova ${{ steps.version.outputs.PHROLOVA_VERSION }}
+          body_path: release_body.md
+          files: Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}.zip
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+
       - name: Notify result
         if: always()
         run: |
@@ -175,20 +192,3 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
           TELEGRAM_ERROR_CHANNEL_ID: ${{ secrets.TELEGRAM_ERROR_CHANNEL_ID }}
-
-      - name: Prepare release body
-        if: steps.final-check.outputs.status == 'success'
-        run: |
-          cp changelog.md release_body.md
-
-      - name: Create GitHub Release
-        if: steps.final-check.outputs.status == 'success'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.version.outputs.PHROLOVA_TAG }}
-          name: Phrolova ${{ steps.version.outputs.PHROLOVA_VERSION }}
-          body_path: release_body.md
-          files: Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}.zip
-          fail_on_unmatched_files: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
