@@ -17,7 +17,7 @@ Format:
 - **ARM NEON:** Enabled `CONFIG_KERNEL_MODE_NEON=y` for hardware floating-point and SIMD acceleration.
 - **TTL/Hotspot Tethering Fix:** Confirmed working via `CONFIG_IP_NF_TARGET_TTL=y` + `NETFILTER_XT_TARGET_HL`. TTL manipulation module (`xt_HL.c`) compiles and links correctly.
 - **Droidspaces Compatibility:** Verified full compatibility with [Droidspaces-OSS](https://github.com/ravindu644/Droidspaces-OSS) container runtime. Kernel 4.14.356 non-GKI + KernelSU fully supported. Recommended for running full Linux distros (Ubuntu, Debian, Alpine) on selene.
-- **AnyKernel3 Flash Fix:** Reverted to `block=auto` — KernelSU Manager v3.3.0 has its own partition detection and ignores explicit `block` paths. Tendou-Arisu (also selene/MT6768) confirmed working with `block=auto`.
+- **AnyKernel3 Flash Fix:** Latest AK3 (osm0sis) uses UPPERCASE variables (`BLOCK`, `IS_SLOT_DEVICE`) but `anykernel.sh` had lowercase (`block`, `is_slot_device`) → variable was empty at runtime → partition detection loop never ran → abort. Fixed by updating to `BLOCK=auto; IS_SLOT_DEVICE=auto;`. Tendou-Arisu (selene/MT6768) works because it uses older AK3 with lowercase vars.
 - **CI Stabilization:** Fixed Greenforce Clang 24.0.0 cache key, `reference/banner` tracking, graceful AnyKernel3 packaging. Build passes on ubuntu-24.04.
 
 ## v0.5.0 — FPSGO Tracepoint Fix + Build Stabilization

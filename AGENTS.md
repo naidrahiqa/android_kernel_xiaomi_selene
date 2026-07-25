@@ -157,11 +157,10 @@ If switching to a different Clang version, check if this is still needed.
 - Fix: add `CONFIG_TRACEPOINTS=y` to `selene_defconfig`.
 
 ### AnyKernel3 MTK Block Device
-- **`block=auto` WORKS with KernelSU Manager v3.3.0** — KernelSU Manager has its own partition detection that ignores the `block` variable from `anykernel.sh`.
-- **Explicit `block=/dev/block/bootdevice/by-name/boot` BREAKS KernelSU Manager flashing** — error "Unable to determine partition. Aborting..."
-- **Fix:** Use `block=auto; is_slot_device=1;`. KernelSU Manager auto-detects the correct boot partition itself.
-- **Evidence:** Tendou-Arisu kernel (also selene/MT6768) uses `block=auto; is_slot_device=auto;` and flashes successfully via KernelSU Manager.
-- The explicit path approach was a misdiagnosis — the real issue was AnyKernel3 standalone flashing (e.g. TWRP) vs KernelSU Manager flashing having different partition detection logic.
+- **Latest AK3 (osm0sis/AnyKernel3) uses UPPERCASE variable names** — `BLOCK`, `IS_SLOT_DEVICE`, `RAMDISK_COMPRESSION`, `PATCH_VBMETA_FLAG` (not lowercase `block`, `is_slot_device`, etc.).
+- CI clones latest AK3, so `anykernel.sh` MUST use uppercase variables. Tendou-Arisu uses older AK3 (lowercase) which still works but is outdated.
+- **Fix:** Use `BLOCK=auto; IS_SLOT_DEVICE=auto;` in `scripts/anykernel.sh`. The `attributes()` function also references `$RAMDISK` (uppercase).
+- **Root cause of "Unable to determine partition" flash error:** lowercase `block=auto` results in `$BLOCK` being empty in `setup_ak()` → partition detection loop never runs → abort.
 
 ### Droidspaces Container Runtime
 - **Fully compatible** with kernel 4.14.356 non-GKI + KernelSU.
