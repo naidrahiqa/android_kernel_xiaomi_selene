@@ -76,11 +76,13 @@ unpack_ramdisk() {
 
     cd $SPLITIMG;
     if [ $retries -ge 2 ]; then
-      rm -rf $RAMDISK $AKHOME/rdtmp 2>/dev/null;
+      rm -rf $AKHOME/rdtmp 2>/dev/null;
+      if [ "$comp" ]; then
+        rm -f ramdisk.cpio;
+      else
+        gzip -9c ramdisk.cpio > ramdisk.cpio.gz 2>/dev/null && rm -f ramdisk.cpio;
+      fi;
       ui_print " "; ui_print "Warning: ramdisk extraction failed, using original ramdisk...";
-    fi;
-    if [ -d "$AKHOME/rdtmp" ] && [ -d "$RAMDISK" ]; then
-      cp -af $AKHOME/rdtmp/* $RAMDISK/ 2>/dev/null;
     fi;
   elif [ -d vendor_ramdisk ]; then
     [ -d $VENDORRD ] && mv -f $VENDORRD $AKHOME/vrdtmp;
