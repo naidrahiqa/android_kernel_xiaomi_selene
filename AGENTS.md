@@ -7,7 +7,17 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 | Skill | File | Trigger |
 |---|---|---|
 | **Selene Kernel** | `.opencode/skills/selene-kernel/SKILL.md` | **Master skill** — build, update, merge, KSU, NoMount, CI/CD, AK3 |
-| Changelog Generator | `.opencode/skills/changelog-generator/SKILL.md` | Generate user-facing changelogs from commits |
+| AK3 Packaging | `.opencode/skills/selene-kernel/references/ak3.md` | AnyKernel3 packaging, anykernel.sh config, flash error debugging |
+| AK3 Reverse Engineering | `.opencode/skills/ak3-reverse-engineering/SKILL.md` | Membandingkan anykernel.sh dengan zip kernel lain yang sudah terbukti work |
+| CI/CD (GitHub Actions) | `.opencode/skills/ci-cd-github-actions/SKILL.md` | Setup/modify GitHub Actions workflows, Telegram notif, release automation |
+| Changelog Generator | `.opencode/skills/changelog-generator/SKILL.md` | Generate user-facing changelogs dari commits |
+| Versioning & Release | `.opencode/skills/versioning-release/SKILL.md` | Version scheme (nightly/stable/hotfix), changelog buat release, troubleshooting body kosong |
+| Finishing Branch | `.opencode/skills/finishing-a-development-branch/SKILL.md` | Integrasi kerja setelah implementasi selesai — merge, PR, cleanup |
+| Kernel Source Merge | `.opencode/skills/kernel-source-merge/SKILL.md` | Merge/compare MiCode base vs Ronald826 reference |
+| Kernel Update | `.opencode/skills/kernel-update/SKILL.md` | Upgrade/downgrade kernel version (4.14.x), CVE patching |
+| Resukisu Integration | `.opencode/skills/resukisu-integration/SKILL.md` | Root solution integration (KernelSU, NoMount, dll) |
+| Skill Creator | `.opencode/skills/skill-creator/SKILL.md` | Membuat atau update SKILL.md baru |
+| Git Worktrees | `.opencode/skills/using-git-worktrees/SKILL.md` | Isolasi workspace via git worktree untuk fitur baru |
 
 **Cara pakai:** Saat dapat task, load **Selene Kernel** skill dulu — dia mencakup semua aspek project. Skill lain hanya untuk task spesifik.
 
@@ -156,11 +166,15 @@ If switching to a different Clang version, check if this is still needed.
 - Without `CONFIG_TRACEPOINTS=y`, these symbols are undefined → vmlinux link fails with 60+ `undefined reference` errors.
 - Fix: add `CONFIG_TRACEPOINTS=y` to `selene_defconfig`.
 
-### AnyKernel3 MTK Block Device
-- **Latest AK3 (osm0sis/AnyKernel3) uses UPPERCASE variable names** — `BLOCK`, `IS_SLOT_DEVICE`, `RAMDISK_COMPRESSION`, `PATCH_VBMETA_FLAG` (not lowercase `block`, `is_slot_device`, etc.).
-- CI clones latest AK3, so `anykernel.sh` MUST use uppercase variables. Tendou-Arisu uses older AK3 (lowercase) which still works but is outdated.
-- **Fix:** Use `BLOCK=auto; IS_SLOT_DEVICE=auto;` in `scripts/anykernel.sh`. The `attributes()` function also references `$RAMDISK` (uppercase).
-- **Root cause of "Unable to determine partition" flash error:** lowercase `block=auto` results in `$BLOCK` being empty in `setup_ak()` → partition detection loop never runs → abort.
+### AnyKernel3 Packaging — Match Tendou-Arisu
+- CI pin ke commit `dca9dc3` (sebelum backwards compat removal `cea8f97`).
+- **anykernel.sh WAJIB**:
+  - Lowercase vars: `block=auto`, `is_slot_device=auto`, `ramdisk_compression=auto`, `patch_vbmeta_flag=auto`
+  - `boot_attributes()` — bukan `attributes()`
+  - **JANGAN override** fungsi AK3 (`unpack_ramdisk`, `dump_boot`, dll)
+- Flash error "Unable to determine partition": cek variable case match AK3 version.
+- Flash error "New image larger than target partition": tanda ada override AK3 yang ngerusak ramdisk — revert ke default.
+- Referensi: `.opencode/skills/selene-kernel/references/ak3.md`.
 
 ### Droidspaces Container Runtime
 - **Fully compatible** with kernel 4.14.356 non-GKI + KernelSU.
