@@ -111,11 +111,12 @@ ${changelog_items}
 <b>Manager</b> (<a href='https://github.com/backslashxx/KernelSU/releases/latest'>KernelSU</a>) | <b>NoMount</b> (<a href='https://github.com/maxsteeel/nomount/releases'>GitHub</a>)
 
 <b>Credits:</b>
+yuki-saisei (<a href='https://github.com/yuki-saisei'>Base kernel</a>)
 backslashxx (<a href='https://github.com/backslashxx/KernelSU'>KernelSU</a>)
 maxsteeel (<a href='https://github.com/maxsteeel/nomount'>NoMount</a>)
 greenforce-project (<a href='https://github.com/greenforce-project/greenforce_clang'>Clang 24</a>)
 osm0sis (<a href='https://github.com/osm0sis/AnyKernel3'>AnyKernel3</a>)
-MiCode (<a href='https://github.com/MiCode/Xiaomi_Kernel_OpenSource'>Base kernel</a>)
+MiCode (<a href='https://github.com/MiCode/Xiaomi_Kernel_OpenSource'>Stock kernel</a>)
 
 <b>Support me:</b>
 <a href='https://github.com/naidrahiqa'>GitHub</a>
