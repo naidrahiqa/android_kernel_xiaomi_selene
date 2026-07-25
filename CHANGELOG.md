@@ -11,6 +11,15 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.6.0 — Kprofiles + Simple LMK + Droidspaces Ready
+- **Kprofiles Power Profile Manager:** New `drivers/misc/kprofiles/` driver. Sysfs interface (`/sys/kernel/kprofiles/kp_mode`) with 4 modes: Off(0), Battery(1), Balanced(2), Performance(3). Exported API (`kp_set_mode`, `kp_active_mode`, `kp_set_mode_rollback`) for other drivers. Auto screen-off profile switching via FB notifier. `CONFIG_KPROFILES=y` in defconfig.
+- **Simple LMK (Low Memory Killer):** New `drivers/staging/android/simple_lmk.c`. Periodic memory checker with configurable `min_free_mb` threshold (default 64MB). Sysfs at `/sys/kernel/simple_lmk/`. Kills highest oom_score_adj process when memory drops below threshold. `CONFIG_SIMPLE_LMK=y` in defconfig.
+- **ARM NEON:** Enabled `CONFIG_KERNEL_MODE_NEON=y` for hardware floating-point and SIMD acceleration.
+- **TTL/Hotspot Tethering Fix:** Confirmed working via `CONFIG_IP_NF_TARGET_TTL=y` + `NETFILTER_XT_TARGET_HL`. TTL manipulation module (`xt_HL.c`) compiles and links correctly.
+- **Droidspaces Compatibility:** Verified full compatibility with [Droidspaces-OSS](https://github.com/ravindu644/Droidspaces-OSS) container runtime. Kernel 4.14.356 non-GKI + KernelSU fully supported. Recommended for running full Linux distros (Ubuntu, Debian, Alpine) on selene.
+- **AnyKernel3 Flash Fix:** Reverted to `block=auto` — KernelSU Manager v3.3.0 has its own partition detection and ignores explicit `block` paths. Tendou-Arisu (also selene/MT6768) confirmed working with `block=auto`.
+- **CI Stabilization:** Fixed Greenforce Clang 24.0.0 cache key, `reference/banner` tracking, graceful AnyKernel3 packaging. Build passes on ubuntu-24.04.
+
 ## v0.5.0 — FPSGO Tracepoint Fix + Build Stabilization
 - **FPSGO Tracepoint Fix:** Add `CONFIG_TRACEPOINTS=y`, `CONFIG_TRACING=y`, `CONFIG_TRACING_SUPPORT=y`, `CONFIG_FTRACE=y`, `CONFIG_CONTEXT_SWITCH_TRACER=y`, `CONFIG_ENABLE_DEFAULT_TRACERS=y`, `CONFIG_NOP_TRACER=y`, `CONFIG_EVENT_TRACING=y`, `CONFIG_MTK_SCHED_TRACERS=y` to `selene_defconfig`. Fixes 60+ undefined reference errors (`__tracepoint_*`, `tracepoint_probe_register`) in FPSGO GPU driver (`xgf.c`). Root cause: FPSGO hooks into kernel tracepoints via `FPSFO_DECLARE_SYSTRACE` macro but tracepoint infrastructure was never enabled.
 - **Kernel String:** Add violin emoji 🎻 to `kernel.string` in `anykernel.sh`.

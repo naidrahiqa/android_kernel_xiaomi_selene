@@ -157,9 +157,11 @@ If switching to a different Clang version, check if this is still needed.
 - Fix: add `CONFIG_TRACEPOINTS=y` to `selene_defconfig`.
 
 ### AnyKernel3 MTK Block Device
-- `block=auto` fails on MTK MT6768 (selene) with `Unable to determine partition. Aborting.`
-- Fix: `scripts/anykernel.sh` must use explicit `block=/dev/block/bootdevice/by-name/boot` and `is_slot_device=1` (Redmi 10 2022 is A/B device).
-- All prior releases (v0.1.0–v0.3.0) have the broken `block=auto` config.
+- **`block=auto` WORKS with KernelSU Manager v3.3.0** — KernelSU Manager has its own partition detection that ignores the `block` variable from `anykernel.sh`.
+- **Explicit `block=/dev/block/bootdevice/by-name/boot` BREAKS KernelSU Manager flashing** — error "Unable to determine partition. Aborting..."
+- **Fix:** Use `block=auto; is_slot_device=1;`. KernelSU Manager auto-detects the correct boot partition itself.
+- **Evidence:** Tendou-Arisu kernel (also selene/MT6768) uses `block=auto; is_slot_device=auto;` and flashes successfully via KernelSU Manager.
+- The explicit path approach was a misdiagnosis — the real issue was AnyKernel3 standalone flashing (e.g. TWRP) vs KernelSU Manager flashing having different partition detection logic.
 
 ### GOODIX_FINGERPRINT + FPC
 - GOODIX: Prebuilt `gf_spi_tee.o_shipped` depends on `__stack_chk_guard` → disabled via `# CONFIG_GOODIX_FINGERPRINT is not set`.
