@@ -33,6 +33,17 @@ config ANDROID_INTF_ALARM_DEV
 	  Espically for wake up alarm ioctl.
 	  Also exports the alarm interface to user-space.
 
+config SIMPLE_LMK
+	bool "Simple Low Memory Killer"
+	default y
+	depends on MMU
+	help
+	  A simple low memory killer that periodically checks free memory
+	  and kills the largest process with the highest oom_score_adj
+	  when below the threshold.
+
+	  Provides sysfs interface at /sys/kernel/simple_lmk/.
+
 config MTK_GMO_RAM_OPTIMIZE
 	bool "MTK ram optimize"
 	default n

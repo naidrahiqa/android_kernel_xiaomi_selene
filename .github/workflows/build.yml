@@ -23,12 +23,14 @@ on:
 env:
   PHROLOVA_VARIANT: ${{ inputs.variant || '0' }}
   PHROLOVA_BASE: ${{ inputs.base_version || '0.5.0' }}
-  TOOLCHAIN_NAME: "Greenforce Clang 23.0.0"
+  TOOLCHAIN_NAME: "Greenforce Clang 24.0.0"
   KERNELSU_VERSION: "KernelSU (backslashxx)"
 
 jobs:
   build:
     runs-on: ubuntu-24.04
+    container:
+      image: voidlinux/voidlinux
     permissions:
       contents: write
     outputs:
@@ -41,6 +43,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "Phrolova CI"
+          git config user.email "phrolova@users.noreply.github.com"
 
       - name: Generate version
         id: version
@@ -67,17 +74,17 @@ jobs:
         uses: actions/cache@v4
         with:
           path: greenforce-clang
-          key: greenforce-clang-23.0.0
+          key: greenforce-clang-24.0.0
 
       - name: Install build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            bc bison build-essential flex \
-            libssl-dev libelf-dev zstd \
+          xbps-install -Sy
+          xbps-install -y \
+            bc bison base-devel flex \
+            openssl-devel elfutils-devel zstd \
             python3 \
-            binutils-aarch64-linux-gnu \
-            zip
+            cross-aarch64-linux-gnu \
+            zip wget ca-certificates git
           if [ "${{ steps.cache-clang.outputs.cache-hit }}" != "true" ]; then
             bash <(wget -qO- https://raw.githubusercontent.com/greenforce-project/greenforce_clang/refs/heads/main/get_clang.sh)
           fi
@@ -109,6 +116,7 @@ jobs:
         run: |
           git clone https://github.com/osm0sis/AnyKernel3 ak3 || { echo "::error::AnyKernel3 clone failed"; exit 1; }
           cp scripts/anykernel.sh ak3/anykernel.sh
+          cp reference/banner ak3/banner
           cp out/arch/arm64/boot/Image.gz-dtb ak3/ 2>/dev/null || \
           cp out/arch/arm64/boot/Image.gz ak3/ 2>/dev/null || \
           cp out/arch/arm64/boot/Image ak3/
@@ -173,14 +181,7 @@ jobs:
       - name: Prepare release body
         if: steps.final-check.outputs.status == 'success'
         run: |
-          BANNER_URL="https://raw.githubusercontent.com/${{ github.repository }}/phrolova/docs/assets/banner_landscape.jpg"
-          {
-            echo "<p align=\"center\">"
-            echo "  <img src=\"${BANNER_URL}\" alt=\"Phrolova\" width=\"100%\"/>"
-            echo "</p>"
-            echo ""
-            cat changelog.md
-          } > release_body.md
+          cp changelog.md release_body.md
 
       - name: Create GitHub Release
         if: steps.final-check.outputs.status == 'success'
@@ -192,4 +193,4 @@ jobs:
           files: Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}.zip
           fail_on_unmatched_files: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}

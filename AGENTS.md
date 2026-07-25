@@ -37,7 +37,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 - [docs/OPTIMIZATIONS.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/docs/OPTIMIZATIONS.md) — Detail optimasi BBR, ZSTD ZRAM, & BFQ I/O.
 - [FIX_PROMPT.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/FIX_PROMPT.md) — Panduan perbaikan cepat jika terjadi masalah kompilasi.
 
-## Build Commands (Greenforce Clang 23.0.0)
+## Build Commands (Greenforce Clang 24.0.0)
 
 ```bash
 # Install deps
@@ -45,7 +45,7 @@ sudo apt-get install -y bc bison build-essential flex \
   libssl-dev libelf-dev zstd python3 \
   binutils-aarch64-linux-gnu zip
 
-# Setup Greenforce Clang 23 (CI uses get_clang.sh)
+# Setup Greenforce Clang (CI uses get_clang.sh)
 bash <(wget -qO- https://raw.githubusercontent.com/greenforce-project/greenforce_clang/refs/heads/main/get_clang.sh)
 export PATH="$(pwd)/greenforce-clang/bin:$PATH"
 
@@ -73,7 +73,7 @@ make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
 
 - Trigger: push ke `selene-r-oss-update`, `m1-cherrypick`, `phrolova`, atau manual dispatch.
 - Runner: `ubuntu-24.04`
-- Toolchain: Greenforce Clang 23.0.0 (`CC=clang HOSTCC=gcc`)
+- Toolchain: Greenforce Clang 24.0.0 (`CC=clang HOSTCC=gcc`)
 - KernelSU: backslashxx v3.2.5-26 via `drivers/kernelsu` symlink
 - CI matrix: **Single build** (universal kernel, 1 zip fits all)
 - Telegram notifications: ObsidianKernel-style format with credits/download links
@@ -111,14 +111,14 @@ If switching to a different Clang version, check if this is still needed.
 - Fix: diganti dengan C11 `_Static_assert((c), "ZSTD_STATIC_ASSERT")`.
 
 ### Clang + kernel 4.14 Compatibility
-- Greenforce Clang 23.0.0 (LLVM trunk) works with kernel 4.14 arm64 **only if**:
+- Greenforce Clang 24.0.0 (LLVM trunk) works with kernel 4.14 arm64 **only if**:
   - Top-level `Makefile` CLANG_FLAGS does NOT contain `-no-integrated-as` — Clang IAS handles `-EL` natively. Per-file `-no-integrated-as` only where needed (e.g., `aes-ce.o` for 68-bit literal).
   - `GCC_TOOLCHAIN_DIR` detection uses `$(CROSS_COMPILE)as` (not `$(CROSS_COMPILE)elfedit` which may not exist).
   - `HOSTCC=gcc` — host tools need real GCC (not Clang) for some build scripts.
 - VDSO `gettimeofday.S`: `clock_gettime_return, shift=1` must be `clock_gettime_return 1` (positional args) — Clang IAS doesn't support named macro args.
 - `arch/arm64/crypto/aes-modes.S`: 68-bit literal `0x30000000200000001` exceeds Clang IAS range → fixed with explicit lane construction using `mov/dup`.
 - Zyc Clang (15.0.7) is incompatible with kernel 4.14 arm64 asm — clang support added in 4.19+. Not usable.
-- Zyc/Electron/Neutron Clang 16+ may work (not tested). Greenforce Clang 23 is the validated toolchain.
+- Zyc/Electron/Neutron Clang 16+ may work (not tested). Greenforce Clang 24 is the validated toolchain.
 
 ### GCC 13 Compatibility (if reverting)
 - GCC 13 promotes many new warnings to `-Werror` on vendor drivers. Strategy: `-Wno-error` in `scripts/Makefile.lib` `orig_c_flags`.

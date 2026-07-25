@@ -1,0 +1,46 @@
+config KPROFILES
+	tristate "Kprofiles kernel module"
+	default y
+	help
+	  This adds support for Kprofiles, a kernel-level power profile
+	  manager. It provides a sysfs interface at /sys/kernel/kprofiles/
+	  to switch between power profiles: 0=Disabled, 1=Battery,
+	  2=Balanced, 3=Performance.
+
+config KP_DEFAULT_MODE
+	int "Default Kprofiles mode"
+	depends on KPROFILES
+	default 0
+	range 0 3
+	help
+	  Default mode applied at boot: 0=Disabled, 1=Battery, 2=Balanced,
+	  3=Performance.
+
+choice
+	prompt "Auto Kprofiles notifier"
+	depends on KPROFILES
+	default AUTO_KPROFILES_NONE
+
+config AUTO_KPROFILES_MSM_DRM
+	bool "msm_drm_notifier"
+	depends on DRM_MSM
+
+config AUTO_KPROFILES_MI_DRM
+	bool "mi_drm_notifier"
+	depends on MI_DRM
+
+config AUTO_KPROFILES_FB
+	bool "fb_notifier"
+	depends on FB
+
+config AUTO_KPROFILES_NONE
+	bool "None"
+
+endchoice
+
+config KP_VERBOSE_DEBUG
+	bool "Verbose Kprofiles debug"
+	depends on KPROFILES
+	default n
+	help
+	  Enables verbose debug logging for Kprofiles.

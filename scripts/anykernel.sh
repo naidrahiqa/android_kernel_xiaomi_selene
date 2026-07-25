@@ -4,16 +4,15 @@
 ### AnyKernel setup
 # begin properties
 properties() { '
-kernel.string=Phrolova 🎻 Kernel
+kernel.string=Phrolova Kernel — by @Naidra
 do.devicecheck=0
 do.modules=0
 do.systemless=1
 do.cleanup=1
 do.cleanuponabort=0
-device.name1=merlin
-device.name2=lancelot
-device.name3=selene
-device.name4=
+device.name1=selene
+device.name2=merlin
+device.name3=lancelot
 supported.versions=
 supported.patchlevels=
 '; } # end properties
@@ -36,7 +35,6 @@ patch_vbmeta_flag=auto;
 . tools/ak3-core.sh && attributes;
 
 # boot install
-dump_boot; # use split_boot to skip ramdisk unpack, e.g. for devices with init_boot ramdisk
-
-write_boot; # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
+dump_boot;
+write_boot;
 ## end boot install

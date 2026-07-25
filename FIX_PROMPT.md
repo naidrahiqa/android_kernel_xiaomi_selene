@@ -70,7 +70,7 @@ Do NOT use the selective update script. Instead:
 ### Step 6: CI Pipeline
 
 GitHub Actions workflow at `.github/workflows/build.yml`:
-- Greenforce Clang 23.0.0
+- Greenforce Clang 24.0.0
 - `CC=clang HOSTCC=gcc CROSS_COMPILE=aarch64-linux-gnu-`
 - Single universal build (1 zip fits MIUI + AOSP)
 - Version scheme: `version.sh` (nightly/stable/hotfix)

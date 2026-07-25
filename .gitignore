@@ -131,3 +131,8 @@ out/
 
 # KernelSU symlink/junction (created at build time, not tracked)
 drivers/kernelsu
+
+# Project temp files (ref kernel, test scripts, zips)
+ref.zip
+reference/
+test-*.ps1

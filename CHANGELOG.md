@@ -182,3 +182,34 @@ Format:
 - Auto-hook options default: `AUTO_SETUID`, `AUTO_INITRC`, `AUTO_INPUT`
   (via LSM, tidak perlu patch manual ke kernel/sys.c / fs/read_write.c /
   drivers/input/input.c).
+
+## M5 — CI: Void Linux Container + Toolchain Greenforce Clang 24
+- `.github/workflows/build.yml`: runner → `container: voidlinux/voidlinux`
+- Package manager: `apt-get` → `xbps-install` (Void Linux)
+- `TOOLCHAIN_NAME`: Greenforce Clang 23 → 24
+- Cache key: `greenforce-clang-23.0.0` → `greenforce-clang-24.0.0`
+- Added `cp reference/banner ak3/banner` di packaging step
+
+## M6 — Feature Update: Kprofiles, Simple LMK, NEON, TTL (v0.6.0)
+
+### Kprofiles — Kernel Power Profile Manager
+- `drivers/misc/kprofiles/` (main.c, Kconfig, Makefile, version.h)
+- Sysfs: `/sys/kernel/kprofiles/kp_mode` (0=Off, 1=Battery, 2=Balanced, 3=Performance)
+- Auto screen-off switching via fb_notifier
+- Exported API: `kp_active_mode()`, `kp_set_mode()`, `kp_notifier_register_client()`
+- `CONFIG_KPROFILES=y`, `CONFIG_KP_DEFAULT_MODE=0`, `CONFIG_AUTO_KPROFILES_NONE=y`
+
+### Simple Low Memory Killer
+- `drivers/staging/android/simple_lmk.c` + header
+- Periodically checks free RAM via `si_meminfo()`, kills best candidate when below threshold
+- Sysfs: `/sys/kernel/simple_lmk/` (min_free_mb, enabled, kill_now)
+- `CONFIG_SIMPLE_LMK=y`, default min_free=64MB
+
+### Kernel Mode NEON
+- `arch/arm64/configs/selene_defconfig`: `CONFIG_KERNEL_MODE_NEON=y`
+- Enables ARM NEON crypto acceleration
+
+### TTL Target (Hotspot Fix)
+- Already enabled via `CONFIG_IP_NF_TARGET_TTL=y` → selects `NETFILTER_XT_TARGET_HL`
+- `net/ipv4/netfilter/xt_HL.c` provides both IPv4 TTL and IPv6 HL target
+- File already exists in tree (no new addition needed)

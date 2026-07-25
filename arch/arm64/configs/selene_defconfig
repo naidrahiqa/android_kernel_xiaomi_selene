@@ -504,3 +504,14 @@ CONFIG_NET_SCH_FQ_CODEL=y
 # I/O Scheduler Optimizations (BFQ for low latency IO)
 CONFIG_IOSCHED_BFQ=y
 CONFIG_BFQ_GROUP_IOSCHED=y
+
+# Kernel Mode NEON — ARM crypto acceleration
+CONFIG_KERNEL_MODE_NEON=y
+
+# Kprofiles — sysfs power profile management
+CONFIG_KPROFILES=y
+CONFIG_KP_DEFAULT_MODE=0
+CONFIG_AUTO_KPROFILES_NONE=y
+
+# Simple Low Memory Killer
+CONFIG_SIMPLE_LMK=y
