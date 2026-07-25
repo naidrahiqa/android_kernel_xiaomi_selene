@@ -163,6 +163,14 @@ If switching to a different Clang version, check if this is still needed.
 - **Evidence:** Tendou-Arisu kernel (also selene/MT6768) uses `block=auto; is_slot_device=auto;` and flashes successfully via KernelSU Manager.
 - The explicit path approach was a misdiagnosis — the real issue was AnyKernel3 standalone flashing (e.g. TWRP) vs KernelSU Manager flashing having different partition detection logic.
 
+### Droidspaces Container Runtime
+- **Fully compatible** with kernel 4.14.356 non-GKI + KernelSU.
+- [Droidspaces-OSS](https://github.com/ravindu644/Droidspaces-OSS): lightweight LXC-like container runtime for Android/Linux. Run full Linux distros (Ubuntu, Debian, Alpine) natively.
+- Requirements: root (KernelSU recommended), kernel 3.10+ with namespace/cgroup support.
+- Single static binary ~400KB, zero dependencies, musl libc.
+- Features: full namespace isolation, systemd/OpenRC, NAT/host networking, GPU acceleration (VirGL/Turnip), PulseAudio.
+- Users can install Droidspaces on selene to run server workloads, dev environments, or full desktop Linux.
+
 ### GOODIX_FINGERPRINT + FPC
 - GOODIX: Prebuilt `gf_spi_tee.o_shipped` depends on `__stack_chk_guard` → disabled via `# CONFIG_GOODIX_FINGERPRINT is not set`.
 - FPC: `CONFIG_FPC_FINGERPRINT` depends on `spi_fingerprint` + `goodix_fp_exist` symbols from Goodix. Both disabled.

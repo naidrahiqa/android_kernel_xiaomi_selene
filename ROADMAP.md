@@ -76,7 +76,12 @@ Target: Cutting-edge / long-term.
 | BFQ | ✓ | ✓ |
 | FPSGO | ✓ | ✓ |
 | SCHEDUTIL | ✓ | ✓ |
-| AnyKernel MTK fix | ✓ (explicit block) | ✗ (block=auto) |
+| Kprofiles | ✓ | ✗ |
+| Simple LMK | ✓ | ✗ |
+| NEON | ✓ | ? |
+| TTL/Hotspot | ✓ | ? |
+| AnyKernel MTK fix | ✓ (block=auto) | ✓ (block=auto) |
+| Droidspaces compatible | ✓ | ✓ |
 | CI/CD | ✓ | n/a |
 | Toolchain | Greenforce Clang 24 | Gino Clang 22 |
 | Build Type | Universal | Universal |

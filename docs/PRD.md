@@ -29,9 +29,14 @@ Provide a stable, performant, and feature-rich custom kernel for Redmi 10 2022 t
 | CI/CD automated builds (GitHub Actions) | Implemented | P0 |
 | Telegram build notifications | Implemented | P1 |
 | AnyKernel3 MTK A/B slot fix | Implemented | P0 |
-| Clang 23 compatibility (Greenforce) | Implemented | P0 |
+| Clang 24 compatibility (Greenforce) | Implemented | P0 |
 | Kernel 4.14.x update workflow | Implemented | P1 |
 | Power-efficient scheduling (SCHEDUTIL + ENERGY_MODEL) | Implemented | P1 |
+| Kprofiles power profile manager | Implemented | P1 |
+| Simple LMK (low memory killer) | Implemented | P1 |
+| ARM NEON SIMD acceleration | Implemented | P1 |
+| TTL/Hotspot tethering fix | Implemented | P1 |
+| Droidspaces container runtime compatible | Verified | P2 |
 
 ## 4. Target Configurations
 
@@ -43,7 +48,8 @@ Provide a stable, performant, and feature-rich custom kernel for Redmi 10 2022 t
 | RAM | LZ4 + ZSTD ZRAM |
 | Filesystems | EXT4, F2FS, EXFAT, NTFS, OVERLAY_FS |
 | Build | Universal (MIUI/HyperOS + AOSP) |
-| Packaging | AnyKernel3 with explicit MT6768 boot partition |
+| Packaging | AnyKernel3 with `block=auto` (KernelSU Manager v3.3.0 compatible) |
+| Container Runtime | Droidspaces-OSS verified (kernel 4.14 non-GKI fully supported) |
 
 ## 5. Quality Requirements
 
