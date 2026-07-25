@@ -91,14 +91,14 @@ jobs:
             -v "${{ github.workspace }}:/workspace" \
             -w /workspace \
             ${{ env.VOID_IMAGE }} \
-            bash -c "
+            sh -c "
               xbps-install -Sy
               xbps-install -y \
                 bc bison base-devel flex \
                 openssl-devel elfutils-devel zstd \
                 python3 \
                 cross-aarch64-linux-gnu \
-                zip wget ca-certificates git
+                zip wget ca-certificates git bash
 
               # Install Greenforce Clang if not cached
               if [ ! -d greenforce-clang/bin ]; then
