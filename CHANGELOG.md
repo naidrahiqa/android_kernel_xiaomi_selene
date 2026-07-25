@@ -11,6 +11,10 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.5.0 — FPSGO Tracepoint Fix + Build Stabilization
+- **FPSGO Tracepoint Fix:** Add `CONFIG_TRACEPOINTS=y`, `CONFIG_TRACING=y`, `CONFIG_TRACING_SUPPORT=y`, `CONFIG_FTRACE=y`, `CONFIG_CONTEXT_SWITCH_TRACER=y`, `CONFIG_ENABLE_DEFAULT_TRACERS=y`, `CONFIG_NOP_TRACER=y`, `CONFIG_EVENT_TRACING=y`, `CONFIG_MTK_SCHED_TRACERS=y` to `selene_defconfig`. Fixes 60+ undefined reference errors (`__tracepoint_*`, `tracepoint_probe_register`) in FPSGO GPU driver (`xgf.c`). Root cause: FPSGO hooks into kernel tracepoints via `FPSFO_DECLARE_SYSTRACE` macro but tracepoint infrastructure was never enabled.
+- **Kernel String:** Add violin emoji 🎻 to `kernel.string` in `anykernel.sh`.
+
 ## v0.4.0 — Performance & Memory Optimizations + LTO Fix
 - **LTO Fix:** Disable `CONFIG_LTO_CLANG` di `selene_defconfig` untuk mengatasi bitcode mismatch antara LLVM 23 (compiler) dan LLVM 16 (system linker).
 - **TCP Congestion Control:** Enable Google BBR (`CONFIG_TCP_CONG_BBR=y`, `CONFIG_DEFAULT_TCP_CONG="bbr"`) + Fair Queueing (`CONFIG_NET_SCH_FQ=y`, `CONFIG_NET_SCH_FQ_CODEL=y`) untuk koneksi internet lebih responsif dan latency lebih rendah.
