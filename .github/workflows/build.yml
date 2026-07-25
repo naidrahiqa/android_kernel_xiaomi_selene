@@ -25,12 +25,11 @@ env:
   PHROLOVA_BASE: ${{ inputs.base_version || '0.5.0' }}
   TOOLCHAIN_NAME: "Greenforce Clang 24.0.0"
   KERNELSU_VERSION: "KernelSU (backslashxx)"
+  VOID_IMAGE: "voidlinux/voidlinux:latest"
 
 jobs:
   build:
     runs-on: ubuntu-24.04
-    container:
-      image: voidlinux/voidlinux
     permissions:
       contents: write
     outputs:
@@ -76,40 +75,52 @@ jobs:
           path: greenforce-clang
           key: greenforce-clang-24.0.0
 
-      - name: Install build dependencies
-        run: |
-          xbps-install -Sy
-          xbps-install -y \
-            bc bison base-devel flex \
-            openssl-devel elfutils-devel zstd \
-            python3 \
-            cross-aarch64-linux-gnu \
-            zip wget ca-certificates git
-          if [ "${{ steps.cache-clang.outputs.cache-hit }}" != "true" ]; then
-            bash <(wget -qO- https://raw.githubusercontent.com/greenforce-project/greenforce_clang/refs/heads/main/get_clang.sh)
-          fi
-          echo "$(pwd)/greenforce-clang/bin" >> $GITHUB_PATH
+      - name: Pull Void Linux image
+        run: docker pull ${{ env.VOID_IMAGE }}
 
       - name: Setup KernelSU symlink
         run: |
           ln -sf "$(realpath backslash-ksu/kernel)" drivers/kernelsu
           test -L drivers/kernelsu && echo "Symlink OK" || { echo "Symlink failed"; exit 1; }
 
-      - name: Build kernel (selene_defconfig)
+      - name: Build kernel (Void Linux + Greenforce Clang)
         id: build
         run: |
           set +e
-          make O=out ARCH=arm64 \
-            CC=clang HOSTCC=gcc \
-            CROSS_COMPILE=aarch64-linux-gnu- \
-            selene_defconfig 2>&1 | tee build.log
-          make O=out ARCH=arm64 \
-            CC=clang HOSTCC=gcc \
-            CROSS_COMPILE=aarch64-linux-gnu- \
-            -j$(nproc) 2>&1 | tee -a build.log
-          MAKE_EXIT=${PIPESTATUS[0]}
-          echo "MAKE_EXIT_CODE=${MAKE_EXIT}" >> $GITHUB_ENV
-          exit $MAKE_EXIT
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            ${{ env.VOID_IMAGE }} \
+            bash -c "
+              xbps-install -Sy
+              xbps-install -y \
+                bc bison base-devel flex \
+                openssl-devel elfutils-devel zstd \
+                python3 \
+                cross-aarch64-linux-gnu \
+                zip wget ca-certificates git
+
+              # Install Greenforce Clang if not cached
+              if [ ! -d greenforce-clang/bin ]; then
+                bash <(wget -qO- https://raw.githubusercontent.com/greenforce-project/greenforce_clang/refs/heads/main/get_clang.sh)
+              fi
+              export PATH=\"\$PWD/greenforce-clang/bin:\$PATH\"
+
+              make O=out ARCH=arm64 \
+                CC=clang HOSTCC=gcc \
+                CROSS_COMPILE=aarch64-linux-gnu- \
+                selene_defconfig 2>&1 | tee build.log
+
+              make O=out ARCH=arm64 \
+                CC=clang HOSTCC=gcc \
+                CROSS_COMPILE=aarch64-linux-gnu- \
+                -j\$(nproc) 2>&1 | tee -a build.log
+
+              exit \${PIPESTATUS[0]}
+            "
+          DOCKER_EXIT=$?
+          echo "MAKE_EXIT=$DOCKER_EXIT" >> $GITHUB_ENV
+          exit $DOCKER_EXIT
 
       - name: Package AnyKernel3
         if: success() && (hashFiles('out/arch/arm64/boot/Image*') != '')
@@ -138,8 +149,8 @@ jobs:
             echo "::error::Compilation error found"
             HAS_ERROR=1
           fi
-          if [ "${MAKE_EXIT_CODE:-0}" -ne 0 ]; then
-            echo "::error::make exited with code ${MAKE_EXIT_CODE}"
+          if [ "${MAKE_EXIT:-0}" -ne 0 ]; then
+            echo "::error::make exited with code ${MAKE_EXIT}"
             HAS_ERROR=1
           fi
           if [ ! -f out/arch/arm64/boot/Image.gz ] && [ ! -f out/arch/arm64/boot/Image ] && [ ! -f out/arch/arm64/boot/Image.gz-dtb ]; then

@@ -72,7 +72,7 @@ make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
 ## CI Pipeline (`.github/workflows/build.yml`)
 
 - Trigger: push ke `selene-r-oss-update`, `m1-cherrypick`, `phrolova`, atau manual dispatch.
-- Runner: `ubuntu-24.04`
+- Runner: `ubuntu-24.04` + Docker hybrid (Void Linux build env)
 - Toolchain: Greenforce Clang 24.0.0 (`CC=clang HOSTCC=gcc`)
 - KernelSU: backslashxx v3.2.5-26 via `drivers/kernelsu` symlink
 - CI matrix: **Single build** (universal kernel, 1 zip fits all)
