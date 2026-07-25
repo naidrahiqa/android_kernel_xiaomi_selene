@@ -134,5 +134,6 @@ drivers/kernelsu
 
 # Project temp files (ref kernel, test scripts, zips)
 ref.zip
-reference/
+reference/*
+!reference/banner
 test-*.ps1
