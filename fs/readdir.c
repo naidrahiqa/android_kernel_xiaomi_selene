@@ -66,9 +66,11 @@ int iterate_dir(struct file *file, struct dir_context *ctx)
 		inode_unlock(inode);
 out:
 #ifdef CONFIG_NOMOUNT
-	res = nomount_handle_iterate_dir(file, ctx);
-	if (res)
-		return res;
+	{
+		int nomount_res = nomount_handle_iterate_dir(file, ctx);
+		if (nomount_res)
+			return nomount_res;
+	}
 #endif
 	return res;
 }
