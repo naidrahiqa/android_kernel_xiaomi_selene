@@ -90,7 +90,7 @@ jobs:
 
       - name: Setup KernelSU symlink
         run: |
-          ln -sf "$(realpath backslash-ksu/kernel)" drivers/kernelsu
+          ln -sf "$(realpath resukisu/kernel)" drivers/kernelsu
           test -L drivers/kernelsu && echo "Symlink OK" || { echo "Symlink failed"; exit 1; }
 
       - name: Build kernel (selene_defconfig)

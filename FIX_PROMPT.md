@@ -62,8 +62,8 @@ Do NOT use the selective update script. Instead:
 
 ### Step 5: KernelSU + NoMount
 
-- KernelSU: backslashxx v3.2.5-26, source at `backslash-ksu/kernel/`, symlink at `drivers/kernelsu`
-- Hook mode: `CONFIG_KSU_TAMPER_SYSCALL_TABLE=y` (no manual hooks)
+- KernelSU: ReSukiSU (multi-manager), source at `resukisu/kernel/`, symlink at `drivers/kernelsu`
+- Hook mode: `CONFIG_KSU_MANUAL_HOOK=y` (manual hooks in fs/ and kernel/)
 - NoMount: `fs/nomount.c` + `fs/nomount.h`, VFS hooks in dcache/namei/readdir/stat/statfs/proc
 - Both work fine at 4.14.186 — no update needed
 
@@ -84,7 +84,7 @@ GitHub Actions workflow at `.github/workflows/build.yml`:
 | `.github/scripts/version.sh` | Versioning |
 | `.github/scripts/generate-changelog.sh` | Release changelog |
 | `.github/scripts/notify-telegram.sh` | Telegram notifications |
-| `backslash-ksu/kernel/` | KernelSU source |
+| `resukisu/kernel/` | ReSukiSU source |
 | `fs/nomount.c`, `fs/nomount.h` | NoMount source |
 | `scripts/anykernel.sh` | AnyKernel3 config |
 | `arch/arm64/configs/selene_defconfig` | Kernel config |

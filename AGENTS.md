@@ -28,7 +28,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 - **Root solution:** ReSukiSU (multi-manager fork — support KernelSU/MKSU/RKSU/SukiSU/ReSukiSU manager).
   - **Hook mode: Manual Hook** (`CONFIG_KSU_MANUAL_HOOK=y`) — patch fs/ syscalls langsung, diperlukan untuk kernel 4.14 (pre-4.17).
   - `CONFIG_KSU_KPROBES_KSUD=n` — kprobes broken di non-GKI 4.14.
-  - Source: `ReSukiSU/ReSukiSU` (local copy di `backslash-ksu/kernel/`).
+  - Source: `ReSukiSU/ReSukiSU` (local copy di `resukisu/kernel/`).
 - **Systemless path redirection:** NoMount (`maxsteeel/nomount`).
   - Virtual file injection + path redirection tanpa mount filesystem.
   - Compiled into kernel (`CONFIG_NOMOUNT=y`), netlink-based userspace control.
@@ -39,7 +39,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 
 - Base kernel: `MiCode/Xiaomi_Kernel_OpenSource`, branch `selene-r-oss-update`.
 - Reference-only: `Ronald826/xiaomi_kernel_selene`, branch `4.14-baxter_EXPERIMENTAL` (jangan merge mentah).
-- ReSukiSU: `ReSukiSU/ReSukiSU` (local copy di `backslash-ksu/kernel/`). Multi-manager: KernelSU/MKSU/RKSU/SukiSU/ReSukiSU.
+- ReSukiSU: `ReSukiSU/ReSukiSU` (local copy di `resukisu/kernel/`). Multi-manager: KernelSU/MKSU/RKSU/SukiSU/ReSukiSU.
 - NoMount: `maxsteeel/nomount` (source di `fs/nomount.c` + `fs/nomount.h`).
 
 ## Dokumentasi Project
@@ -61,7 +61,7 @@ bash <(wget -qO- https://raw.githubusercontent.com/greenforce-project/greenforce
 export PATH="$(pwd)/greenforce-clang/bin:$PATH"
 
 # Setup KernelSU symlink (wajib sebelum build)
-ln -sf "$(realpath backslash-ksu/kernel)" drivers/kernelsu
+ln -sf "$(realpath resukisu/kernel)" drivers/kernelsu
 
 # Build
 make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
@@ -136,8 +136,8 @@ If switching to a different Clang version, check if this is still needed.
 - Without `-Wno-error`: `CONFIG_CC_STACKPROTECTOR_STRONG` fails, `CONFIG_BLK_INLINE_ENCRYPTION` broken.
 
 ### KernelSU (backslashxx) Integration
-- Source: `backslash-ksu/kernel/` (direct copy, not submodule). Current: v3.2.5-26.
-- Symlink: `ln -sf backslash-ksu/kernel drivers/kernelsu` — created at CI time, not in git.
+- Source: `resukisu/kernel/` (direct copy, not submodule). Current: v3.2.5-26.
+- Symlink: `ln -sf resukisu/kernel drivers/kernelsu` — created at CI time, not in git.
 - `drivers/Kconfig`: already has `source "drivers/kernelsu/Kconfig"` (line 225).
 - `drivers/Makefile`: already has `obj-$(CONFIG_KSU) += kernelsu/` (line 194).
 - Uses `KSU_TAMPER_SYSCALL_TABLE=y` — hooks syscall table directly. NO manual hooks in fs/ needed.
@@ -206,7 +206,7 @@ If switching to a different Clang version, check if this is still needed.
 - **Workflow:** `.github/workflows/update-kernel.yml` — manual trigger, `workflow_dispatch`
 - **Source:** kernel.org (≤4.14.336) / OpenELA LTS (>4.14.336)
 - **Logic:** Compare repo file vs vanilla 4.14.186 — if identical → replace with target version. If different (Xiaomi modified) → skip.
-- **Skip list:** `net/wireguard/`, `backslash-ksu/`, `fs/nomount.*`, `lib/string.c`, `selene_defconfig`, `arch/arm64/lib/{memcpy,memmove,memset}.S`, `arch/arm64/crypto/aes-modes.S`, `include/uapi/linux/netfilter/xt_*.h`, `drivers/goodix/`, `drivers/fpc1020/`, `drivers/misc/mediatek*/`
+- **Skip list:** `net/wireguard/`, `resukisu/`, `fs/nomount.*`, `lib/string.c`, `selene_defconfig`, `arch/arm64/lib/{memcpy,memmove,memset}.S`, `arch/arm64/crypto/aes-modes.S`, `include/uapi/linux/netfilter/xt_*.h`, `drivers/goodix/`, `drivers/fpc1020/`, `drivers/misc/mediatek*/`
 - **Target versions:** Configurable via `workflow_dispatch` input. Default: latest stable below 350.
 - **Known issue:** 4.14.357+ has blank screen issue on MTK devices (screen blank, system alive, need power cycle).
 
