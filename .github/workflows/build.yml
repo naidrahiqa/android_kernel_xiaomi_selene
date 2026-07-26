@@ -17,14 +17,14 @@ on:
       base_version:
         description: 'Base version (e.g. 0.1.0, 0.2.0, 1.0.0)'
         required: false
-        default: '0.5.0'
+        default: '0.6.0'
         type: string
 
 env:
   PHROLOVA_VARIANT: ${{ inputs.variant || '0' }}
-  PHROLOVA_BASE: ${{ inputs.base_version || '0.5.0' }}
+  PHROLOVA_BASE: ${{ inputs.base_version || '0.6.0' }}
   TOOLCHAIN_NAME: "Greenforce Clang 24.0.0"
-  KERNELSU_VERSION: "KernelSU (backslashxx)"
+  KERNELSU_VERSION: "backslashxx/KernelSU (Syscall Table Hook)"
 
 jobs:
   build:

@@ -20,6 +20,9 @@ Format:
 - **AnyKernel3 Flash Fix:** Latest AK3 (osm0sis) uses UPPERCASE variables (`BLOCK`, `IS_SLOT_DEVICE`) but `anykernel.sh` had lowercase (`block`, `is_slot_device`) → variable was empty at runtime → partition detection loop never ran → abort. Fixed by updating to `BLOCK=auto; IS_SLOT_DEVICE=auto;`. Tendou-Arisu (selene/MT6768) works because it uses older AK3 with lowercase vars.
 - **CI Stabilization:** Fixed Greenforce Clang 24.0.0 cache key, `reference/banner` tracking, graceful AnyKernel3 packaging. Build passes on ubuntu-24.04.
 
+## v0.6.1 — NoMount Double-Iterate Hotfix
+- **NoMount Fix:** `nomount_handle_iterate_dir` di `fs/nomount.c` tidak lagi memanggil `f_op->iterate_shared` dua kali. `iterate_dir` di VFS sudah memanggil iterate function asli, jadi hook NoMount cukup inject virtual files tanpa re-iterate. Fix duplicate file listing di directory mana pun yang di-intercept NoMount.
+
 ## v0.5.0 — FPSGO Tracepoint Fix + Build Stabilization
 - **FPSGO Tracepoint Fix:** Add `CONFIG_TRACEPOINTS=y`, `CONFIG_TRACING=y`, `CONFIG_TRACING_SUPPORT=y`, `CONFIG_FTRACE=y`, `CONFIG_CONTEXT_SWITCH_TRACER=y`, `CONFIG_ENABLE_DEFAULT_TRACERS=y`, `CONFIG_NOP_TRACER=y`, `CONFIG_EVENT_TRACING=y`, `CONFIG_MTK_SCHED_TRACERS=y` to `selene_defconfig`. Fixes 60+ undefined reference errors (`__tracepoint_*`, `tracepoint_probe_register`) in FPSGO GPU driver (`xgf.c`). Root cause: FPSGO hooks into kernel tracepoints via `FPSFO_DECLARE_SYSTRACE` macro but tracepoint infrastructure was never enabled.
 - **Kernel String:** Add violin emoji 🎻 to `kernel.string` in `anykernel.sh`.

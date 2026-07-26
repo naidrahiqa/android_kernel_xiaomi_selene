@@ -382,27 +382,14 @@ int nomount_handle_iterate_dir(struct file *file, struct dir_context *ctx)
     u32 i;
 
     if (!static_branch_unlikely(&nomount_active_dirs) || __nomount_should_skip()) {
-        if (file->f_op->iterate_shared)
-            return file->f_op->iterate_shared(file, ctx);
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
-        else if (file->f_op->iterate)
-            return file->f_op->iterate(file, ctx);
-#endif
-        return -ENOTDIR;
+        return 0;
     }
 
 #ifdef CONFIG_COMPAT
     if (in_compat_syscall()) nomount_magic_pos = 0x7E000000;
 #endif
     if (ctx->pos < nomount_magic_pos) {
-        if (file->f_op->iterate_shared)
-            res = file->f_op->iterate_shared(file, ctx);
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
-        else if (file->f_op->iterate)
-            return file->f_op->iterate(file, ctx);
-#endif
-        else
-            return -ENOTDIR;
+        ctx->pos = nomount_magic_pos;
     }
 
     if (res >= 0 && (ctx->pos == old_pos || ctx->pos >= nomount_magic_pos)) {
