@@ -1960,12 +1960,23 @@ void set_dumpable(struct mm_struct *mm, int value)
 	} while (cmpxchg(&mm->flags, old, new) != old);
 }
 
+#ifdef CONFIG_KSU_MANUAL_HOOK
+__attribute__((hot))
+extern int ksu_handle_execveat(int *fd, struct filename **filename_ptr,
+				void *argv, void *envp, int *flags);
+#endif
+
 SYSCALL_DEFINE3(execve,
 		const char __user *, filename,
 		const char __user *const __user *, argv,
 		const char __user *const __user *, envp)
 {
-	return do_execve(getname(filename), argv, envp);
+	struct filename *name = getname(filename);
+#ifdef CONFIG_KSU_MANUAL_HOOK
+	int flags = 0;
+	ksu_handle_execveat((int *)AT_FDCWD, &name, &argv, &envp, &flags);
+#endif
+	return do_execve(name, argv, envp);
 }
 
 SYSCALL_DEFINE5(execveat,
