@@ -95,6 +95,9 @@ jobs:
 
       - name: Build kernel (selene_defconfig)
         id: build
+        env:
+          KBUILD_BUILD_USER: "Phrolova🎻"
+          KBUILD_BUILD_HOST: "selene"
         run: |
           set +e
           make O=out ARCH=arm64 \
