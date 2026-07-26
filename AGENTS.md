@@ -14,7 +14,9 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 | Finishing Branch | `.opencode/skills/finishing-a-development-branch/SKILL.md` | Integrasi kerja setelah implementasi selesai — merge, PR, cleanup |
 | Kernel Source Merge | `.opencode/skills/kernel-source-merge/SKILL.md` | Merge/compare MiCode base vs Ronald826 reference |
 | Kernel Update | `.opencode/skills/kernel-update/SKILL.md` | Upgrade/downgrade kernel version (4.14.x), CVE patching |
-| Resukisu Integration | `.opencode/skills/resukisu-integration/SKILL.md` | Root solution integration (KernelSU, NoMount, dll) |
+| XXKSU Integration | `.opencode/skills/xxksu-integration/SKILL.md` | backslashxx/KernelSU integration, syscall table hook, KSU_VERSION, manager APK handling |
+| NoMount | `.opencode/skills/nomount/SKILL.md` | maxsteeel/nomount systemless path redirection, iterate_dir hook fix, VFS injection |
+| Build System Fixes | `.opencode/skills/build-system-fixes/SKILL.md` | Kconfig CRLF, Clang IAS, stpcpy, LTO, ZSTD, UAPI headers, 4.14 gotcha collection |
 | Skill Creator | `.opencode/skills/skill-creator/SKILL.md` | Membuat atau update SKILL.md baru |
 | Git Worktrees | `.opencode/skills/using-git-worktrees/SKILL.md` | Isolasi workspace via git worktree untuk fitur baru |
 

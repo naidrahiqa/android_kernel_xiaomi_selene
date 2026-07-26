@@ -29,18 +29,9 @@ ALL_COMMITS=$(git log $RANGE --oneline --no-decorate 2>/dev/null || true)
 cat << EOF
 ## Phrolova Kernel — ${VARIANT_NAME} Build (${VERSION})
 
-| | |
-|---|---|
-| **Device** | Redmi 10 (selene) · MediaTek Helio G88 |
-| **Kernel** | Linux 4.14 · Non-GKI |
-| **Toolchain** | Greenforce Clang 23.0.0 |
-| **Root** | KernelSU (backslashxx) · Syscall Table Hook |
-| **Build Type** | ${VARIANT_NAME} |
-| **Date** | ${DATE} |
+Redmi 10 (selene) · Linux 4.14 Non-GKI · ${DATE}
 
-### Download
-
-\`Phrolova-selene-${TAG}.zip\`
+**Download:** \`Phrolova-selene-${TAG}.zip\`
 
 EOF
 

@@ -116,14 +116,13 @@ backslashxx (<a href='https://github.com/backslashxx/KernelSU'>KernelSU</a>)
 maxsteeel (<a href='https://github.com/maxsteeel/nomount'>NoMount</a>)
 greenforce-project (<a href='https://github.com/greenforce-project/greenforce_clang'>Clang 24</a>)
 osm0sis (<a href='https://github.com/osm0sis/AnyKernel3'>AnyKernel3</a>)
-MiCode (<a href='https://github.com/MiCode/Xiaomi_Kernel_OpenSource'>Stock kernel</a>)
 
 <b>Support me:</b>
 <a href='https://github.com/naidrahiqa'>GitHub</a>
 
 <a href='${REPO_URL}'>Phrolova Kernel</a>
 
-#PhrolovaKernel #selene #Redmi10 #MT6768 #KernelSU #NoMount"
+#PhrolovaKernel #Redmi10 #MT6768 #KernelSU #NoMount"
 
 	if tg_photo "$CHANNEL_ID" "$BANNER_URL" "$msg"; then
 		echo "Success notification sent with banner."
