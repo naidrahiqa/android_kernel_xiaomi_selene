@@ -9,12 +9,34 @@ static long anon_ksu_ioctl(struct file *filp, unsigned int cmd, unsigned long ar
 	return ksu_supercall_handle_ioctl(cmd, (void __user *)arg);
 }
 
-// File operations structure
+// File operations structure (used by both anon inode and /dev/ksu)
 static const struct file_operations anon_ksu_fops = {
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = anon_ksu_ioctl,
 	.compat_ioctl = anon_ksu_ioctl,
 	.release = anon_ksu_release,
+};
+
+/*
+ * /dev/ksu misc device — compatibility layer for apps that expect
+ * tiann/KernelSU-style /dev/ksu node (e.g. Franco Kernel Manager).
+ * Routes ioctl to the same handler as the anonymous inode path.
+ */
+static long dev_ksu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	return ksu_supercall_handle_ioctl(cmd, (void __user *)arg);
+}
+
+static const struct file_operations dev_ksu_fops = {
+	.owner = THIS_MODULE,
+	.unlocked_ioctl = dev_ksu_ioctl,
+	.compat_ioctl = dev_ksu_ioctl,
+};
+
+static struct miscdevice ksu_misc_device = {
+	.minor = MISC_DYNAMIC_MINOR,
+	.name = "ksu",
+	.fops = &dev_ksu_fops,
 };
 
 // Install KSU fd to current process
@@ -204,9 +226,21 @@ int ksu_handle_sys_reboot(int magic1, int magic2, unsigned int cmd, void __user 
 
 void __init ksu_supercalls_init(void)
 {
+	int ret;
+
 	ksu_supercall_dump_commands();
 	
 	tiny_sulog_init_heap(); // grab heap memory for sulog
+
+	// Register /dev/ksu for compatibility with tiann/KernelSU apps
+	ret = misc_register(&ksu_misc_device);
+	if (ret)
+		pr_err("ksu: failed to register /dev/ksu: %d\n", ret);
+	else
+		pr_info("ksu: /dev/ksu registered (minor=%d)\n", ksu_misc_device.minor);
 }
 
-void __exit ksu_supercalls_exit(void) { }
+void __exit ksu_supercalls_exit(void)
+{
+	misc_deregister(&ksu_misc_device);
+}

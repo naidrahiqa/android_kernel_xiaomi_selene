@@ -133,6 +133,14 @@ static int apply_kernelsu_rules_fn(void *ptr)
 	ksu_allow(db, "domain", KERNEL_SU_DOMAIN, "unix_stream_socket", "getopt");
 	ksu_allow(db, "domain", KERNEL_SU_DOMAIN, "unix_stream_socket", "getattr");
 
+	// /dev/ksu compatibility — allow any domain to open/ioctl the misc device
+	// so apps like Franco Kernel Manager can communicate with KSU
+	ksu_allow(db, "domain", "device", "chr_file", "open");
+	ksu_allow(db, "domain", "device", "chr_file", "ioctl");
+	ksu_allow(db, "domain", "device", "chr_file", "read");
+	ksu_allow(db, "domain", "device", "chr_file", "write");
+	ksu_allow(db, "domain", "device", "chr_file", "getattr");
+
 	return 0;
 }
 
