@@ -233,6 +233,7 @@ void __init ksu_supercalls_init(void)
 	tiny_sulog_init_heap(); // grab heap memory for sulog
 
 	// Register /dev/ksu for compatibility with tiann/KernelSU apps
+	// Device is root-only (0600) — apps must escalate to root first
 	ret = misc_register(&ksu_misc_device);
 	if (ret)
 		pr_err("ksu: failed to register /dev/ksu: %d\n", ret);
