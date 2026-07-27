@@ -61,7 +61,7 @@ EXPORT_SYMBOL_GPL(cpufreq_mtk_set_table);
 
 int is_freq_valid(int cluster, int freq) {
     struct cpufreq_frequency_table *pos;
-    int ret;
+    int ret = 0;
 
     /* 
      * Allow -1 frequency as that is
