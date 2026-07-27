@@ -63,6 +63,12 @@ int is_freq_valid(int cluster, int freq) {
     struct cpufreq_frequency_table *pos;
     int ret = 0;
 
+    if (cluster < 0 || cluster >= CLUSTER_NUM)
+        return 0;
+
+    if (!cpuftbl[cluster])
+        return 0;
+
     /* 
      * Allow -1 frequency as that is
      * used to remove the limit.
@@ -154,7 +160,7 @@ static ssize_t store_lcluster_min_freq(struct kobject *kobj,
     mutex_unlock(&cpufreq_mtk_mutex);
 
     if (ret < 0)
-        count = ret;
+        return ret;
 
     return count;
 }
@@ -182,7 +188,7 @@ static ssize_t store_lcluster_max_freq(struct kobject *kobj,
     mutex_unlock(&cpufreq_mtk_mutex);
 
     if (ret < 0)
-        count = ret;
+        return ret;
 
     return count;
 }
@@ -280,16 +286,20 @@ static int __init cpufreq_mtk_init(void)
     if (!cpufreq_global_kobject) {
         pr_err("[%s] !cpufreq_global_kobject\n", __func__);
         ret = -ENODEV;
-        goto out;
+        goto out_free;
     }
 
     ret = sysfs_create_group(cpufreq_global_kobject, &mtk_param_attr_group);
     if (ret) {
         pr_err("[%s] sysfs_create_group failed!\n", __func__);
         ret = -ENOMEM;
-        goto out;
+        goto out_free;
     }
 
+    return 0;
+
+out_free:
+    kfree(current_cpu_freq);
 out:
     return ret;
 }
