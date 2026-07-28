@@ -30,6 +30,8 @@
 
 #include <mt-plat/fpsgo_common.h>
 #include "fpsgo_base.h"
+
+struct dentry *fpsgo_debugfs_dir;
 #include "fstb.h"
 #include "eara_job_usedext.h"
 #include "mtk_upower.h"
