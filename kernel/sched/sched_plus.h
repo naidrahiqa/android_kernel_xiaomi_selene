@@ -23,9 +23,15 @@ extern unsigned int capacity_margin;
 #ifdef CONFIG_ARM64
 extern unsigned long arch_scale_get_max_freq(int cpu);
 extern unsigned long arch_scale_get_min_freq(int cpu);
+extern void arch_scale_set_curr_freq(int cpu, unsigned long freq);
+extern void arch_scale_set_max_freq(int cpu, unsigned long freq);
+extern void arch_scale_set_min_freq(int cpu, unsigned long freq);
 #else
 static inline unsigned long arch_scale_get_max_freq(int cpu) { return 0; }
 static inline unsigned long arch_scale_get_min_freq(int cpu) { return 0; }
+static inline void arch_scale_set_curr_freq(int cpu, unsigned long freq) {}
+static inline void arch_scale_set_max_freq(int cpu, unsigned long freq) {}
+static inline void arch_scale_set_min_freq(int cpu, unsigned long freq) {}
 #endif
 #endif
 #define SCHED_ENHANCED_ATTR 0x40000
