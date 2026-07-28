@@ -555,3 +555,91 @@ CONFIG_TMPFS_XATTR=y
 CONFIG_FW_LOADER=y
 CONFIG_FW_LOADER_USER_HELPER=y
 
+# Memory — THP, CMA, Compaction
+CONFIG_TRANSPARENT_HUGEPAGE=y
+CONFIG_TRANSPARENT_HUGEPAGE_MADVISE=y
+CONFIG_CMA=y
+CONFIG_COMPACTION=y
+
+# PSI — Pressure Stall Information (Android ActivityManager uses this)
+CONFIG_PSI=y
+
+# Kernel Hardening — Fortify + usercopy bounds checking
+CONFIG_FORTIFY_SOURCE=y
+CONFIG_HARDENED_USERCOPY=y
+CONFIG_SECURITY_PERF_EVENTS_RESTRICT=y
+
+# Additional TCP Congestion Control (Westwood for cellular, BIC)
+CONFIG_TCP_CONG_WESTWOOD=y
+CONFIG_TCP_CONG_BIC=y
+
+# ASHMEM — Android shared memory (vendor HAL compat)
+CONFIG_ASHMEM=y
+
+# ZSWAP — compressed swap cache (extends ZRAM benefit)
+CONFIG_ZSWAP=y
+CONFIG_ZPOOL=y
+
+# TASKSTATS — per-task performance accounting
+CONFIG_TASKSTATS=y
+CONFIG_TASK_DELAY_ACCT=y
+
+# SCHED_HMP — Heterogeneous Multi-Processing for big.LITTLE (2x A75 + 6x A55)
+# NOTE: CONFIG_SCHED_AUTOGROUP disabled (conflicts with HMP, less relevant on Android)
+# CONFIG_SCHED_AUTOGROUP is not set
+CONFIG_SCHED_HMP=y
+CONFIG_SCHED_HMP_PLUS=y
+CONFIG_SCHED_HMP_PRIO_FILTER=y
+CONFIG_HMP_FREQUENCY_INVARIANT_SCALE=y
+CONFIG_MTK_SCHED_INTEROP=y
+CONFIG_MTK_SCHED_EAS_POWER_SUPPORT=y
+CONFIG_MTK_SCHED_MULTI_GEARS=y
+CONFIG_MTK_SCHED_BL_FIRST=y
+CONFIG_MTK_SCHED_RQAVG_KS=y
+CONFIG_MTK_SCHED_RQAVG_US=y
+CONFIG_MTK_SCHED_CPULOAD=y
+CONFIG_MTK_SCHED_SYSHINT=y
+
+# MTK Performance — Touch Boost, Load Tracker, IO Boost, Task Turbo
+CONFIG_MTK_PERFMGR_TOUCH_BOOST=y
+CONFIG_MTK_LOAD_TRACKER=y
+CONFIG_MTK_CPU_CTRL_CFP=y
+CONFIG_MTK_IO_BOOST=y
+CONFIG_MTK_TASK_TURBO=y
+CONFIG_MTK_GBE=y
+CONFIG_MTK_EARA_AI=y
+
+# PGTABLE_MAPPING — page table mapping for zsmalloc (faster ZRAM)
+CONFIG_PGTABLE_MAPPING=y
+
+# Speculative Page Fault — reduces mmap_sem contention, multi-thread perf
+CONFIG_SPECULATIVE_PAGE_FAULT=y
+
+# PROCESS_RECLAIM — targeted memory reclaim via /proc/pid/reclaim
+CONFIG_PROCESS_RECLAIM=y
+
+# MEMCG_SWAP — per-cgroup swap accounting
+CONFIG_MEMCG_SWAP=y
+CONFIG_MEMCG_SWAP_ENABLED=y
+
+# CPU governor — performance governor for benchmarking
+CONFIG_CPU_FREQ_GOV_PERFORMANCE=y
+
+# I/O scheduler — Kyber for low-overhead eMMC scheduling
+CONFIG_MQ_IOSCHED_KYBER=y
+
+# Default I/O scheduler — Deadline for legacy, mq-deadline for MQ (eMMC)
+CONFIG_DEFAULT_DEADLINE=y
+CONFIG_DEFAULT_IOSCHED="deadline"
+
+# KSM — Kernel Samepage Merging (save RAM on 4GB variant, runtime tunable)
+CONFIG_KSM=y
+
+# SQUASHFS — Custom ROM vendor partition compatibility
+CONFIG_SQUASHFS=y
+CONFIG_SQUASHFS_XATTR=y
+CONFIG_SQUASHFS_ZSTD=y
+CONFIG_SQUASHFS_LZ4=y
+CONFIG_SQUASHFS_LZO=y
+CONFIG_SQUASHFS_XZ=y
+

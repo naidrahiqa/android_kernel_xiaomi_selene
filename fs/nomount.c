@@ -375,40 +375,31 @@ int nomount_handle_iterate_dir(struct file *file, struct dir_context *ctx)
 {
     struct nomount_dir_node *curr_dir;
     struct nm_child_array *array = NULL;
-    loff_t old_pos = ctx->pos;
     loff_t nomount_magic_pos = 0x7000000000000000ULL;
     unsigned long v_index;
-    int res = 0;
     u32 i;
 
-    if (!static_branch_unlikely(&nomount_active_dirs) || __nomount_should_skip()) {
-        if (file->f_op->iterate_shared)
-            return file->f_op->iterate_shared(file, ctx);
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
-        else if (file->f_op->iterate)
-            return file->f_op->iterate(file, ctx);
-#endif
-        return -ENOTDIR;
-    }
+    if (!static_branch_unlikely(&nomount_active_dirs) || __nomount_should_skip())
+        return 0;
 
 #ifdef CONFIG_COMPAT
     if (in_compat_syscall()) nomount_magic_pos = 0x7E000000;
 #endif
-    if (ctx->pos < nomount_magic_pos) {
-        if (file->f_op->iterate_shared)
-            res = file->f_op->iterate_shared(file, ctx);
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
-        else if (file->f_op->iterate)
-            return file->f_op->iterate(file, ctx);
-#endif
-        else
-            return -ENOTDIR;
+
+    if (ctx->pos < nomount_magic_pos)
+        ctx->pos = nomount_magic_pos;
+
+    if (ctx->pos >= nomount_magic_pos && ctx->pos < nomount_magic_pos + 100000) {
+        v_index = (unsigned long)(ctx->pos - nomount_magic_pos);
+    } else {
+        v_index = 0;
+        ctx->pos = nomount_magic_pos;
     }
 
-    if (res >= 0 && (ctx->pos == old_pos || ctx->pos >= nomount_magic_pos)) {
+    {
         struct nm_inode_node *inode_node;
         struct inode *dir_inode = file_inode(file);
-        if (!dir_inode) return res;
+        if (!dir_inode) return 0;
 
         rcu_read_lock();
         hash_for_each_possible_rcu(nomount_inodes_ht, inode_node, node, dir_inode->i_ino) {
@@ -419,18 +410,11 @@ int nomount_handle_iterate_dir(struct file *file, struct dir_context *ctx)
                     if (likely(array && atomic_inc_not_zero(&array->refcnt))) break;
                     array = NULL;
                 }
-                break; 
+                break;
             }
         }
         rcu_read_unlock();
-        if (!array) return res;
-
-        if (ctx->pos >= nomount_magic_pos && ctx->pos < nomount_magic_pos + 100000) {
-            v_index = (unsigned long)(ctx->pos - nomount_magic_pos);
-        } else {
-            v_index = 0;
-            ctx->pos = nomount_magic_pos;
-        }
+        if (!array) return 0;
 
         for (i = v_index; i < array->num_children; i++) {
             struct nomount_child_name *child = &array->entries[i];
@@ -442,10 +426,8 @@ int nomount_handle_iterate_dir(struct file *file, struct dir_context *ctx)
         if (atomic_dec_and_test(&array->refcnt)) kfree_rcu(array, rcu);
     }
 
-    return res;
+    return 0;
 }
-
-/*** Metadata Spoofing ***/
 
 /**
  * nomount_handle_getattr - Wrapper for vfs_getattr intercept

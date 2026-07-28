@@ -20,6 +20,23 @@ Format:
 - **AnyKernel3 Flash Fix:** Latest AK3 (osm0sis) uses UPPERCASE variables (`BLOCK`, `IS_SLOT_DEVICE`) but `anykernel.sh` had lowercase (`block`, `is_slot_device`) → variable was empty at runtime → partition detection loop never ran → abort. Fixed by updating to `BLOCK=auto; IS_SLOT_DEVICE=auto;`. Tendou-Arisu (selene/MT6768) works because it uses older AK3 with lowercase vars.
 - **CI Stabilization:** Fixed Greenforce Clang 24.0.0 cache key, `reference/banner` tracking, graceful AnyKernel3 packaging. Build passes on ubuntu-24.04.
 
+## v0.7.0 — Kprofiles + Simple LMK + Droidspaces Ready
+
+- **Memory Management:** Enable THP (madvise), CMA, Compaction, ZSWAP/ZPOOL, TASKSTATS, SCHED_AUTOGROUP for better memory utilization and performance.
+- **Kernel Hardening:** Enable FORTIFY_SOURCE, HARDENED_USERCOPY, SECURITY_PERF_EVENTS_RESTRICT - low-overhead exploit mitigations.
+- **TCP:** Add Westwood (cellular) and BIC congestion algorithms alongside BBR.
+- **Android Compat:** Enable ASHMEM for vendor HAL compatibility.
+- **PSI:** Pressure Stall Information - Android 12+ uses this for smarter LMK/kill decisions.
+- **MTK Performance Boost:** Enable Touch Boost (CPU freq/cores naik pas disentuh), Load Tracker, CPU Ceiling Fool-Proof (bebasin ceiling pas heavy load), IO Boost (stune boost), Task Turbo (app launch/lock latency), GBE (Game Boost Engine), EARA AI (AI low power balance). Semua native MTK, sudah di tree.
+- **Scheduler — HMP:** Ganti `SCHED_AUTOGROUP` → `SCHED_HMP` (big.LITTLE task placement) + EAS power calculation, Multi Gears, BL_FIRST, RQAVG, CPULOAD, SYSHINT. Stock MiCode juga pake HMP. AUTOGROUP kurang relevan di Android karena cgroups udah handle task grouping.
+- **Speculative Page Fault:** Kurangin `mmap_sem` contention buat multi-thread performance.
+- **PGTABLE Mapping:** Page table mapping buat zsmalloc/ZRAM — lebih cepat dari copy mapping. Stock enable.
+- **Process Reclaim:** `/proc/pid/reclaim` — targeted memory reclaim tanpa LMK.
+- **MEMCG_SWAP:** Per-cgroup swap accounting.
+- **CPU_PERFORMANCE governor:** Buat benchmarking.
+- **Kyber I/O scheduler:** Low-overhead scheduler buat eMMC. — hapus total pemanggilan `f_op->iterate_shared` / `f_op->iterate`. VFS `iterate_dir` sudah handle real iterate, NoMount cukup skip pos ke `nomount_magic_pos` dan inject virtual entries. Fix duplikasi total di semua direktori yang di-intercept NoMount.
+- **Version:** Bump ke v0.7.0 (feature bump).
+
 ## v0.6.1 — NoMount Double-Iterate Hotfix
 - **NoMount Fix:** `nomount_handle_iterate_dir` di `fs/nomount.c` tidak lagi memanggil `f_op->iterate_shared` dua kali. `iterate_dir` di VFS sudah memanggil iterate function asli, jadi hook NoMount cukup inject virtual files tanpa re-iterate. Fix duplicate file listing di directory mana pun yang di-intercept NoMount.
 
