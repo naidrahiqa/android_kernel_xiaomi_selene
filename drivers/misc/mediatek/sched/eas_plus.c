@@ -39,42 +39,10 @@ static char module_name[128];
 /* A lock for scheduling switcher */
 DEFINE_SPINLOCK(sched_switch_lock);
 
-#if defined(CONFIG_SCHED_DEBUG) && \
-defined(CONFIG_DEFAULT_USE_ENERGY_AWARE) && defined(CONFIG_SCHED_HMP)
-int sched_scheduler_switch(enum SCHED_LB_TYPE new_sched)
-{
-	unsigned long flags;
-
-	if (new_sched >= SCHED_UNKNOWN_LB)
-		return -1;
-
-	spin_lock_irqsave(&sched_switch_lock, flags);
-	switch (new_sched) {
-	case SCHED_EAS_LB:
-		sysctl_sched_features &= ~(1 << __SCHED_FEAT_SCHED_HMP);
-		sysctl_sched_features |= 1 << __SCHED_FEAT_ENERGY_AWARE;
-		break;
-	case SCHED_HMP_LB:
-		sysctl_sched_features &= ~(1 << __SCHED_FEAT_ENERGY_AWARE);
-		sysctl_sched_features |= 1 << __SCHED_FEAT_SCHED_HMP;
-		break;
-	case SCHED_HYBRID_LB:
-		sysctl_sched_features |= 1 << __SCHED_FEAT_ENERGY_AWARE;
-		sysctl_sched_features |= 1 << __SCHED_FEAT_SCHED_HMP;
-		break;
-	default:
-		break;
-	}
-	spin_unlock_irqrestore(&sched_switch_lock, flags);
-
-	return 0;
-}
-#else
 int sched_scheduler_switch(enum SCHED_LB_TYPE new_sched)
 {
 	return -EINVAL;
 }
-#endif
 EXPORT_SYMBOL(sched_scheduler_switch);
 
 /* Try to get original capacity of all CPUs */
