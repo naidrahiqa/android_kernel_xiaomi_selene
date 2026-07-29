@@ -17,6 +17,10 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 | XXKSU Integration | `.opencode/skills/xxksu-integration/SKILL.md` | backslashxx/KernelSU integration, syscall table hook, KSU_VERSION, manager APK handling |
 | NoMount | `.opencode/skills/nomount/SKILL.md` | maxsteeel/nomount systemless path redirection, iterate_dir hook fix, VFS injection |
 | Build System Fixes | `.opencode/skills/build-system-fixes/SKILL.md` | Kconfig CRLF, Clang IAS, stpcpy, LTO, ZSTD, UAPI headers, 4.14 gotcha collection |
+| Defconfig Management | `.opencode/skills/defconfig-management/SKILL.md` | Config dependency chains, known gotchas (HMP, THP, TASK_TURBO, SECTION_MISMATCH), defconfig debug workflow |
+| Performance Tuning | `.opencode/skills/performance-tuning/SKILL.md` | Katalog fitur (THP, KSM, HMP, SQUASHFS, ZSWAP, dll), tradeoff notes, referensi defconfig |
+| CI/CD Debug Workflow | `.opencode/skills/ci-cd-debug-workflow/SKILL.md` | Step-by-step debug CI build failure: ambil log, parse error, fix, re-run |
+| Windows Compatibility | `.opencode/skills/windows-compatibility/SKILL.md` | NTFS case-folding, xt_hl.c vs xt_HL.c, reserved filenames, git index manipulation |
 | Skill Creator | `.opencode/skills/skill-creator/SKILL.md` | Membuat atau update SKILL.md baru |
 | Git Worktrees | `.opencode/skills/using-git-worktrees/SKILL.md` | Isolasi workspace via git worktree untuk fitur baru |
 
