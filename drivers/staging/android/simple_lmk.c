@@ -12,9 +12,9 @@
 #include <linux/kthread.h>
 #include <linux/freezer.h>
 
-#define SIMPLE_LMK_VERSION "1.0.0"
-#define LMK_DEFAULT_MIN_FREE	64
-#define LMK_CHECK_INTERVAL_MS	2000
+#define SIMPLE_LMK_VERSION "1.0.1"
+#define LMK_DEFAULT_MIN_FREE	200
+#define LMK_CHECK_INTERVAL_MS	500
 
 static unsigned long lmk_min_free_mb = LMK_DEFAULT_MIN_FREE;
 static unsigned long lmk_debug = 0;
@@ -32,7 +32,7 @@ static struct task_struct *lmk_find_best_victim(void)
 
 	rcu_read_lock();
 	for_each_process(p) {
-		struct signal_struct *sig = p->signal;
+		struct signal_struct *sig;
 		struct mm_struct *mm;
 		short oom_score_adj;
 		unsigned long rss;
@@ -42,6 +42,7 @@ static struct task_struct *lmk_find_best_victim(void)
 		if (is_global_init(p))
 			continue;
 
+		sig = p->signal;
 		oom_score_adj = sig->oom_score_adj;
 		if (oom_score_adj < 0)
 			continue;
@@ -55,6 +56,9 @@ static struct task_struct *lmk_find_best_victim(void)
 
 		if (!victim || oom_score_adj > min_score ||
 		    (oom_score_adj == min_score && rss > max_rss)) {
+			if (victim)
+				put_task_struct(victim);
+			get_task_struct(p);
 			victim = p;
 			min_score = oom_score_adj;
 			max_rss = rss;
@@ -79,24 +83,21 @@ static void lmk_kill_process(struct task_struct *p)
 
 static int lmk_do_check(void *data)
 {
-	struct sysinfo i;
-	unsigned long free_mb;
+	unsigned long avail_mb;
 	struct task_struct *victim;
 
 	while (!kthread_should_stop()) {
 		set_current_state(TASK_RUNNING);
 
 		if (lmk_enabled) {
-			si_meminfo(&i);
-			free_mb = (i.freeram * i.mem_unit) >> 20;
+			avail_mb = si_mem_available() >> (20 - PAGE_SHIFT);
 
-			if (free_mb < lmk_min_free_mb) {
+			if (avail_mb < lmk_min_free_mb) {
 				if (lmk_debug)
 					pr_debug("simple_lmk: low memory %luMB < %luMB\n",
-						 free_mb, lmk_min_free_mb);
+						 avail_mb, lmk_min_free_mb);
 				victim = lmk_find_best_victim();
 				if (victim) {
-					get_task_struct(victim);
 					lmk_kill_process(victim);
 					put_task_struct(victim);
 				}
@@ -143,7 +144,6 @@ static ssize_t kill_now_store(struct kobject *kobj, struct kobj_attribute *attr,
 {
 	struct task_struct *victim = lmk_find_best_victim();
 	if (victim) {
-		get_task_struct(victim);
 		lmk_kill_process(victim);
 		put_task_struct(victim);
 	}

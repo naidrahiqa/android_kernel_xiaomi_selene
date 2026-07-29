@@ -11,6 +11,27 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.7.1 — Performance Tuning (Responsiveness & RAM Fix)
+- **WQ_POWER_EFFICIENT_DEFAULT=n:** Workqueue ga lagi dipaksa jalan di little core doang. Fix root cause slow background task processing — workqueue tasks sekarang bisa jalan di A75 big core.
+- **vmalloc=496M→320M:** Hemat ~176MB RAM yang sebelumnya dipesen buat vmalloc. RAM tambahan ini available buat app/launcher/system, kurangi LMK kills.
+- **slub_max_order=0→2:** Naikin slab allocator dari order-0 (4KB) ke order-2 (16KB) per chunk. Kurangin overhead management slab, akses memory lebih cepat.
+- **MTK_SCHED_CPULOAD=y:** Per-CPU load calculation — schedutil governor sekarang bisa liat akurat beban tiap CPU buat frequency scaling yang tepat. Without this, governor basically blind.
+- **MTK_SCHED_RQAVG_US=y:** Runqueue average dari userspace — bantu scheduler bikin task placement decision yang lebih baik.
+- **MTK_SCHED_SYSHINT=y:** System-wide scheduling hints — ngasih tau scheduler tentang konteks sistem (screen on/off, heavy load) buat keputusan yang lebih cerdas.
+- **MTK_GBE=y:** Global Boost Engine — boost frekuensi CPU+GPU pas app launch, switching task, dan interaksi UI. Fix "app ga mau load kenceng".
+- **ZRAM_SIZE 3GB→2GB:** Kurangin CPU compression overhead. 3GB ZRAM di device 4GB bikin CPU terus-terusan zstd compress/decompress pas multitasking — itu sumber lemot. 2GB lebih balance, sistem bisa keep pages uncompressed lebih banyak.
+- **ZRAM_WRITEBACK=n:** Gak ada backing device (flash-based swap). Konfigurasi ini useless tapi ZRAM tetap jalan function call buat ngecek — sekarang di-disable.
+- **MTK_EARA_AI=y:** AI-guided task placement di big.LITTLE. EARA (Energy-Aware Resource Allocator) pake AI lightweight model buat nentuin task mana yang jalan di A75 (big) vs A55 (LITTLE) — lebih cerdas dari HMP static rules.
+- **CC_STACKPROTECTOR_STRONG=n:** Stack canary prologue/epilogue dihilangkan dari semua fungsi kernel. Setiap fungsi kernel dapet ~2-5% speedup. `drivers/misc/mediatek/Kconfig.default` juga diedit — hapus `select CC_STACKPROTECTOR_STRONG` yang sebelumnya override defconfig.
+- **KSM=n:** Kernel Samepage Merging thread distop. Dulu KSM scan 4GB RAM tiap beberapa detik — CPU dibuang buat cari page duplikat yang jarang ada di Android (Zygote udah handle sharing via fork). ZRAM + Simple LMK udah cukup handle memory pressure.
+- **SCHEDSTATS=n:** Scheduler stats collection dimatiin. Kurangin overhead di context switch path. Ini data debug yang gak dipake di runtime.
+- **HID driver bloat removed:** Dari 25 HID driver built-in jadi cuma 4 (Apple, Logitech, Microsoft, Samsung). Gaming HID (DragonRise, GreenAsia, SmartJoyPlus, ThrustMaster, ZeroPlus) + vendor obscure (Gyration, TwinHan, dll) di-cut — gak ada gunanya di phone. Kernel image lebih kecil, memory footprint lebih rendah.
+- **Simple LMK Fix (v1.0.1):**
+  - **min_free=200MB** (dari 64MB): Sekarang pake `si_mem_available()` (free + reclaimable cache), bukan cuma `freeram`. Threshold dinaikin ke 200MB biat LMK kill cached apps SEBELUM sistem mulai thrashing swap.
+  - **Check interval 500ms** (dari 2000ms): Respon lebih cepet ke memory pressure. 2 detik terlalu lambat — memory bisa abis total dalam waktu itu.
+  - **Fix race condition:** `lmk_find_best_victim()` sekarang return dengan refcount dipegang (`get_task_struct` inside loop). Sebelumnya return raw pointer tanpa ref → bisa use-after-free kalo task exit antara return dan caller pake.
+  - **kill_now_store fix:** Ikut adapt ke refcount pattern baru.
+
 ## v0.6.0 — Kprofiles + Simple LMK + Droidspaces Ready
 - **Kprofiles Power Profile Manager:** New `drivers/misc/kprofiles/` driver. Sysfs interface (`/sys/kernel/kprofiles/kp_mode`) with 4 modes: Off(0), Battery(1), Balanced(2), Performance(3). Exported API (`kp_set_mode`, `kp_active_mode`, `kp_set_mode_rollback`) for other drivers. Auto screen-off profile switching via FB notifier. `CONFIG_KPROFILES=y` in defconfig.
 - **Simple LMK (Low Memory Killer):** New `drivers/staging/android/simple_lmk.c`. Periodic memory checker with configurable `min_free_mb` threshold (default 64MB). Sysfs at `/sys/kernel/simple_lmk/`. Kills highest oom_score_adj process when memory drops below threshold. `CONFIG_SIMPLE_LMK=y` in defconfig.

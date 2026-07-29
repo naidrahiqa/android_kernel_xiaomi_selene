@@ -33,9 +33,10 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 
 - **Device:** Redmi 10 2022, codename **selene**, MediaTek Helio G88 (MT6768).
 - **Kernel:** Linux 4.14.356 (yuki-saisei base), **non-GKI**. Banyak API beda drastis dari 5.x/6.x — jangan apply patch GKI 5.10+ tanpa cek dulu.
-- **Root solution:** backslashxx/KernelSU v3.2.5-26 (fork tiann/KernelSU).
-  - **Hook mode: Syscall Table Hook** (`CONFIG_KSU_TAMPER_SYSCALL_TABLE=y`) — langsung hook syscall table, bukan Manual Hook. Tidak perlu patch fs/ fs/ manual.
+- **Root solution:** backslashxx/KernelSU v3.2.5-46 (fork tiann/KernelSU).
+  - **Hook mode: Syscall Table Hook** (`CONFIG_KSU_TAMPER_SYSCALL_TABLE=y`) — langsung hook syscall table, bukan Manual Hook. Tidak perlu patch fs/ manual.
   - `CONFIG_KSU_KPROBES_KSUD=n` — kprobes broken di non-GKI 4.14.
+  - Multi-manager support: `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` — terima manager dari tiann, backslashxx, ReSukiSU, MKSU, RKSU.
 - **Systemless path redirection:** NoMount (`maxsteeel/nomount`).
   - Virtual file injection + path redirection tanpa mount filesystem.
   - Compiled into kernel (`CONFIG_NOMOUNT=y`), netlink-based userspace control.
@@ -46,7 +47,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 
 - Base kernel: `MiCode/Xiaomi_Kernel_OpenSource`, branch `selene-r-oss-update`.
 - Reference-only: `Ronald826/xiaomi_kernel_selene`, branch `4.14-baxter_EXPERIMENTAL` (jangan merge mentah).
-- KernelSU: `backslashxx/KernelSU` v3.2.5-26 (local copy di `backslash-ksu/kernel/`).
+- KernelSU: `backslashxx/KernelSU` v3.2.5-46 (local copy di `backslash-ksu/kernel/`).
 - NoMount: `maxsteeel/nomount` (source di `fs/nomount.c` + `fs/nomount.h`).
 
 ## Dokumentasi Project
@@ -92,7 +93,7 @@ make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
 - Trigger: push ke `selene-r-oss-update`, `m1-cherrypick`, `phrolova`, atau manual dispatch.
 - Runner: `ubuntu-24.04` + Docker hybrid (Void Linux build env)
 - Toolchain: Greenforce Clang 24.0.0 (`CC=clang HOSTCC=gcc`)
-- KernelSU: backslashxx v3.2.5-26 via `drivers/kernelsu` symlink
+- KernelSU: backslashxx v3.2.5-46 via `drivers/kernelsu` symlink
 - CI matrix: **Single build** (universal kernel, 1 zip fits all)
 - Telegram notifications: ObsidianKernel-style format with credits/download links
   - Start/success/failed (error log ke `TELEGRAM_ERROR_CHANNEL_ID` channel terpisah)
@@ -143,14 +144,14 @@ If switching to a different Clang version, check if this is still needed.
 - Without `-Wno-error`: `CONFIG_CC_STACKPROTECTOR_STRONG` fails, `CONFIG_BLK_INLINE_ENCRYPTION` broken.
 
 ### KernelSU (backslashxx) Integration
-- Source: `backslash-ksu/kernel/` (direct copy, not submodule). Current: v3.2.5-26.
+- Source: `backslash-ksu/kernel/` (direct copy, not submodule). Current: v3.2.5-46.
 - Symlink: `ln -sf backslash-ksu/kernel drivers/kernelsu` — created at CI time, not in git.
 - `drivers/Kconfig`: already has `source "drivers/kernelsu/Kconfig"` (line 225).
 - `drivers/Makefile`: already has `obj-$(CONFIG_KSU) += kernelsu/` (line 194).
 - Uses `KSU_TAMPER_SYSCALL_TABLE=y` — hooks syscall table directly. NO manual hooks in fs/ needed.
 - `KSU_KPROBES_KSUD=n` — kprobes broken on non-GKI 4.14.
-- v3.2.5-26 added tristate KSU option (LKM support), fixes 32-on-64 adb_root.
-- Manager bebas — bisa dari tiann/KernelSU release atau backslashxx release.
+- v3.2.5-46 added tristate KSU option (LKM support), fixes 32-on-64 adb_root.
+- Multi-manager support: manager bebas — tiann, backslashxx, ReSukiSU, MKSU, RKSU.
 
 ### NoMount Integration
 - Source: `maxsteeel/nomount` — kernel-level path redirection + virtual file injection.
