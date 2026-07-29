@@ -21,6 +21,9 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 | Performance Tuning | `.opencode/skills/performance-tuning/SKILL.md` | Katalog fitur (THP, KSM, HMP, SQUASHFS, ZSWAP, dll), tradeoff notes, referensi defconfig |
 | CI/CD Debug Workflow | `.opencode/skills/ci-cd-debug-workflow/SKILL.md` | Step-by-step debug CI build failure: ambil log, parse error, fix, re-run |
 | Windows Compatibility | `.opencode/skills/windows-compatibility/SKILL.md` | NTFS case-folding, xt_hl.c vs xt_HL.c, reserved filenames, git index manipulation |
+| SELinux Policy | `.opencode/skills/selinux-policy/SKILL.md` | KernelSU device node context, NoMount SELinux implications, debugging denials |
+| MTK FPSGO v3 | `.opencode/skills/mtk-fpsgo/SKILL.md` | FPSGO v3 gaming framework components, known bugs (fpsgo_debugfs_dir), build fixes |
+| Linux Container | `.opencode/skills/linux-container/SKILL.md` | Droidspaces-OSS integration, namespace/cgroup kernel requirements, verification |
 | Skill Creator | `.opencode/skills/skill-creator/SKILL.md` | Membuat atau update SKILL.md baru |
 | Git Worktrees | `.opencode/skills/using-git-worktrees/SKILL.md` | Isolasi workspace via git worktree untuk fitur baru |
 
