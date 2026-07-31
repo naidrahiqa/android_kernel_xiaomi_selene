@@ -43,7 +43,7 @@ Provide a stable, performant, and feature-rich custom kernel for Redmi 10 2022 t
 | Config | Value |
 |---|---|
 | Clang | Greenforce Clang 24.0.0 |
-| KernelSU | KernelSU-Next v3.3.0, CONFIG_KSU=y + KPROBES/EXT4_FS/MODULES |
+| KernelSU | KernelSU-Next v3.3.0, CONFIG_KSU=y + EXT4_FS/MODULES (hookless-only, KPROBES=n) |
 | NoMount | CONFIG_NOMOUNT=y |
 | RAM | LZ4 + ZSTD ZRAM |
 | Filesystems | EXT4, F2FS, EXFAT, NTFS, OVERLAY_FS |

@@ -11,6 +11,19 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.8.1 — Hookless-only (Kprobes Disabled)
+- **KernelSU-Next sekarang murni hookless:** `CONFIG_KPROBES=y` dihapus dari `selene_defconfig` → framework kprobes tidak di-compile sama sekali.
+- **Kconfig ksu-next di-patch lokal:** `depends on KPROBES && EXT4_FS` → `depends on EXT4_FS` (upstream tetap `KPROBES && EXT4_FS`).
+- **Kode kprobe di-guard `#ifdef CONFIG_KPROBES`** (compiled-out):
+  - `ksu-next/kernel/supercall/supercall.c`: reboot kprobe (sys_reboot magic) — fd-install tetap jalan via `hook/setuid_hook.c` `ksu_install_fd()`.
+  - `ksu-next/kernel/runtime/ksud_integration.c`: input_event kprobe + `stop_input_hook_work`.
+  - `extras.c` (avc_spoof) & `syscall_hook_manager.c` (kretprobe) — sudah ada guard dari upstream; `#ifndef CONFIG_KRETPROBES` fallback `ksu_mark_running_process_locked()` aktif.
+- **Fitur yang mati (disengaja):** reboot supercall, AVC spoof, key-event hook. Root, manager fd, setresuid/execve/newfstatat/faccessat/read/fstat hooks — semua tetap jalan via syscall table + tracepoint.
+- **`CONFIG_MODULES=y` dipertahankan** (parity MiCode asli).
+- **Alasan:** kprobes = permukaan serang breakpoint + overhead runtime; hookless sudah cukup untuk semua fitur root inti. Tidak ada device testing (bootloader masih locked) — validasi via CI compile.
+- **Dokumentasi:** AGENTS.md (gotcha integration), docs/HOOK_MODES.md (section 4 → hookless-only).
+- **Sumber:** patch lokal di atas upstream KernelSU-Next v3.3.0 @ `e7536f0`.
+
 ## v0.8.0 — Migrasi KernelSU → KernelSU-Next
 - **Root solution diganti: backslashxx/KernelSU → KernelSU-Next** (`KernelSU-Next/KernelSU-Next`, dev @ `e7536f0`, tag v3.3.0, 3227 commits).
   - `backslash-ksu/kernel/` dihapus → source baru di `ksu-next/kernel/` (direct copy, sama seperti sebelumnya).

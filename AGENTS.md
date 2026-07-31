@@ -35,7 +35,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 - **Kernel:** Linux 4.14.356 (yuki-saisei base), **non-GKI**. Banyak API beda drastis dari 5.x/6.x — jangan apply patch GKI 5.10+ tanpa cek dulu.
 - **Root solution:** KernelSU-Next (`KernelSU-Next/KernelSU-Next`, fork tiann/KernelSU, latest dev @ `e7536f0`, tag v3.3.0).
   - **Hook mode: syscall table hook + sys_enter tracepoint** — dispatcher slot di-patch langsung ke `sys_call_table` (via `ksu_patch_text`), routing syscall via `register_trace_prio_sys_enter`. Tidak perlu patch fs/ manual.
-  - `CONFIG_KPROBES=y` + `CONFIG_EXT4_FS=y` — wajib (Kconfig `depends on KPROBES && EXT4_FS`). Kprobes dipakai opsional: reboot supercall, slow_avc_audit, input_handle_event, syscall_regfunc kretprobe — gagal register = aman, hanya fitur terkait mati.
+  - `CONFIG_EXT4_FS=y` — wajib (Kconfig `depends on EXT4_FS`; KPROBES di-drop dari depends — **hookless-only**, `CONFIG_KPROBES=n`). Kprobes compiled-out: reboot supercall, avc spoof, key-event hook, kretprobe tracking mati — root core tidak terpengaruh.
   - **Manager tunggal:** KernelSU-Next manager APK (signature `EXPECTED_MANAGER_HASH` di Kbuild). Manager tiann/backslashxx/RKSU/MKSU **tidak** kompatibel.
 - **Systemless path redirection:** NoMount (`maxsteeel/nomount`).
   - Virtual file injection + path redirection tanpa mount filesystem.
@@ -54,6 +54,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 
 - [CHANGELOG.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/CHANGELOG.md) — Record cherry-pick & versi rilis kernel.
 - [docs/OPTIMIZATIONS.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/docs/OPTIMIZATIONS.md) — Detail optimasi BBR, ZSTD ZRAM, & BFQ I/O.
+- [docs/HOOK_MODES.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/docs/HOOK_MODES.md) — Perbandingan hook mode KernelSU-Next: hookless (syscall table + tracepoint) vs kprobes.
 - [FIX_PROMPT.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/FIX_PROMPT.md) — Panduan perbaikan cepat jika terjadi masalah kompilasi.
 
 ## Build Commands (Greenforce Clang 24.0.0)
@@ -148,10 +149,10 @@ If switching to a different Clang version, check if this is still needed.
 - Symlink: `ln -sf ksu-next/kernel drivers/kernelsu` — created at CI time, not in git.
 - `drivers/Kconfig`: already has `source "drivers/kernelsu/Kconfig"` (line 225).
 - `drivers/Makefile`: already has `obj-$(CONFIG_KSU) += kernelsu/` (line 194).
-- Kconfig `depends on KPROBES && EXT4_FS` — both `=y` di `selene_defconfig`. Tanpa keduanya, `CONFIG_KSU` tidak bisa di-enable.
-- **KPROBES `depends on MODULES`** di tree ini — `CONFIG_MODULES=y` wajib (hilang sejak rebase yuki-saisei; ada di defconfig MiCode asli). Tanpa itu kconfig drop `CONFIG_KPROBES` diam-diam → KSU tidak ter-build.
-- Hook mode: dispatcher slot di `sys_call_table` (via `ksu_patch_text`) + `register_trace_prio_sys_enter` — NO manual hooks in fs/ needed.
-- Kprobes opsional saat runtime (reboot supercall, slow_avc_audit, input_handle_event, syscall_regfunc kretprobe) — gagal register hanya mematikan fitur terkait.
+- Kconfig `depends on EXT4_FS` (KPROBES **dihapus** dari depends — patch lokal; upstream `depends on KPROBES && EXT4_FS`). `CONFIG_EXT4_FS=y` wajib.
+- **Hookless-only:** `CONFIG_KPROBES=n` (bukan `=y` lagi). Kode kprobe di `ksu-next/kernel` di-guard `#ifdef CONFIG_KPROBES` (supercall.c reboot kprobe, ksud_integration.c input_event kprobe, extras.c avc_spoof, syscall_hook_manager.c kretprobe) — fitur opsional tsb compiled-out: reboot supercall via sys_reboot magic, avc spoof, key-event hook mati (manager fd-install tetap jalan via setuid hook).
+- `CONFIG_MODULES=y` dipertahankan (parity defconfig MiCode asli).
+- Hook mode: dispatcher slot di `sys_call_table` (via `ksu_patch_text`) + `register_trace_prio_sys_enter` — NO manual hooks in fs/ needed, NO kprobes.
 - **Manager tunggal:** hanya KernelSU-Next manager APK. `KSU_NEXT_MANAGER_SIZE`/`KSU_NEXT_MANAGER_HASH` di `Kbuild` (default = signature KernelSU-Next manager).
 - Versi di-pin via fallback di `Kbuild`: `KSU_VERSION_FALLBACK := 33227` (30000 + 3227 commits) dan `KSU_VERSION_TAG_FALLBACK := v3.3.0` — jangan set ke 1 (manager tidak deteksi root).
 - Build system: `Kbuild` (bukan Makefile) — `kernelsu-objs` multi-file, bukan unity build.

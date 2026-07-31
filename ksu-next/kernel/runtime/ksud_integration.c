@@ -52,7 +52,9 @@ static const char KERNEL_SU_RC[] =
 static void stop_init_rc_hook();
 static void stop_execve_hook();
 
+#ifdef CONFIG_KPROBES
 static struct work_struct stop_input_hook_work;
+#endif
 
 #define MAX_ARG_STRINGS 0x7FFFFFFF
 struct user_arg_ptr {
@@ -596,6 +598,7 @@ static long ksu_sys_fstat(const struct pt_regs *regs)
     return ret;
 }
 
+#ifdef CONFIG_KPROBES
 static int input_handle_event_handler_pre(struct kprobe *p, struct pt_regs *regs)
 {
     unsigned int *type = (unsigned int *)&PT_REGS_PARM2(regs);
@@ -613,6 +616,7 @@ static void do_stop_input_hook(struct work_struct *work)
 {
     unregister_kprobe(&input_event_kp);
 }
+#endif
 
 static void stop_init_rc_hook()
 {
@@ -623,6 +627,7 @@ static void stop_init_rc_hook()
 
 void ksu_stop_input_hook_runtime(void)
 {
+#ifdef CONFIG_KPROBES
     static bool input_hook_stopped = false;
     if (input_hook_stopped) {
         return;
@@ -630,20 +635,23 @@ void ksu_stop_input_hook_runtime(void)
     input_hook_stopped = true;
     bool ret = schedule_work(&stop_input_hook_work);
     pr_info("unregister input kprobe: %d!\n", ret);
+#endif
 }
 
 // ksud: module support
 void __init ksu_ksud_init()
 {
-    int ret;
-
     ksu_syscall_table_hook(__NR_read, ksu_sys_read, &orig_sys_read);
     ksu_syscall_table_hook(__NR_fstat, ksu_sys_fstat, &orig_sys_fstat);
+
+#ifdef CONFIG_KPROBES
+    int ret;
 
     ret = register_kprobe(&input_event_kp);
     pr_info("ksud: input_event_kp: %d\n", ret);
 
     INIT_WORK(&stop_input_hook_work, do_stop_input_hook);
+#endif
 }
 
 void __exit ksu_ksud_exit()
@@ -651,7 +659,9 @@ void __exit ksu_ksud_exit()
     // TODO:
     // this should be done before unregister vfs_read_kp
     // stop_init_rc_hook();
+#ifdef CONFIG_KPROBES
     unregister_kprobe(&input_event_kp);
+#endif
 
     if (module_rc_buf) {
         free_module_rc();

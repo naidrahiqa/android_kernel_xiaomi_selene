@@ -3,7 +3,9 @@
 #include <linux/fdtable.h>
 #include <linux/file.h>
 #include <linux/fs.h>
+#ifdef CONFIG_KPROBES
 #include <linux/kprobes.h>
+#endif
 #include <linux/pid.h>
 #include <linux/slab.h>
 #include <linux/syscalls.h>
@@ -69,6 +71,7 @@ int ksu_install_fd(void)
     return fd;
 }
 
+#ifdef CONFIG_KPROBES
 static void ksu_install_fd_tw_func(struct callback_head *cb)
 {
     struct ksu_install_fd_tw *tw = container_of(cb, struct ksu_install_fd_tw, cb);
@@ -229,12 +232,14 @@ static struct kprobe reboot_kp = {
     .symbol_name = REBOOT_SYMBOL,
     .pre_handler = reboot_handler_pre,
 };
+#endif
 
 void __init ksu_supercalls_init(void)
 {
-    int rc;
-
     ksu_supercall_dump_commands();
+
+#ifdef CONFIG_KPROBES
+    int rc;
 
     rc = register_kprobe(&reboot_kp);
     if (rc) {
@@ -242,10 +247,13 @@ void __init ksu_supercalls_init(void)
     } else {
         pr_info("reboot kprobe registered successfully\n");
     }
+#endif
 }
 
 void __exit ksu_supercalls_exit(void)
 {
+#ifdef CONFIG_KPROBES
     unregister_kprobe(&reboot_kp);
+#endif
     ksu_supercall_cleanup_state();
 }

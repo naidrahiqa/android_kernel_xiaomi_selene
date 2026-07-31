@@ -461,12 +461,11 @@ CONFIG_CRYPTO_TWOFISH=y
 # CONFIG_CRYPTO_HW is not set
 CONFIG_FORCE_NR_CPUS=y
 
-# KernelSU (KernelSU-Next, syscall table hook + sys_enter tracepoint)
-# KPROBES + EXT4_FS required by KernelSU-Next Kconfig (depends on)
-# MODULES needed because KPROBES depends on MODULES in this tree
+# KernelSU (KernelSU-Next, hookless: syscall table hook + sys_enter tracepoint)
+# EXT4_FS required by KernelSU-Next Kconfig (depends on)
+# KPROBES disabled: hookless mode, optional kprobe features compiled out
 CONFIG_KSU=y
 CONFIG_MODULES=y
-CONFIG_KPROBES=y
 
 # KernelSU requires KALLSYMS_ALL for symbol resolution
 CONFIG_KALLSYMS=y
