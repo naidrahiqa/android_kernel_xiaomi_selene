@@ -17,14 +17,14 @@ on:
       base_version:
         description: 'Base version (e.g. 0.1.0, 0.2.0, 1.0.0)'
         required: false
-        default: '0.7.0'
+        default: '0.8.0'
         type: string
 
 env:
   PHROLOVA_VARIANT: ${{ inputs.variant || '0' }}
-  PHROLOVA_BASE: ${{ inputs.base_version || '0.7.0' }}
+  PHROLOVA_BASE: ${{ inputs.base_version || '0.8.0' }}
   TOOLCHAIN_NAME: "Greenforce Clang 24.0.0"
-  KERNELSU_VERSION: "backslashxx/KernelSU v3.2.5-26"
+  KERNELSU_VERSION: "KernelSU-Next v3.3.0 (e7536f0)"
 
 jobs:
   build:
@@ -90,7 +90,7 @@ jobs:
 
       - name: Setup KernelSU symlink
         run: |
-          ln -sf "$(realpath backslash-ksu/kernel)" drivers/kernelsu
+          ln -sf "$(realpath ksu-next/kernel)" drivers/kernelsu
           test -L drivers/kernelsu && echo "Symlink OK" || { echo "Symlink failed"; exit 1; }
 
       - name: Build kernel (selene_defconfig)

@@ -11,6 +11,21 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.8.0 — Migrasi KernelSU → KernelSU-Next
+- **Root solution diganti: backslashxx/KernelSU → KernelSU-Next** (`KernelSU-Next/KernelSU-Next`, dev @ `e7536f0`, tag v3.3.0, 3227 commits).
+  - `backslash-ksu/kernel/` dihapus → source baru di `ksu-next/kernel/` (direct copy, sama seperti sebelumnya).
+  - **Hook mode:** dispatcher slot di-patch langsung ke `sys_call_table` (`hook/arm64/syscall_hook.c`, via `ksu_patch_text`) + routing `register_trace_prio_sys_enter` (`hook/syscall_hook_manager.c`). Tidak ada patch fs/ manual — analog dengan syscall table hook backslashxx.
+  - **Opsi Kconfig lama dibuang:** `KSU_TAMPER_SYSCALL_TABLE`, `KSU_KPROBES_KSUD`, `KSU_MULTI_MANAGER_SUPPORT` tidak ada di KernelSU-Next.
+  - **Manager tunggal:** hanya KernelSU-Next manager APK (signature `KSU_NEXT_MANAGER_HASH` di Kbuild). Multi-manager (tiann/backslashxx/RKSU/MKSU) tidak didukung lagi.
+  - **KSU_VERSION di-pin:** `KSU_VERSION_FALLBACK := 33227` (30000 + 3227 commits) + `KSU_VERSION_TAG_FALLBACK := v3.3.0` di `ksu-next/kernel/Kbuild` — vendored copy tidak punya `.git`, jadi fallback upstream `1` diganti supaya manager tetap deteksi root.
+- **Defconfig baru (selene_defconfig):**
+  - `CONFIG_MODULES=y` — wajib: `KPROBES depends on MODULES` di tree ini; hilang sejak rebase yuki-saisei (ada di defconfig MiCode asli). Tanpa ini `CONFIG_KPROBES` di-drop diam-diam → KSU tidak ter-build.
+  - `CONFIG_KPROBES=y` — wajib untuk Kconfig KernelSU-Next (`depends on KPROBES && EXT4_FS`). Tersedia karena MTK 4.14 punya backport kprobes (`arch/arm64/Kconfig`: `select HAVE_KPROBES` + `HAVE_KRETPROBES`; vanilla upstream 4.14 arm64 TIDAK punya — kprobes arm64 baru masuk 4.16). Kprobes runtime opsional & fail-safe (reboot supercall, slow_avc_audit, input_handle_event, syscall_regfunc kretprobe).
+  - `CONFIG_EXT4_FS=y` — wajib untuk `depends on KPROBES && EXT4_FS` (dipakai `ext4_unregister_sysfs` di `runtime/boot_event.c`); sebelumnya tidak di-enable (kernel berbasis F2FS).
+- **CI/CD & scripts diupdate:** `build.yml` (symlink → `ksu-next/kernel`, `KERNELSU_VERSION=KernelSU-Next v3.3.0`), `update-kernel.yml` + `scripts/update_kernel_selective.sh` (skip list → `ksu-next/`), `notify-telegram.sh` (credit + link manager).
+- **Dokumentasi diupdate:** AGENTS.md, skill `xxksu-integration` → `ksunext-integration` (ditulis ulang), `selene-kernel` SKILL + references (ksu.md/build.md/ci.md/update.md), `kernel-update`, `selinux-policy`, `project-identity`, FIX_PROMPT.md, ROADMAP.md, docs/PRD.md.
+- **Sumber:** KernelSU-Next/KernelSU-Next (upstream). Alasan: drop multi-manager complexity, ikut ekosistem KernelSU-Next (maintener aktif, manager sendiri, policy profiles), kompatibel 4.14 non-GKI.
+
 ## v0.7.1 — Performance Tuning (Responsiveness & RAM Fix)
 - **WQ_POWER_EFFICIENT_DEFAULT=n:** Workqueue ga lagi dipaksa jalan di little core doang. Fix root cause slow background task processing — workqueue tasks sekarang bisa jalan di A75 big core.
 - **vmalloc=496M→320M:** Hemat ~176MB RAM yang sebelumnya dipesen buat vmalloc. RAM tambahan ini available buat app/launcher/system, kurangi LMK kills.

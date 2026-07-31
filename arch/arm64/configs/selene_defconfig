@@ -419,6 +419,7 @@ CONFIG_EXFAT_FS=y
 CONFIG_NTFS_FS=y
 CONFIG_NTFS_RW=y
 CONFIG_TMPFS=y
+CONFIG_EXT4_FS=y
 CONFIG_PSTORE=y
 CONFIG_PSTORE_CONSOLE=y
 CONFIG_PSTORE_PMSG=y
@@ -460,11 +461,12 @@ CONFIG_CRYPTO_TWOFISH=y
 # CONFIG_CRYPTO_HW is not set
 CONFIG_FORCE_NR_CPUS=y
 
-# KernelSU (backslashxx/KernelSU, Syscall Table Hook)
+# KernelSU (KernelSU-Next, syscall table hook + sys_enter tracepoint)
+# KPROBES + EXT4_FS required by KernelSU-Next Kconfig (depends on)
+# MODULES needed because KPROBES depends on MODULES in this tree
 CONFIG_KSU=y
-# CONFIG_KSU_KPROBES_KSUD is not set
-CONFIG_KSU_TAMPER_SYSCALL_TABLE=y
-CONFIG_KSU_MULTI_MANAGER_SUPPORT=y
+CONFIG_MODULES=y
+CONFIG_KPROBES=y
 
 # KernelSU requires KALLSYMS_ALL for symbol resolution
 CONFIG_KALLSYMS=y

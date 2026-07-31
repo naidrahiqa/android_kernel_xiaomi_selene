@@ -85,7 +85,7 @@ echo "  NEW: $(head -1 $NEW_DIR/Makefile)"
 # ── Step 2: Define skip patterns ───────────────────────────────
 SKIP_PATTERNS=(
   "net/wireguard/"
-  "backslash-ksu/"
+  "ksu-next/"
   "fs/nomount.c"
   "fs/nomount.h"
   "lib/string.c"

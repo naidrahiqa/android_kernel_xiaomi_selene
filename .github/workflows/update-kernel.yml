@@ -110,7 +110,7 @@ jobs:
           # Skip patterns — files we added or Xiaomi modified
           SKIP_PATTERNS=(
             "net/wireguard/"
-            "backslash-ksu/"
+            "ksu-next/"
             "fs/nomount.c"
             "fs/nomount.h"
             "lib/string.c"

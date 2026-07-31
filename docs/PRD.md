@@ -19,7 +19,7 @@ Provide a stable, performant, and feature-rich custom kernel for Redmi 10 2022 t
 
 | Feature | Status | Priority |
 |---|---|---|
-| **KernelSU** (backslashxx v3.2.5-26, syscall table hook) | Implemented | P0 |
+| **KernelSU** (KernelSU-Next v3.3.0, syscall table hook + sys_enter tracepoint) | Implemented | P0 |
 | **NoMount** (systemless path redirection) | Implemented | P0 |
 | ZRAM with ZSTD compression | Implemented | P0 |
 | TCP BBR congestion control | Implemented | P0 |
@@ -43,7 +43,7 @@ Provide a stable, performant, and feature-rich custom kernel for Redmi 10 2022 t
 | Config | Value |
 |---|---|
 | Clang | Greenforce Clang 24.0.0 |
-| KernelSU | backslashxx v3.2.5-26, CONFIG_KSU_TAMPER_SYSCALL_TABLE=y |
+| KernelSU | KernelSU-Next v3.3.0, CONFIG_KSU=y + KPROBES/EXT4_FS/MODULES |
 | NoMount | CONFIG_NOMOUNT=y |
 | RAM | LZ4 + ZSTD ZRAM |
 | Filesystems | EXT4, F2FS, EXFAT, NTFS, OVERLAY_FS |
@@ -56,13 +56,13 @@ Provide a stable, performant, and feature-rich custom kernel for Redmi 10 2022 t
 - **Build**: Must compile cleanly with Greenforce Clang 24.0.0 (no warnings-as-errors)
 - **CI**: All builds must pass on GitHub Actions before tagged release
 - **Partition**: Must detect and flash to correct A/B slot on MT6768
-- **Root**: KernelSU must work with both tiann and backslashxx Manager
+- **Root**: KernelSU-Next manager APK wajib (tiann/backslashxx/RKSU/MKSU manager tidak kompatibel)
 - **SafetyNet**: NoMount provides systemless path redirection without modifying /system
 
 ## 6. Constraints
 
 - **No device testing** — bootloader still locked. All validation = compile-time only
 - **No GKI patches** — kernel 4.14 non-GKI, many APIs differ from 5.x/6.x
-- **No kprobes** — `CONFIG_KSU_KPROBES_KSUD=n`, broken on non-GKI 4.14
+- **Kprobes optional** — KernelSU-Next kprobes (reboot supercall, avc_spoof, input event) fail-safe; core root = syscall table + tracepoint
 - **No LTO** — `CONFIG_LTO_CLANG=n`, LLVM bitcode mismatch between Clang 23 and system LLD
 - **No xt_hl.c** — must be restored manually after rebase (deleted by yuki-saisei)

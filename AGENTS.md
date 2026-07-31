@@ -14,7 +14,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 | Finishing Branch | `.opencode/skills/finishing-a-development-branch/SKILL.md` | Integrasi kerja setelah implementasi selesai — merge, PR, cleanup |
 | Kernel Source Merge | `.opencode/skills/kernel-source-merge/SKILL.md` | Merge/compare MiCode base vs Ronald826 reference |
 | Kernel Update | `.opencode/skills/kernel-update/SKILL.md` | Upgrade/downgrade kernel version (4.14.x), CVE patching |
-| XXKSU Integration | `.opencode/skills/xxksu-integration/SKILL.md` | backslashxx/KernelSU integration, syscall table hook, KSU_VERSION, manager APK handling |
+| KSU-Next Integration | `.opencode/skills/ksunext-integration/SKILL.md` | KernelSU-Next integration, syscall table hook, KSU_VERSION, manager APK handling |
 | NoMount | `.opencode/skills/nomount/SKILL.md` | maxsteeel/nomount systemless path redirection, iterate_dir hook fix, VFS injection |
 | Build System Fixes | `.opencode/skills/build-system-fixes/SKILL.md` | Kconfig CRLF, Clang IAS, stpcpy, LTO, ZSTD, UAPI headers, 4.14 gotcha collection |
 | Defconfig Management | `.opencode/skills/defconfig-management/SKILL.md` | Config dependency chains, known gotchas (HMP, THP, TASK_TURBO, SECTION_MISMATCH), defconfig debug workflow |
@@ -33,10 +33,10 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 
 - **Device:** Redmi 10 2022, codename **selene**, MediaTek Helio G88 (MT6768).
 - **Kernel:** Linux 4.14.356 (yuki-saisei base), **non-GKI**. Banyak API beda drastis dari 5.x/6.x — jangan apply patch GKI 5.10+ tanpa cek dulu.
-- **Root solution:** backslashxx/KernelSU v3.2.5-46 (fork tiann/KernelSU).
-  - **Hook mode: Syscall Table Hook** (`CONFIG_KSU_TAMPER_SYSCALL_TABLE=y`) — langsung hook syscall table, bukan Manual Hook. Tidak perlu patch fs/ manual.
-  - `CONFIG_KSU_KPROBES_KSUD=n` — kprobes broken di non-GKI 4.14.
-  - Multi-manager support: `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` — terima manager dari tiann, backslashxx, ReSukiSU, MKSU, RKSU.
+- **Root solution:** KernelSU-Next (`KernelSU-Next/KernelSU-Next`, fork tiann/KernelSU, latest dev @ `e7536f0`, tag v3.3.0).
+  - **Hook mode: syscall table hook + sys_enter tracepoint** — dispatcher slot di-patch langsung ke `sys_call_table` (via `ksu_patch_text`), routing syscall via `register_trace_prio_sys_enter`. Tidak perlu patch fs/ manual.
+  - `CONFIG_KPROBES=y` + `CONFIG_EXT4_FS=y` — wajib (Kconfig `depends on KPROBES && EXT4_FS`). Kprobes dipakai opsional: reboot supercall, slow_avc_audit, input_handle_event, syscall_regfunc kretprobe — gagal register = aman, hanya fitur terkait mati.
+  - **Manager tunggal:** KernelSU-Next manager APK (signature `EXPECTED_MANAGER_HASH` di Kbuild). Manager tiann/backslashxx/RKSU/MKSU **tidak** kompatibel.
 - **Systemless path redirection:** NoMount (`maxsteeel/nomount`).
   - Virtual file injection + path redirection tanpa mount filesystem.
   - Compiled into kernel (`CONFIG_NOMOUNT=y`), netlink-based userspace control.
@@ -47,7 +47,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 
 - Base kernel: `MiCode/Xiaomi_Kernel_OpenSource`, branch `selene-r-oss-update`.
 - Reference-only: `Ronald826/xiaomi_kernel_selene`, branch `4.14-baxter_EXPERIMENTAL` (jangan merge mentah).
-- KernelSU: `backslashxx/KernelSU` v3.2.5-46 (local copy di `backslash-ksu/kernel/`).
+- KernelSU: `KernelSU-Next/KernelSU-Next` v3.3.0 @ `e7536f0` (local copy di `ksu-next/kernel/`).
 - NoMount: `maxsteeel/nomount` (source di `fs/nomount.c` + `fs/nomount.h`).
 
 ## Dokumentasi Project
@@ -69,7 +69,7 @@ bash <(wget -qO- https://raw.githubusercontent.com/greenforce-project/greenforce
 export PATH="$(pwd)/greenforce-clang/bin:$PATH"
 
 # Setup KernelSU symlink (wajib sebelum build)
-ln -sf "$(realpath backslash-ksu/kernel)" drivers/kernelsu
+ln -sf "$(realpath ksu-next/kernel)" drivers/kernelsu
 
 # Build
 make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
@@ -93,7 +93,7 @@ make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
 - Trigger: push ke `selene-r-oss-update`, `m1-cherrypick`, `phrolova`, atau manual dispatch.
 - Runner: `ubuntu-24.04` + Docker hybrid (Void Linux build env)
 - Toolchain: Greenforce Clang 24.0.0 (`CC=clang HOSTCC=gcc`)
-- KernelSU: backslashxx v3.2.5-46 via `drivers/kernelsu` symlink
+- KernelSU: KernelSU-Next v3.3.0 via `drivers/kernelsu` symlink
 - CI matrix: **Single build** (universal kernel, 1 zip fits all)
 - Telegram notifications: ObsidianKernel-style format with credits/download links
   - Start/success/failed (error log ke `TELEGRAM_ERROR_CHANNEL_ID` channel terpisah)
@@ -143,15 +143,18 @@ If switching to a different Clang version, check if this is still needed.
 - GCC 13 promotes many new warnings to `-Werror` on vendor drivers. Strategy: `-Wno-error` in `scripts/Makefile.lib` `orig_c_flags`.
 - Without `-Wno-error`: `CONFIG_CC_STACKPROTECTOR_STRONG` fails, `CONFIG_BLK_INLINE_ENCRYPTION` broken.
 
-### KernelSU (backslashxx) Integration
-- Source: `backslash-ksu/kernel/` (direct copy, not submodule). Current: v3.2.5-46.
-- Symlink: `ln -sf backslash-ksu/kernel drivers/kernelsu` — created at CI time, not in git.
+### KernelSU-Next Integration
+- Source: `ksu-next/kernel/` (direct copy, not submodule). Current: v3.3.0 @ `e7536f0` (dev branch).
+- Symlink: `ln -sf ksu-next/kernel drivers/kernelsu` — created at CI time, not in git.
 - `drivers/Kconfig`: already has `source "drivers/kernelsu/Kconfig"` (line 225).
 - `drivers/Makefile`: already has `obj-$(CONFIG_KSU) += kernelsu/` (line 194).
-- Uses `KSU_TAMPER_SYSCALL_TABLE=y` — hooks syscall table directly. NO manual hooks in fs/ needed.
-- `KSU_KPROBES_KSUD=n` — kprobes broken on non-GKI 4.14.
-- v3.2.5-46 added tristate KSU option (LKM support), fixes 32-on-64 adb_root.
-- Multi-manager support: manager bebas — tiann, backslashxx, ReSukiSU, MKSU, RKSU.
+- Kconfig `depends on KPROBES && EXT4_FS` — both `=y` di `selene_defconfig`. Tanpa keduanya, `CONFIG_KSU` tidak bisa di-enable.
+- **KPROBES `depends on MODULES`** di tree ini — `CONFIG_MODULES=y` wajib (hilang sejak rebase yuki-saisei; ada di defconfig MiCode asli). Tanpa itu kconfig drop `CONFIG_KPROBES` diam-diam → KSU tidak ter-build.
+- Hook mode: dispatcher slot di `sys_call_table` (via `ksu_patch_text`) + `register_trace_prio_sys_enter` — NO manual hooks in fs/ needed.
+- Kprobes opsional saat runtime (reboot supercall, slow_avc_audit, input_handle_event, syscall_regfunc kretprobe) — gagal register hanya mematikan fitur terkait.
+- **Manager tunggal:** hanya KernelSU-Next manager APK. `KSU_NEXT_MANAGER_SIZE`/`KSU_NEXT_MANAGER_HASH` di `Kbuild` (default = signature KernelSU-Next manager).
+- Versi di-pin via fallback di `Kbuild`: `KSU_VERSION_FALLBACK := 33227` (30000 + 3227 commits) dan `KSU_VERSION_TAG_FALLBACK := v3.3.0` — jangan set ke 1 (manager tidak deteksi root).
+- Build system: `Kbuild` (bukan Makefile) — `kernelsu-objs` multi-file, bukan unity build.
 
 ### NoMount Integration
 - Source: `maxsteeel/nomount` — kernel-level path redirection + virtual file injection.
@@ -214,7 +217,7 @@ If switching to a different Clang version, check if this is still needed.
 - **Workflow:** `.github/workflows/update-kernel.yml` — manual trigger, `workflow_dispatch`
 - **Source:** kernel.org (≤4.14.336) / OpenELA LTS (>4.14.336)
 - **Logic:** Compare repo file vs vanilla 4.14.186 — if identical → replace with target version. If different (Xiaomi modified) → skip.
-- **Skip list:** `net/wireguard/`, `backslash-ksu/`, `fs/nomount.*`, `lib/string.c`, `selene_defconfig`, `arch/arm64/lib/{memcpy,memmove,memset}.S`, `arch/arm64/crypto/aes-modes.S`, `include/uapi/linux/netfilter/xt_*.h`, `drivers/goodix/`, `drivers/fpc1020/`, `drivers/misc/mediatek*/`
+- **Skip list:** `net/wireguard/`, `ksu-next/`, `fs/nomount.*`, `lib/string.c`, `selene_defconfig`, `arch/arm64/lib/{memcpy,memmove,memset}.S`, `arch/arm64/crypto/aes-modes.S`, `include/uapi/linux/netfilter/xt_*.h`, `drivers/goodix/`, `drivers/fpc1020/`, `drivers/misc/mediatek*/`
 - **Target versions:** Configurable via `workflow_dispatch` input. Default: latest stable below 350.
 - **Known issue:** 4.14.357+ has blank screen issue on MTK devices (screen blank, system alive, need power cycle).
 
