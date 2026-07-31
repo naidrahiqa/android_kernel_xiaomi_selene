@@ -1,5 +1,5 @@
 #include <linux/rcupdate.h>
-#include <linux/limits.h>
+#include <uapi/linux/limits.h>
 #include <linux/rculist.h>
 #include <linux/mutex.h>
 #include <linux/task_work.h>

@@ -4,7 +4,7 @@
 #include <linux/file.h>
 #include <linux/fs.h>
 #include <linux/fs_struct.h>
-#include <linux/limits.h>
+#include <uapi/linux/limits.h>
 #include <linux/namei.h>
 #include <linux/proc_ns.h>
 #include <linux/pid.h>

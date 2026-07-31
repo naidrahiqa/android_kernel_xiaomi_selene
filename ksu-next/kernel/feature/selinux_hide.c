@@ -10,7 +10,7 @@
 #include <linux/printk.h>
 #include <linux/string.h>
 #include <linux/fs.h>
-#include <asm-generic/errno-base.h>
+#include <linux/errno.h>
 #include <net/genetlink.h>
 #include <linux/moduleparam.h>
 #include <linux/mutex.h>
