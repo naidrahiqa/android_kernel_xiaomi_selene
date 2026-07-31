@@ -4,6 +4,10 @@
 
 #if defined(__x86_64__)
 typedef sys_call_ptr_t syscall_fn_t;
+#elif defined(__aarch64__)
+// 4.14 arm64 does not define syscall_fn_t (added in kernel 5.x
+// include/linux/syscall.h); same signature used by KSU handlers.
+typedef long (*syscall_fn_t)(const struct pt_regs *regs);
 #endif
 
 extern syscall_fn_t *ksu_syscall_table;
