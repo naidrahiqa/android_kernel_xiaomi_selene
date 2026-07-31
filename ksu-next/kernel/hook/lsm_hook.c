@@ -6,7 +6,7 @@
 #include <linux/mutex.h>
 #include <linux/rcupdate.h>
 #include <linux/string.h>
-
+#include <linux/version.h>
 #include "infra/symbol_resolver.h"
 #include "hook/lsm_hook.h"
 #include "hook/patch_memory.h"

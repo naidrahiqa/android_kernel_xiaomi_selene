@@ -4,6 +4,7 @@
 #include <linux/preempt.h>
 #include <linux/printk.h>
 #include <linux/mm.h>
+#include <linux/version.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 0)
 #include <linux/pgtable.h>
 #else
@@ -14,7 +15,7 @@
 #include <linux/cred.h>
 #include <linux/fs.h>
 #include <linux/types.h>
-#include <linux/version.h>
+#include <linux/syscalls.h>
 #include <linux/sched/task_stack.h>
 #include <linux/ptrace.h>
 

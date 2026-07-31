@@ -11,6 +11,7 @@
 #include <linux/string.h>
 #include <linux/fs.h>
 #include <linux/errno.h>
+#include <linux/version.h>
 #include <net/genetlink.h>
 #include <linux/moduleparam.h>
 #include <linux/mutex.h>
