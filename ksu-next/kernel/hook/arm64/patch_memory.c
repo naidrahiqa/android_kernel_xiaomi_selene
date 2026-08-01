@@ -80,8 +80,12 @@ unsigned long phys_from_virt(unsigned long addr, int *err)
     if (!pte_present(*pte))
         goto fail;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
     return __pte_to_phys(*pte) + ((addr & ~PAGE_MASK));
-
+#else
+    // 4.14 (MTK selene): __pte_to_phys helper stripped by vendor; pte_pfn() is native.
+    return ((phys_addr_t)pte_pfn(*pte) << PAGE_SHIFT) + ((addr & ~PAGE_MASK));
+#endif
 fail:
     *err = -ENOENT;
     return 0;
@@ -93,6 +97,11 @@ fail:
 // However, it's backport to android13-5.10 but not to android12-5.10.
 // https://cs.android.com/android/_/android/kernel/common/+/6d9f07d8f1ffc310a6877153fe882f35ae380799
 // So we need to grep kernel source code to detect which one to use.
+// 4.14 (MTK selene): __flush_icache_range was added in newer kernels;
+// flush_icache_range is the pre-existing equivalent (full D+I cache flush).
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0)
+#define __flush_icache_range flush_icache_range
+#endif
 #if KSU_NEW_DCACHE_FLUSH
 #define ksu_flush_dcache(start, sz)                                            \
     ({                                                                         \
