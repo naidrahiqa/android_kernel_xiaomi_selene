@@ -99,7 +99,7 @@ static int ksu_wrapper_iopoll(struct kiocb *kiocb, struct io_comp_batch *icb,
     kiocb->ki_filp = orig;
     return orig->f_op->iopoll(kiocb, icb, v);
 }
-#else
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
 static int ksu_wrapper_iopoll(struct kiocb *kiocb, bool spin)
 {
     struct ksu_file_wrapper *data = kiocb->ki_filp->private_data;
@@ -125,7 +125,12 @@ static int ksu_wrapper_iterate_shared(struct file *fp, struct dir_context *dc)
     return orig->f_op->iterate_shared(orig, dc);
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 16, 0)
 static __poll_t ksu_wrapper_poll(struct file *fp, struct poll_table_struct *pts)
+#else
+// 4.14: __poll_t does not exist yet; poll returns unsigned int.
+static unsigned int ksu_wrapper_poll(struct file *fp, struct poll_table_struct *pts)
+#endif
 {
     struct ksu_file_wrapper *data = fp->private_data;
     struct file *orig = data->orig;
@@ -325,6 +330,7 @@ static ssize_t ksu_wrapper_copy_file_range(struct file *file_in, loff_t pos_in,
                                        flags);
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
 // no REMAP_FILE_DEDUP: use file_in
 // https://cs.android.com/android/kernel/superproject/+/common-android-mainline:common/fs/read_write.c;l=1598-1599;drc=398da7defe218d3e51b0f3bdff75147e28125b60
 // https://cs.android.com/android/kernel/superproject/+/common-android-mainline:common/fs/remap_range.c;l=403-404;drc=398da7defe218d3e51b0f3bdff75147e28125b60
@@ -347,7 +353,9 @@ static loff_t ksu_wrapper_remap_file_range(struct file *file_in, loff_t pos_in,
                                             len, remap_flags);
     }
 }
+#endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 0, 0)
 static int ksu_wrapper_fadvise(struct file *fp, loff_t off1, loff_t off2,
                                int flags)
 {
@@ -358,6 +366,7 @@ static int ksu_wrapper_fadvise(struct file *fp, loff_t off1, loff_t off2,
     }
     return -EINVAL;
 }
+#endif
 
 static void ksu_release_file_wrapper(struct ksu_file_wrapper *data);
 
@@ -389,7 +398,9 @@ static struct ksu_file_wrapper *ksu_create_file_wrapper(struct file *fp)
     p->ops.write = fp->f_op->write ? ksu_wrapper_write : NULL;
     p->ops.read_iter = fp->f_op->read_iter ? ksu_wrapper_read_iter : NULL;
     p->ops.write_iter = fp->f_op->write_iter ? ksu_wrapper_write_iter : NULL;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
     p->ops.iopoll = fp->f_op->iopoll ? ksu_wrapper_iopoll : NULL;
+#endif
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
     p->ops.iterate = fp->f_op->iterate ? ksu_wrapper_iterate : NULL;
 #endif
@@ -403,7 +414,7 @@ static struct ksu_file_wrapper *ksu_create_file_wrapper(struct file *fp)
     p->ops.mmap = fp->f_op->mmap ? ksu_wrapper_mmap : NULL;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 12, 0)
     p->ops.fop_flags = fp->f_op->fop_flags;
-#else
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 19, 0)
     p->ops.mmap_supported_flags = fp->f_op->mmap_supported_flags;
 #endif
     p->ops.flush = fp->f_op->flush ? ksu_wrapper_flush : NULL;
@@ -426,9 +437,13 @@ static struct ksu_file_wrapper *ksu_create_file_wrapper(struct file *fp)
     p->ops.show_fdinfo = fp->f_op->show_fdinfo ? ksu_wrapper_show_fdinfo : NULL;
     p->ops.copy_file_range =
         fp->f_op->copy_file_range ? ksu_wrapper_copy_file_range : NULL;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
     p->ops.remap_file_range =
         fp->f_op->remap_file_range ? ksu_wrapper_remap_file_range : NULL;
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 0, 0)
     p->ops.fadvise = fp->f_op->fadvise ? ksu_wrapper_fadvise : NULL;
+#endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 0)
     p->ops.splice_eof = fp->f_op->splice_eof ? ksu_wrapper_splice_eof : NULL;
@@ -478,8 +493,6 @@ ksu_anon_inode_make_secure_inode(const char *name,
                                  const struct inode *context_inode)
 {
     struct inode *inode;
-    const struct qstr qname = QSTR_INIT(name, strlen(name));
-    int error;
 
     if (unlikely(!anon_inode_mnt)) {
         return ERR_PTR(-ENODEV);
@@ -489,11 +502,9 @@ ksu_anon_inode_make_secure_inode(const char *name,
     if (IS_ERR(inode))
         return inode;
     inode->i_flags &= ~S_PRIVATE;
-    error = security_inode_init_security_anon(inode, &qname, context_inode);
-    if (error) {
-        iput(inode);
-        return ERR_PTR(error);
-    }
+    // 4.14: security_inode_init_security_anon() does not exist (added in newer
+    // kernels). No automatic label init needed: the SELinux sid is set
+    // explicitly to ksu_file_sid right after creation in ksu_install_file_wrapper().
     return inode;
 }
 
@@ -501,8 +512,10 @@ static struct file *ksu_anon_inode_create_getfile_compat(
     const char *name, const struct file_operations *fops, void *priv, int flags,
     const struct inode *context_inode)
 {
-    struct inode *inode;
+    struct qstr this;
+    struct path path;
     struct file *file;
+    struct inode *inode;
 
     if (fops->owner && !try_module_get(fops->owner))
         return ERR_PTR(-ENOENT);
@@ -513,17 +526,33 @@ static struct file *ksu_anon_inode_create_getfile_compat(
         goto err;
     }
 
-    file = alloc_file_pseudo(inode, anon_inode_mnt, name,
-                             flags & (O_ACCMODE | O_NONBLOCK), fops);
-    if (IS_ERR(file))
+    // 4.14: alloc_file_pseudo() does not exist (added in newer kernels);
+    // mirror the pre-5.16 anon_inode_getfile() implementation.
+    file = ERR_PTR(-ENOMEM);
+    this.name = name;
+    this.len = strlen(name);
+    this.hash = 0;
+    path.dentry = d_alloc_pseudo(anon_inode_mnt->mnt_sb, &this);
+    if (!path.dentry)
         goto err_iput;
 
+    path.mnt = mntget(anon_inode_mnt);
+    ihold(inode);
+
+    d_instantiate(path.dentry, inode);
+
+    file = alloc_file(&path, OPEN_FMODE(flags), fops);
+    if (IS_ERR(file))
+        goto err_dput;
     file->f_mapping = inode->i_mapping;
 
+    file->f_flags = flags & (O_ACCMODE | O_NONBLOCK);
     file->private_data = priv;
 
     return file;
 
+err_dput:
+    path_put(&path);
 err_iput:
     iput(inode);
 err:
@@ -568,7 +597,10 @@ int ksu_install_file_wrapper(int fd)
     struct inode *wrapper_inode = file_inode(wrapper_file);
     // libc's stdio relies on the fstat() result of the fd to determine its buffer type.
     wrapper_inode->i_mode = file_inode(orig_file)->i_mode;
-    struct inode_security_struct *wrapper_sec = selinux_inode(wrapper_inode);
+    // 4.14 (MTK selene): objsec.h has no selinux_inode() helper (vendor stripped
+    // it); i_security is the direct backing field on all kernels.
+    struct inode_security_struct *wrapper_sec =
+        (struct inode_security_struct *)wrapper_inode->i_security;
     // Use ksu_file_sid to bypass SELinux check.
     // When we call `su` from terminal app, this is useful.
     if (wrapper_sec) {
