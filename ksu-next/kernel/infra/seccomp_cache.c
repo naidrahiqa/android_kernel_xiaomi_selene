@@ -8,6 +8,11 @@
 #include "klog.h" // IWYU pragma: keep
 #include "infra/seccomp_cache.h"
 
+// 4.14 (and <5.6): kernel/seccomp.c has no `action_cache` member in struct
+// seccomp_filter and SECCOMP_ARCH_* macros do not exist (added in 5.6).
+// Writing filter->cache would corrupt the real struct — no-op stubs instead.
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+
 struct action_cache {
 	DECLARE_BITMAP(allow_native, SECCOMP_ARCH_NATIVE_NR);
 #ifdef SECCOMP_ARCH_COMPAT
@@ -63,3 +68,15 @@ void ksu_seccomp_allow_cache(struct seccomp_filter *filter, int nr)
     }
 #endif
 }
+
+#else
+
+void ksu_seccomp_clear_cache(struct seccomp_filter *filter, int nr)
+{
+}
+
+void ksu_seccomp_allow_cache(struct seccomp_filter *filter, int nr)
+{
+}
+
+#endif
