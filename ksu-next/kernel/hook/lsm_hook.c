@@ -424,7 +424,7 @@ int ksu_lsm_hook(struct ksu_lsm_hook *hook)
                     hook->list.head = head;
                     hook->list.list.next = head;
                     hook->list.list.prev = head;
-                    head->prev = &hook->list;
+                    head->prev = &hook->list.list;
                     hook->list.lsm = "ksu";
                     *(void **)((char *)selected_entry + hook->hook_offset) = hook->replacement;
                     selected_slot = (void **)&head->next;
