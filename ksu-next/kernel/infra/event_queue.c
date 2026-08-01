@@ -7,7 +7,10 @@
 #include <linux/spinlock.h>
 #include <linux/string.h>
 #include <linux/uaccess.h>
+#include <linux/version.h>
 #include <linux/wait.h>
+// 4.14: linux/poll.h does not pull in EPOLL* constants (added with __poll_t in 4.16).
+#include <uapi/linux/eventpoll.h>
 
 #include "infra/event_queue.h"
 
@@ -369,9 +372,18 @@ out_unlock:
     return copied;
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 16, 0)
 __poll_t ksu_event_queue_poll(struct ksu_event_queue *queue, struct file *file, poll_table *wait)
+#else
+// 4.14: __poll_t does not exist yet; poll returns unsigned int.
+unsigned int ksu_event_queue_poll(struct ksu_event_queue *queue, struct file *file, poll_table *wait)
+#endif
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 16, 0)
     __poll_t mask = 0;
+#else
+    unsigned int mask = 0;
+#endif
     unsigned long irq_flags;
 
     poll_wait(file, &queue->read_wait, wait);
