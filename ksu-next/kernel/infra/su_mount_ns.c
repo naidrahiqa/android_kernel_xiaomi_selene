@@ -13,7 +13,8 @@
 #include <linux/syscalls.h>
 #include <linux/task_work.h>
 #include <linux/version.h>
-#include <uapi/linux/mount.h>
+// 4.14: uapi/linux/mount.h does not exist (4.16+); MS_* flags come from
+// linux/fs.h, CLONE_NEWNS from linux/sched.h, ksys_unshare from syscalls.h.
 
 #include "arch.h"
 #include "klog.h" // IWYU pragma: keep
@@ -26,23 +27,36 @@ extern int path_mount(const char *dev_name, struct path *path,
                       void *data_page);
 
 #if defined(__aarch64__)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
 extern long __arm64_sys_setns(const struct pt_regs *regs);
+#else
+// 4.14: no arm64 syscall wrappers yet — plain sys_setns.
+extern long sys_setns(int fd, int nstype);
+#endif
 #elif defined(__x86_64__)
 extern long __x64_sys_setns(const struct pt_regs *regs);
 #endif
 
 static long ksu_sys_setns(int fd, int flags)
 {
+#if defined(__aarch64__) && LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
     struct pt_regs regs;
     memset(&regs, 0, sizeof(regs));
 
     PT_REGS_PARM1(&regs) = fd;
     PT_REGS_PARM2(&regs) = flags;
 
-#if defined(__aarch64__)
     return __arm64_sys_setns(&regs);
 #elif defined(__x86_64__)
+    struct pt_regs regs;
+    memset(&regs, 0, sizeof(regs));
+
+    PT_REGS_PARM1(&regs) = fd;
+    PT_REGS_PARM2(&regs) = flags;
+
     return __x64_sys_setns(&regs);
+#elif defined(__aarch64__)
+    return sys_setns(fd, flags);
 #else
 #error "Unsupported arch"
 #endif
