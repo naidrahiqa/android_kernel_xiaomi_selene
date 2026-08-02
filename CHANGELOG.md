@@ -11,6 +11,17 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.8.0-nightly.20260802 — KernelSU-Next 4.14 Porting: SELinux & Link Compat
+- Rangkaian fix kompatibilitas agar KernelSU-Next v3.3.0 (`ksu-next/kernel/`) compile + link hijau di kernel 4.14.356 (selene_defconfig). Referensi utama: branch `legacy` KernelSU-Next.
+- `682cc38dc5` `selinux/rules.c` + `selinux/sepolicy.c`: model `struct selinux_policy` (dup/swap policy) hanya ada di 5.10+. Untuk <5.10 (4.14): aturan diaplikasikan langsung ke `selinux_state.ss->policydb` di bawah `policy_rwlock` (pola legacy KSU). `ksu_dup_sepolicy`/`ksu_destroy_sepolicy` jadi stub no-op di <5.10.
+- `1a399126df` `selinux/sepolicy.c`: policydb 4.14 pakai `flex_array` untuk `te_avtab.htable`, `type_attr_map_array`, `type_val_to_struct_array`, `sym_val_to_name` (helper `ksu_avtab_get_node`/`put_node` + branch `add_type` flex_array). `policydb_filenametr_search`/`filename_trans_key`/`compat_filename_trans_count`/`filenametr_key_params` hanya 5.9+ → branch legacy pakai `struct filename_trans` + hashtab 3-arg.
+- `4e9b9b7ca5` `sulog/event.c`: `ktime_get_boottime_ts64` (5.6+) → fallback `getboottime64()` untuk 4.14 (+ include `linux/timekeeping.h`).
+- `0161316a81` `sulog/fd.c`: `__poll_t` (4.16+) → `unsigned int` untuk <4.16.
+- `bba51baf25` `supercall/dispatch.c`: include `linux/sched/task.h` — `tasklist_lock`/`init_task` ada di sana di 4.14.
+- `70c3b02548` `feature/selinux_hide.c`: `status_lock`/`status_page` di 4.14 ada di `selinux_state.ss->*`; tidak ada member `state.policy`; `backup_sepolicy->sidtab` hanya valid 5.10+ (guard).
+- `bad5f1cae0` `infra/su_mount_ns.c` + `policy/app_profile.c`: link fix — `path_mount` (5.9+) diganti wrapper `d_path()` + `do_mount()` + `set_fs(KERNEL_DS)` (pola legacy kernel_compat.c); `seccomp_filter_release` static di <5.9 → pakai `put_seccomp_filter(current)` (simbol global di 4.14).
+- **Sumber:** KernelSU-Next branch `legacy` (kernel/selinux/*, kernel/compat/kernel_compat.c) + struktur SELinux 4.14 di tree (`ss/services.h`, `ss/policydb.h`, `ss/avtab.h`).
+
 ## v0.8.1 — Hookless-only (Kprobes Disabled)
 - **KernelSU-Next sekarang murni hookless:** `CONFIG_KPROBES=y` dihapus dari `selene_defconfig` → framework kprobes tidak di-compile sama sekali.
 - **Kconfig ksu-next di-patch lokal:** `depends on KPROBES && EXT4_FS` → `depends on EXT4_FS` (upstream tetap `KPROBES && EXT4_FS`).
