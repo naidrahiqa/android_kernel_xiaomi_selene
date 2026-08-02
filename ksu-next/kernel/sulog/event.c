@@ -7,6 +7,7 @@
 #include <linux/sched/signal.h>
 #include <linux/slab.h>
 #include <linux/string.h>
+#include <linux/timekeeping.h>
 #include <linux/uaccess.h>
 
 #include <linux/version.h>
@@ -56,7 +57,11 @@ void ksu_compat_sulog(uint8_t sym)
     unsigned int uid = current_uid().val;
     struct timespec64 ts;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
     ktime_get_boottime_ts64(&ts);
+#else
+    getboottime64(&ts);
+#endif
     entry.s_time = (uint32_t)ts.tv_sec;
     entry.data = (uint32_t)uid;
     memcpy((void *)&entry.data + 3, &sym, 1);
@@ -87,7 +92,11 @@ int ksu_sulog_handle_compat_dump(void __user *uptr)
     if (!sbuf.index_ptr || !sbuf.buf_ptr || !sbuf.uptime_ptr)
         return 1;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
     ktime_get_boottime_ts64(&ts);
+#else
+    getboottime64(&ts);
+#endif
     uptime = (uint32_t)ts.tv_sec;
     if (copy_to_user((void __user *)(uintptr_t)sbuf.uptime_ptr, &uptime, sizeof(uptime)))
         return 1;
