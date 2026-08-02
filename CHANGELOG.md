@@ -11,6 +11,11 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.8.0-nightly.20260802 — CI: Docs-only Push Tidak Trigger Build
+- `67a4a331c0` `.github/workflows/build.yml`: trigger `push` kini punya `paths-ignore: ['*.md', '**/*.md']`.
+- **Alasan:** sebelumnya commit yang cuma mengubah dokumentasi (CHANGELOG/AGENTS/docs) memicu full build + update release dengan tag yang sama — release body (`changelog.md`) dihitung ulang sejak tag terakhir dan menimpa changelog lengkap dengan hanya item "docs: ...". Notif Telegram ikut menampilkan changelog menyusut.
+- **Efek**: hanya perubahan kode/defconfig/CI yang memicu build, notif, dan release update.
+
 ## v0.8.0-nightly.20260802 — KernelSU-Next 4.14 Porting: SELinux & Link Compat
 - Rangkaian fix kompatibilitas agar KernelSU-Next v3.3.0 (`ksu-next/kernel/`) compile + link hijau di kernel 4.14.356 (selene_defconfig). Referensi utama: branch `legacy` KernelSU-Next.
 - `682cc38dc5` `selinux/rules.c` + `selinux/sepolicy.c`: model `struct selinux_policy` (dup/swap policy) hanya ada di 5.10+. Untuk <5.10 (4.14): aturan diaplikasikan langsung ke `selinux_state.ss->policydb` di bawah `policy_rwlock` (pola legacy KSU). `ksu_dup_sepolicy`/`ksu_destroy_sepolicy` jadi stub no-op di <5.10.

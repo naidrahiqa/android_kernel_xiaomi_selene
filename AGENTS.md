@@ -93,6 +93,7 @@ make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
 ## CI Pipeline (`.github/workflows/build.yml`)
 
 - Trigger: push ke `selene-r-oss-update`, `m1-cherrypick`, `phrolova`, atau manual dispatch.
+- **Docs-only push di-skip:** `paths-ignore: ['*.md', '**/*.md']` — commit yang cuma mengubah dokumentasi tidak memicu build/notif/release (mencegah release body tertimpa changelog "docs:" saja).
 - Runner: `ubuntu-24.04` + Docker hybrid (Void Linux build env)
 - Toolchain: Greenforce Clang 24.0.0 (`CC=clang HOSTCC=gcc`)
 - KernelSU: KernelSU-Next v3.3.0 via `drivers/kernelsu` symlink
