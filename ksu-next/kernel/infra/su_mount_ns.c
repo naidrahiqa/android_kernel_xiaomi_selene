@@ -12,6 +12,7 @@
 #include <linux/slab.h>
 #include <linux/syscalls.h>
 #include <linux/task_work.h>
+#include <linux/uaccess.h>
 #include <linux/version.h>
 // 4.14: uapi/linux/mount.h does not exist (4.16+); MS_* flags come from
 // linux/fs.h, CLONE_NEWNS from linux/sched.h, ksys_unshare from syscalls.h.
@@ -22,9 +23,39 @@
 #include "infra/su_mount_ns.h"
 #include "util.h"
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
 extern int path_mount(const char *dev_name, struct path *path,
                       const char *type_page, unsigned long flags,
                       void *data_page);
+#else
+// 4.14 (<5.9): path_mount does not exist. Provide a compat wrapper over
+// do_mount + set_fs(KERNEL_DS) (same as legacy KSU kernel_compat.c).
+extern long do_mount(const char *dev_name, const char __user *dir_name,
+                     const char *type_page, unsigned long flags,
+                     void *data_page);
+
+static int path_mount(const char *dev_name, struct path *path,
+                      const char *type_page, unsigned long flags,
+                      void *data_page)
+{
+    mm_segment_t old_fs;
+    long ret = 0;
+    char buf[384];
+
+    char *realpath = d_path(path, buf, sizeof(buf));
+    if (IS_ERR(realpath)) {
+        pr_err("ksu_mount: d_path failed, err: %lu\n", PTR_ERR(realpath));
+        return PTR_ERR(realpath);
+    }
+
+    old_fs = get_fs();
+    set_fs(KERNEL_DS);
+    ret = do_mount(dev_name, (const char __user *)realpath, type_page, flags,
+                   data_page);
+    set_fs(old_fs);
+    return ret;
+}
+#endif
 
 #if defined(__aarch64__)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)

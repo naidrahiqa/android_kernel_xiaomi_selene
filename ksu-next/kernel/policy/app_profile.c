@@ -65,6 +65,9 @@ void seccomp_filter_release(struct task_struct *tsk);
 
 static void disable_seccomp(void)
 {
+    // https://github.com/backslashxx/KernelSU/tree/e28930645e764b9f0e5d0d1b0d5e236464939075/kernel/app_profile.c
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0) ||                          \
+     defined(KSU_OPTIONAL_SECCOMP_FILTER_RELEASE))
     struct task_struct *fake;
 
     fake = kmalloc(sizeof(*fake), GFP_KERNEL);
@@ -72,6 +75,7 @@ static void disable_seccomp(void)
         pr_warn("failed to alloc fake task_struct\n");
         return;
     }
+#endif
 
     // Refer to kernel/seccomp.c: seccomp_set_mode_strict
     // When disabling Seccomp, ensure that current->sighand->siglock is held during the operation.
@@ -84,6 +88,8 @@ static void disable_seccomp(void)
     clear_thread_flag(TIF_SECCOMP);
 #endif
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0) ||                          \
+     defined(KSU_OPTIONAL_SECCOMP_FILTER_RELEASE))
     memcpy(fake, current, sizeof(*fake));
 
     current->seccomp.mode = 0;
@@ -103,6 +109,14 @@ static void disable_seccomp(void)
 
     seccomp_filter_release(fake);
     kfree(fake);
+#else
+    // 4.14 (<5.9): seccomp_filter_release is static; put_seccomp_filter is a
+    // global symbol on old kernels. It is allowed while holding sighand lock.
+    put_seccomp_filter(current);
+    current->seccomp.mode = 0;
+    current->seccomp.filter = NULL;
+    spin_unlock_irq(&current->sighand->siglock);
+#endif
 }
 
 int escape_with_root_profile(void)
