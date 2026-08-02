@@ -6,6 +6,7 @@
 #include <linux/mutex.h>
 #include <linux/poll.h>
 #include <linux/sched.h>
+#include <linux/version.h>
 
 #include "infra/event_queue.h"
 #include "klog.h" // IWYU pragma: keep
@@ -19,7 +20,12 @@ static ssize_t ksu_sulog_read(struct file *file, char __user *buf, size_t count,
     return ksu_event_queue_read(ksu_sulog_get_queue(), buf, count, file->f_flags);
 }
 
+// 4.14: __poll_t does not exist yet; poll returns unsigned int.
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 16, 0)
 static __poll_t ksu_sulog_poll(struct file *file, poll_table *wait)
+#else
+static unsigned int ksu_sulog_poll(struct file *file, poll_table *wait)
+#endif
 {
     return ksu_event_queue_poll(ksu_sulog_get_queue(), file, wait);
 }
