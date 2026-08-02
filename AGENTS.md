@@ -17,6 +17,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 | KSU-Next Integration | `.opencode/skills/ksunext-integration/SKILL.md` | KernelSU-Next integration, syscall table hook, KSU_VERSION, manager APK handling |
 | NoMount | `.opencode/skills/nomount/SKILL.md` | maxsteeel/nomount systemless path redirection, iterate_dir hook fix, VFS injection |
 | Build System Fixes | `.opencode/skills/build-system-fixes/SKILL.md` | Kconfig CRLF, Clang IAS, stpcpy, LTO, ZSTD, UAPI headers, 4.14 gotcha collection |
+| Linux Version Compat | `.opencode/skills/linux-version-compat/SKILL.md` | Porting kode upstream (KSU-Next dll) ke 4.14: peta `LINUX_VERSION_CODE` guard, API split points (4.15/4.16/4.17/5.4/5.6/5.11/6.12 dll), fallback 4.14 per file |
 | Defconfig Management | `.opencode/skills/defconfig-management/SKILL.md` | Config dependency chains, known gotchas (HMP, THP, TASK_TURBO, SECTION_MISMATCH), defconfig debug workflow |
 | Performance Tuning | `.opencode/skills/performance-tuning/SKILL.md` | Katalog fitur (THP, KSM, HMP, SQUASHFS, ZSWAP, dll), tradeoff notes, referensi defconfig |
 | CI/CD Debug Workflow | `.opencode/skills/ci-cd-debug-workflow/SKILL.md` | Step-by-step debug CI build failure: ambil log, parse error, fix, re-run |
