@@ -156,7 +156,13 @@ out:
 // individual mode , need CAP_SYS_ADMIN to perform unshare and remount
 static void ksu_mnt_ns_individual(void)
 {
-    long ret = ksys_unshare(CLONE_NEWNS);
+    long ret;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
+    ret = ksys_unshare(CLONE_NEWNS);
+#else
+    // 4.14: ksys_unshare does not exist yet (syscall wrapper split in 4.17).
+    ret = sys_unshare(CLONE_NEWNS);
+#endif
     if (ret) {
         pr_warn("call ksys_unshare failed: %ld\n", ret);
         return;
