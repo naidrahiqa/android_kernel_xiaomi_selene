@@ -158,6 +158,14 @@ If switching to a different Clang version, check if this is still needed.
 - Versi di-pin via fallback di `Kbuild`: `KSU_VERSION_FALLBACK := 33227` (30000 + 3227 commits) dan `KSU_VERSION_TAG_FALLBACK := v3.3.0` — jangan set ke 1 (manager tidak deteksi root).
 - Build system: `Kbuild` (bukan Makefile) — `kernelsu-objs` multi-file, bukan unity build.
 
+### KernelSU-Next 4.14 SELinux & Link Port (v0.8.0-nightly.20260802)
+Semua fix di bawah SUDAH diterapkan & build hijau. Jangan revert tanpa alasan.
+- **Model policy:** `struct selinux_policy` + `selinux_state.policy` + `policy_mutex` hanya ada di 5.10+. 4.14 pakai `struct selinux_ss` (`security/selinux/ss/services.h`) — `sidtab`, `policydb`, `policy_rwlock`, `latest_granting`, `status_page`, `status_lock`. `rules.c`/`sepolicy.c`: macro `SELINUX_POLICY_INSTEAD_SELINUX_SS` hanya didefinisikan `>=5.10`; di bawahnya aturan diedit **in-place** ke `selinux_state.ss->policydb` di bawah `policy_rwlock`. `ksu_dup/destroy_sepolicy` = stub no-op <5.10. Reference: branch `legacy` KernelSU-Next.
+- **Policydb 4.14 pakai `flex_array`:** `te_avtab.htable`, `type_attr_map_array`, `type_val_to_struct_array`, `sym_val_to_name[SYM_TYPES]` bukan array langsung (flex_array baru 5.1 jadi array). Helper `ksu_avtab_get_node`/`ksu_avtab_put_node` + branch flex_array di `add_type`.
+- **filename_trans:** `policydb_filenametr_search`/`filename_trans_key`/`filenametr_key_params` hanya 5.9+. <5.9 pakai `struct filename_trans` + hashtab **3-arg** (4.14 `hashtab.h` = `hashtab_insert(h,k,d)`; hash/cmp disimpan di struct `hashtab`).
+- **Link fixes:** `path_mount` (5.9+) → wrapper `d_path()` + `do_mount()` + `set_fs(KERNEL_DS)` (pola legacy `kernel/compat/kernel_compat.c`); `seccomp_filter_release` static di 4.14 → pakai `put_seccomp_filter(current)` (global di `kernel/seccomp.c:523`).
+- **API 4.14 lain:** `ktime_get_boottime_ts64` → `getboottime64()` (<5.6); `__poll_t` → `unsigned int` (<4.16); `tasklist_lock`/`init_task` butuh `#include <linux/sched/task.h>`; `status_lock`/`status_page`/`status` akses via `selinux_state.ss->` (<5.10) di `feature/selinux_hide.c`.
+
 ### NoMount Integration
 - Source: `maxsteeel/nomount` — kernel-level path redirection + virtual file injection.
 - Compiled as `fs/nomount.c` + `fs/nomount.h`, enabled via `CONFIG_NOMOUNT=y`.
