@@ -248,6 +248,7 @@ static struct page *fake_status = NULL;
 
 static void initialize_fake_status()
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
     mutex_lock(&selinux_state.status_lock);
     if (fake_status)
         goto out;
@@ -257,6 +258,18 @@ static void initialize_fake_status()
     }
 
     struct selinux_kernel_status *status = page_address(selinux_state.status_page);
+#else
+    // 4.14 (<5.10): status_lock/status_page live in selinux_state.ss
+    mutex_lock(&selinux_state.ss->status_lock);
+    if (fake_status)
+        goto out;
+    if (!selinux_state.ss->status_page) {
+        pr_warn("initialize_fake_status: status_page not exist\n");
+        goto out;
+    }
+
+    struct selinux_kernel_status *status = page_address(selinux_state.ss->status_page);
+#endif
     if (!status->enforcing && !ksu_late_loaded) {
         pr_warn("initialize_fake_status: skip not enforcing\n");
         goto out;
@@ -283,7 +296,11 @@ static void initialize_fake_status()
             new_status->policyload, new_status->enforcing);
 
 out:
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
     mutex_unlock(&selinux_state.status_lock);
+#else
+    mutex_unlock(&selinux_state.ss->status_lock);
+#endif
 }
 
 typedef int (*sel_open_handle_status_fn)(struct inode *inode, struct file *filp);
@@ -292,9 +309,15 @@ static int my_sel_open_handle_status(struct inode *inode, struct file *filp)
 {
     if (likely(current_uid().val >= 10000 && ksu_selinux_hide_enabled)) {
         void *data;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
         mutex_lock(&selinux_state.status_lock);
         data = fake_status;
         mutex_unlock(&selinux_state.status_lock);
+#else
+        mutex_lock(&selinux_state.ss->status_lock);
+        data = fake_status;
+        mutex_unlock(&selinux_state.ss->status_lock);
+#endif
         if (data) {
             filp->private_data = data;
             return 0;
@@ -334,9 +357,13 @@ static int ksu_selinux_hide_enable()
     if (!context_struct_compute_av_fn) {
         pr_warn("context_struct_compute_av not found!\n");
     }
-#else
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
     fake_state.initialized = true;
     fake_state.policy = backup_sepolicy;
+#else
+    // 4.14 (<5.10): no struct selinux_policy / state.policy member; the
+    // backup sepolicy never exists on this model, so fake_state stays empty.
+    fake_state.initialized = true;
 #endif
 
     context_write = &selinux_write_op[SEL_CONTEXT];
@@ -507,11 +534,19 @@ void __exit ksu_selinux_hide_exit()
     }
     mutex_unlock(&selinux_hide_mutex);
     ksu_unregister_feature_handler(KSU_FEATURE_SELINUX_HIDE);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
     mutex_lock(&selinux_state.status_lock);
     if (fake_status)
         __free_page(fake_status);
     fake_status = NULL;
     mutex_unlock(&selinux_state.status_lock);
+#else
+    mutex_lock(&selinux_state.ss->status_lock);
+    if (fake_status)
+        __free_page(fake_status);
+    fake_status = NULL;
+    mutex_unlock(&selinux_state.ss->status_lock);
+#endif
 }
 
 void ksu_selinux_hide_drop_backup_if_unused()
@@ -519,8 +554,10 @@ void ksu_selinux_hide_drop_backup_if_unused()
     mutex_lock(&selinux_hide_mutex);
     if (!ksu_selinux_hide_running && backup_sepolicy) {
         pr_info("selinux_hide is not enabled - drop backup_sepolicy\n");
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
         sidtab_destroy(backup_sepolicy->sidtab);
         kfree(backup_sepolicy->sidtab);
+#endif
         ksu_destroy_sepolicy(backup_sepolicy);
         backup_sepolicy = NULL;
     }
