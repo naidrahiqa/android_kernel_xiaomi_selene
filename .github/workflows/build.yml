@@ -3,6 +3,9 @@ name: Build Selene Kernel
 on:
   push:
     branches: [selene-r-oss-update, m1-cherrypick, phrolova]
+    paths-ignore:
+      - '*.md'
+      - '**/*.md'
   workflow_dispatch:
     inputs:
       variant:
