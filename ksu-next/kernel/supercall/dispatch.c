@@ -2,6 +2,7 @@
 #include <linux/cred.h>
 #include <linux/slab.h>
 #include <linux/string.h>
+#include <linux/sched/task.h>
 #include <linux/uaccess.h>
 #include <linux/version.h>
 #include <linux/thread_info.h>
