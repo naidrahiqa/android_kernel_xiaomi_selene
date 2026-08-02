@@ -944,6 +944,11 @@ bool ksu_genfscon(struct policydb *db, const char *fs_name, const char *path,
 
 // ======== sepolicy ========
 
+// struct selinux_policy (and the dup/swap model) exists only on 5.10+.
+// On 4.14 (and <5.10) kernel: selinux_state.ss->policydb is edited in place
+// (see rules.c) — ksu_dup_sepolicy/ksu_destroy_sepolicy are unused stubs.
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+
 void ksu_destroy_sepolicy(struct selinux_policy *pol)
 {
     policydb_destroy(&pol->policydb);
@@ -1023,3 +1028,16 @@ out_free_data:
 
     return ERR_PTR(ret);
 }
+
+#else
+
+void ksu_destroy_sepolicy(struct selinux_policy *pol)
+{
+}
+
+struct selinux_policy *ksu_dup_sepolicy(struct selinux_policy *old_pol)
+{
+    return NULL;
+}
+
+#endif // LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
