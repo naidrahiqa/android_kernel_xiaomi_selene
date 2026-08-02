@@ -582,10 +582,19 @@ static long ksu_sys_fstat(const struct pt_regs *regs)
         void __user *st_size_ptr = statbuf + offsetof(struct stat, st_size);
         long size, new_size;
         size_t extra = ksu_rc_len + module_rc_len;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 0)
         if (!copy_from_user_nofault(&size, st_size_ptr, sizeof(long))) {
+#else
+        // 4.14: copy_*_nofault does not exist (5.3+); plain copy_* is fine here.
+        if (!copy_from_user(&size, st_size_ptr, sizeof(long))) {
+#endif
             new_size = size + extra;
             pr_info("adding rc len: %ld -> %ld (static=%zu module=%zu)", size, new_size, ksu_rc_len, module_rc_len);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 0)
             if (!copy_to_user_nofault(st_size_ptr, &new_size, sizeof(long))) {
+#else
+            if (!copy_to_user(st_size_ptr, &new_size, sizeof(long))) {
+#endif
                 pr_info("added rc len");
             } else {
                 pr_err("add rc len failed: statbuf 0x%lx", (unsigned long)st_size_ptr);
