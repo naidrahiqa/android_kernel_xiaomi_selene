@@ -60,13 +60,16 @@ Do NOT use the selective update script. Instead:
 | Reserved NTFS filenames | `aux.c`/`aux.h` in nouveau/soc/arc — sparse checkout or WSL |
 | `UL()` macro undeclared | `BIT_MASK(nr)` in Clang — add `#include <linux/types.h>` before `bits.h` usage |
 
-### Step 5: KernelSU + NoMount
+### Step 5: ReSukiSU + NoMount
 
-- KernelSU: KernelSU-Next v3.3.0, source at `ksu-next/kernel/`, symlink at `drivers/kernelsu`
-- Hook mode: syscall table dispatcher + sys_enter tracepoint (no manual hooks)
-- Deps: `CONFIG_KSU=y`, `CONFIG_MODULES=y`, `CONFIG_KPROBES=y`, `CONFIG_EXT4_FS=y`
+- ReSukiSU: main @ `faccf4c5` (KSU_VERSION 35071), source at `resukisu/kernel/`, symlink at `drivers/kernelsu`
+- Hook mode: manual hook (`CONFIG_KSU_MANUAL_HOOK=y`) — `ksu_handle_execveat`/`faccessat`/`stat`/`newfstat_ret`/`fstat64_ret`/`sys_reboot` di fs/exec.c, fs/open.c, fs/stat.c, kernel/reboot.c
+- setuid/initrc/input hooks otomatis via LSM/input_handler (AUTO_* default y, <6.8) — jangan patch manual
+- `manual_hook_check.mk` verify tiap hook saat build — hook hilang = compile error; hook lama (`ksu_vfs_read_hook`, `is_ksu_transition`, `ksu_handle_rename`) ditolak
+- Deps: `CONFIG_KSU=y`, `CONFIG_KSU_MANUAL_HOOK=y`, `CONFIG_KALLSYMS_ALL=y` (tanpa KALLSYMS_ALL butuh static export patch di security/selinux/), `CONFIG_MODULES=y`, `CONFIG_EXT4_FS=y`
+- Kbuild fallback version pin: `KSU_LOCAL_VERSION := 4371`, tag `v4.2.0-rc1`, sha `faccf4c5` — jangan set ke 1 (manager tidak deteksi root)
 - NoMount: `fs/nomount.c` + `fs/nomount.h`, VFS hooks in dcache/namei/readdir/stat/statfs/proc
-- Both work fine at 4.14.186 — no update needed
+- Both work fine at 4.14.356 — no update needed
 
 ### Step 6: CI Pipeline
 
@@ -85,7 +88,7 @@ GitHub Actions workflow at `.github/workflows/build.yml`:
 | `.github/scripts/version.sh` | Versioning |
 | `.github/scripts/generate-changelog.sh` | Release changelog |
 | `.github/scripts/notify-telegram.sh` | Telegram notifications |
-| `ksu-next/kernel/` | KernelSU-Next source |
+| `resukisu/kernel/` | ReSukiSU source |
 | `fs/nomount.c`, `fs/nomount.h` | NoMount source |
 | `scripts/anykernel.sh` | AnyKernel3 config |
 | `arch/arm64/configs/selene_defconfig` | Kernel config |

@@ -108,11 +108,12 @@ function build_success() {
 ${changelog_items}
 
 <b>Download</b> (<a href='${REPO_URL}/releases/tag/${TAG}'>GitHub Releases</a>)
-<b>Manager</b> (<a href='https://github.com/KernelSU-Next/KernelSU-Next/releases/latest'>KernelSU-Next</a>) | <b>NoMount</b> (<a href='https://github.com/maxsteeel/nomount/releases'>GitHub</a>)
+<b>Manager</b> (<a href='https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip'>ReSukiSU</a> · <a href='https://t.me/ReSukiSU'>t.me/ReSukiSU</a>) | <b>NoMount</b> (<a href='https://github.com/maxsteeel/nomount/releases'>GitHub</a>)
 
 <b>Credits:</b>
 yuki-saisei (<a href='https://github.com/yuki-saisei'>Base kernel</a>)
-KernelSU-Next (<a href='https://github.com/KernelSU-Next/KernelSU-Next'>KernelSU-Next</a>)
+ReSukiSU (<a href='https://github.com/ReSukiSU/ReSukiSU'>ReSukiSU</a>)
+SukiSU-Ultra (<a href='https://github.com/SukiSU-Ultra/SukiSU-Ultra'>SukiSU-Ultra</a>)
 maxsteeel (<a href='https://github.com/maxsteeel/nomount'>NoMount</a>)
 greenforce-project (<a href='https://github.com/greenforce-project/greenforce_clang'>Clang 24</a>)
 osm0sis (<a href='https://github.com/osm0sis/AnyKernel3'>AnyKernel3</a>)

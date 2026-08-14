@@ -11,6 +11,25 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.9.0 — Migrasi Root Solution: KernelSU-Next → ReSukiSU
+- **Root solution diganti: KernelSU-Next → ReSukiSU** (`ReSukiSU/ReSukiSU`, fork SukiSU-Ultra, main @ `faccf4c5` = v4.2.0-rc1 + 10 commits, 4371 commits, **KSU_VERSION 35071**; formula `30000 + commit_count + 700`).
+  - `ksu-next/kernel/` dihapus → source baru di `resukisu/kernel/` (direct copy, bukan submodule).
+  - **Hook mode: manual hook (`CONFIG_KSU_MANUAL_HOOK=y`)** — wajib non-GKI: TP-hook (`CONFIG_KSU_TRACEPOINT_HOOK`) hanya GKI2 5.10+ dan di-hard-error Kbuild untuk Non-GKI/GKI1. Patch manual di tree kernel:
+    - `fs/exec.c`: `ksu_handle_execveat` di `do_execve` + `compat_do_execve`
+    - `fs/open.c`: `ksu_handle_faccessat` di `SYSCALL_DEFINE3(faccessat)`
+    - `fs/stat.c`: `ksu_handle_stat` di `newfstatat` + `fstatat64`; `ksu_handle_newfstat_ret` di `newfstat`; `ksu_handle_fstat64_ret` di `fstat64`
+    - `kernel/reboot.c`: `ksu_handle_sys_reboot` di `SYSCALL_DEFINE4(reboot)`
+    - setuid/initrc(read)/input: **otomatis** via LSM/input_handler (`KSU_MANUAL_HOOK_AUTO_SETUID_HOOK`/`AUTO_INITRC_HOOK`/`AUTO_INPUT_HOOK`, default y, hanya <6.8 — 4.14 aman). Tidak ada patch manual di `kernel/sys.c`/`fs/read_write.c`/`drivers/input/input.c`.
+    - `resukisu/kernel/tools/manual_hook_check.mk` meng-verify SEMUA hook saat build (grep string di file kernel) — hook hilang/ekstra = compile error; hook lama (`ksu_vfs_read_hook`, `is_ksu_transition`, `ksu_handle_rename`) ditolak.
+  - **Kbuild di-patch lokal:** upstream `$(error)` kalau bukan git submodule → fallback pin tanpa `.git`: `KSU_LOCAL_VERSION := 4371`, `KSU_TAG_NAME := v4.2.0-rc1`, `KSU_COMMIT_SHA := faccf4c5`, `KSU_BRANCH_NAME := main`. Jangan set ke 1 (manager tidak deteksi root).
+  - **Manager:** `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` (default) — manager KernelSU/MKSU/RKSU/SukiSU-Ultra diterima. Rekomendasi: **ReSukiSU manager** (nightly.link build-manager / t.me/ReSukiSU) — match KSU_VERSION 35071.
+  - `CONFIG_KPROBES` **tidak dibutuhkan** (Kconfig ReSukiSU tidak `depends on KPROBES`). `CONFIG_EXT4_FS=y` dipertahankan (boot_event pakai ext4 helpers). `CONFIG_KALLSYMS_ALL=y` dipertahankan — tanpa itu ReSukiSU butuh static export patch di `security/selinux/`.
+  - **Compat 4.14 ditangani upstream:** `tools/kernel_compat.mk` + `compat/kernel_compat.c` auto-detect (flex_array policydb, hashtab 3-arg, `struct selinux_ss`, `path_mount` wrapper, `put_seccomp_filter`, `__poll_t`, dll) — tidak perlu port manual seperti KSU-Next dulu.
+- **Defconfig (`selene_defconfig`):** section KernelSU-Next → ReSukiSU: `CONFIG_KSU=y`, `CONFIG_KSU_MANUAL_HOOK=y`, `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` (+ KALLSYMS/KALLSYMS_ALL, MODULES, EXT4_FS dipertahankan).
+- **CI/CD diupdate:** `build.yml` (symlink → `resukisu/kernel`, `KERNELSU_VERSION=ReSukiSU main @ faccf4c5 (v4.2.0-rc1+10)`, `PHROLOVA_BASE` → 0.9.0, release body + section "Root Solution — ReSukiSU" dengan link manager), `notify-telegram.sh` (manager link ReSukiSU + credits ReSukiSU/SukiSU-Ultra), `update-kernel.yml` + `scripts/update_kernel_selective.sh` (skip list → `resukisu/`).
+- **Dokumentasi diupdate:** AGENTS.md (Konteks Project, Source of Truth, gotchas ReSukiSU Integration + 4.14 SELinux notes), skill `ksunext-integration` → `resukisu-integration` (ditulis ulang), `selene-kernel` SKILL (Workflow D), `kernel-update`, `linux-version-compat`, `selinux-policy`, docs/HOOK_MODES.md (ditulis ulang → manual hook vs TP-hook), FIX_PROMPT.md, ROADMAP.md.
+- **Sumber:** ReSukiSU/ReSukiSU (upstream). Alasan: fork SukiSU-Ultra yang aktif (last push 2026-08-14), support resmi non-GKI (3.4+), multi-manager support, dan fix non-GKI terbaru (`3b70416f` handle_sepolicy success_cmd_count).
+
 ## v0.8.0-nightly.20260802 — CI: Docs-only Push Tidak Trigger Build
 - `67a4a331c0` `.github/workflows/build.yml`: trigger `push` kini punya `paths-ignore: ['*.md', '**/*.md']`.
 - **Alasan:** sebelumnya commit yang cuma mengubah dokumentasi (CHANGELOG/AGENTS/docs) memicu full build + update release dengan tag yang sama — release body (`changelog.md`) dihitung ulang sejak tag terakhir dan menimpa changelog lengkap dengan hanya item "docs: ...". Notif Telegram ikut menampilkan changelog menyusut.

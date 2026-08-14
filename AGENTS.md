@@ -14,7 +14,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 | Finishing Branch | `.opencode/skills/finishing-a-development-branch/SKILL.md` | Integrasi kerja setelah implementasi selesai — merge, PR, cleanup |
 | Kernel Source Merge | `.opencode/skills/kernel-source-merge/SKILL.md` | Merge/compare MiCode base vs Ronald826 reference |
 | Kernel Update | `.opencode/skills/kernel-update/SKILL.md` | Upgrade/downgrade kernel version (4.14.x), CVE patching |
-| KSU-Next Integration | `.opencode/skills/ksunext-integration/SKILL.md` | KernelSU-Next integration, syscall table hook, KSU_VERSION, manager APK handling |
+| ReSukiSU Integration | `.opencode/skills/resukisu-integration/SKILL.md` | ReSukiSU integration, manual hooks (non-GKI), KSU_VERSION pin, manager APK handling |
 | NoMount | `.opencode/skills/nomount/SKILL.md` | maxsteeel/nomount systemless path redirection, iterate_dir hook fix, VFS injection |
 | Build System Fixes | `.opencode/skills/build-system-fixes/SKILL.md` | Kconfig CRLF, Clang IAS, stpcpy, LTO, ZSTD, UAPI headers, 4.14 gotcha collection |
 | Linux Version Compat | `.opencode/skills/linux-version-compat/SKILL.md` | Porting kode upstream (KSU-Next dll) ke 4.14: peta `LINUX_VERSION_CODE` guard, API split points (4.15/4.16/4.17/5.4/5.6/5.11/6.12 dll), fallback 4.14 per file |
@@ -34,10 +34,10 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 
 - **Device:** Redmi 10 2022, codename **selene**, MediaTek Helio G88 (MT6768).
 - **Kernel:** Linux 4.14.356 (yuki-saisei base), **non-GKI**. Banyak API beda drastis dari 5.x/6.x — jangan apply patch GKI 5.10+ tanpa cek dulu.
-- **Root solution:** KernelSU-Next (`KernelSU-Next/KernelSU-Next`, fork tiann/KernelSU, latest dev @ `e7536f0`, tag v3.3.0).
-  - **Hook mode: syscall table hook + sys_enter tracepoint** — dispatcher slot di-patch langsung ke `sys_call_table` (via `ksu_patch_text`), routing syscall via `register_trace_prio_sys_enter`. Tidak perlu patch fs/ manual.
-  - `CONFIG_EXT4_FS=y` — wajib (Kconfig `depends on EXT4_FS`; KPROBES di-drop dari depends — **hookless-only**, `CONFIG_KPROBES=n`). Kprobes compiled-out: reboot supercall, avc spoof, key-event hook, kretprobe tracking mati — root core tidak terpengaruh.
-  - **Manager tunggal:** KernelSU-Next manager APK (signature `EXPECTED_MANAGER_HASH` di Kbuild). Manager tiann/backslashxx/RKSU/MKSU **tidak** kompatibel.
+- **Root solution:** ReSukiSU (`ReSukiSU/ReSukiSU`, fork SukiSU-Ultra, main @ `faccf4c5` = v4.2.0-rc1 + 10 commits, **KSU_VERSION 35071**).
+  - **Hook mode: manual hook (`CONFIG_KSU_MANUAL_HOOK=y`)** — TP-hook (syscall table) cuma GKI 5.10+; di non-GKI 4.14 wajib manual hook. Patch manual di: `fs/exec.c` (`ksu_handle_execveat`), `fs/open.c` (`ksu_handle_faccessat`), `fs/stat.c` (`ksu_handle_stat`/`ksu_handle_newfstat_ret`/`ksu_handle_fstat64_ret`), `kernel/reboot.c` (`ksu_handle_sys_reboot`). setuid/initrc/read via LSM (`KSU_MANUAL_HOOK_AUTO_SETUID_HOOK`/`AUTO_INITRC_HOOK`) + input via input_handler (`AUTO_INPUT_HOOK`) — otomatis, default y (<6.8). `manual_hook_check.mk` meng-verify tiap hook saat build — hook hilang = compile error.
+  - Kbuild di-patch lokal: fallback version pin tanpa `.git` (`KSU_LOCAL_VERSION := 4371`, tag `v4.2.0-rc1`, sha `faccf4c5`, branch `main`). `CONFIG_KPROBES` tidak dibutuhkan; `CONFIG_EXT4_FS=y` dipertahankan.
+  - **Manager:** `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` (default) — manager KernelSU/MKSU/RKSU/SukiSU-Ultra bisa dipakai. Disarankan **ReSukiSU manager** (nightly.link build-manager / t.me/ReSukiSU) — match KSU_VERSION 35071.
 - **Systemless path redirection:** NoMount (`maxsteeel/nomount`).
   - Virtual file injection + path redirection tanpa mount filesystem.
   - Compiled into kernel (`CONFIG_NOMOUNT=y`), netlink-based userspace control.
@@ -48,14 +48,14 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 
 - Base kernel: `MiCode/Xiaomi_Kernel_OpenSource`, branch `selene-r-oss-update`.
 - Reference-only: `Ronald826/xiaomi_kernel_selene`, branch `4.14-baxter_EXPERIMENTAL` (jangan merge mentah).
-- KernelSU: `KernelSU-Next/KernelSU-Next` v3.3.0 @ `e7536f0` (local copy di `ksu-next/kernel/`).
+- ReSukiSU: `ReSukiSU/ReSukiSU` main @ `faccf4c5` (local copy di `resukisu/kernel/`).
 - NoMount: `maxsteeel/nomount` (source di `fs/nomount.c` + `fs/nomount.h`).
 
 ## Dokumentasi Project
 
 - [CHANGELOG.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/CHANGELOG.md) — Record cherry-pick & versi rilis kernel.
 - [docs/OPTIMIZATIONS.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/docs/OPTIMIZATIONS.md) — Detail optimasi BBR, ZSTD ZRAM, & BFQ I/O.
-- [docs/HOOK_MODES.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/docs/HOOK_MODES.md) — Perbandingan hook mode KernelSU-Next: hookless (syscall table + tracepoint) vs kprobes.
+- [docs/HOOK_MODES.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/docs/HOOK_MODES.md) — Perbandingan hook mode root solution: ReSukiSU manual hook (non-GKI) vs TP-hook (GKI2).
 - [FIX_PROMPT.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/FIX_PROMPT.md) — Panduan perbaikan cepat jika terjadi masalah kompilasi.
 
 ## Build Commands (Greenforce Clang 24.0.0)
@@ -70,8 +70,8 @@ sudo apt-get install -y bc bison build-essential flex \
 bash <(wget -qO- https://raw.githubusercontent.com/greenforce-project/greenforce_clang/refs/heads/main/get_clang.sh)
 export PATH="$(pwd)/greenforce-clang/bin:$PATH"
 
-# Setup KernelSU symlink (wajib sebelum build)
-ln -sf "$(realpath ksu-next/kernel)" drivers/kernelsu
+# Setup ReSukiSU symlink (wajib sebelum build)
+ln -sf "$(realpath resukisu/kernel)" drivers/kernelsu
 
 # Build
 make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
@@ -96,7 +96,7 @@ make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
 - **Docs-only push di-skip:** `paths-ignore: ['*.md', '**/*.md']` — commit yang cuma mengubah dokumentasi tidak memicu build/notif/release (mencegah release body tertimpa changelog "docs:" saja).
 - Runner: `ubuntu-24.04` + Docker hybrid (Void Linux build env)
 - Toolchain: Greenforce Clang 24.0.0 (`CC=clang HOSTCC=gcc`)
-- KernelSU: KernelSU-Next v3.3.0 via `drivers/kernelsu` symlink
+- ReSukiSU: ReSukiSU main @ `faccf4c5` via `drivers/kernelsu` symlink (manual hook, non-GKI)
 - CI matrix: **Single build** (universal kernel, 1 zip fits all)
 - Telegram notifications: ObsidianKernel-style format with credits/download links
   - Start/success/failed (error log ke `TELEGRAM_ERROR_CHANNEL_ID` channel terpisah)
@@ -146,26 +146,31 @@ If switching to a different Clang version, check if this is still needed.
 - GCC 13 promotes many new warnings to `-Werror` on vendor drivers. Strategy: `-Wno-error` in `scripts/Makefile.lib` `orig_c_flags`.
 - Without `-Wno-error`: `CONFIG_CC_STACKPROTECTOR_STRONG` fails, `CONFIG_BLK_INLINE_ENCRYPTION` broken.
 
-### KernelSU-Next Integration
-- Source: `ksu-next/kernel/` (direct copy, not submodule). Current: v3.3.0 @ `e7536f0` (dev branch).
-- Symlink: `ln -sf ksu-next/kernel drivers/kernelsu` — created at CI time, not in git.
-- `drivers/Kconfig`: already has `source "drivers/kernelsu/Kconfig"` (line 225).
-- `drivers/Makefile`: already has `obj-$(CONFIG_KSU) += kernelsu/` (line 194).
-- Kconfig `depends on EXT4_FS` (KPROBES **dihapus** dari depends — patch lokal; upstream `depends on KPROBES && EXT4_FS`). `CONFIG_EXT4_FS=y` wajib.
-- **Hookless-only:** `CONFIG_KPROBES=n` (bukan `=y` lagi). Kode kprobe di `ksu-next/kernel` di-guard `#ifdef CONFIG_KPROBES` (supercall.c reboot kprobe, ksud_integration.c input_event kprobe, extras.c avc_spoof, syscall_hook_manager.c kretprobe) — fitur opsional tsb compiled-out: reboot supercall via sys_reboot magic, avc spoof, key-event hook mati (manager fd-install tetap jalan via setuid hook).
-- `CONFIG_MODULES=y` dipertahankan (parity defconfig MiCode asli).
-- Hook mode: dispatcher slot di `sys_call_table` (via `ksu_patch_text`) + `register_trace_prio_sys_enter` — NO manual hooks in fs/ needed, NO kprobes.
-- **Manager tunggal:** hanya KernelSU-Next manager APK. `KSU_NEXT_MANAGER_SIZE`/`KSU_NEXT_MANAGER_HASH` di `Kbuild` (default = signature KernelSU-Next manager).
-- Versi di-pin via fallback di `Kbuild`: `KSU_VERSION_FALLBACK := 33227` (30000 + 3227 commits) dan `KSU_VERSION_TAG_FALLBACK := v3.3.0` — jangan set ke 1 (manager tidak deteksi root).
+### ReSukiSU Integration
+- Source: `resukisu/kernel/` (direct copy, not submodule). Current: main @ `faccf4c5` (v4.2.0-rc1 + 10 commits, 4371 commits, **KSU_VERSION 35071**).
+- Symlink: `ln -sf "$(realpath resukisu/kernel)" drivers/kernelsu` — created at CI time, not in git.
+- `drivers/Kconfig`: already has `source "drivers/kernelsu/Kconfig"` (line 223).
+- `drivers/Makefile`: already has `obj-$(CONFIG_KSU) += kernelsu/` (line 191).
+- Kconfig: `CONFIG_KSU` (tristate, `select KALLSYMS`) — tidak ada `depends on KPROBES/EXT4_FS` di ReSukiSU. `CONFIG_EXT4_FS=y` dipertahankan (boot_event pakai ext4 helpers).
+- **Hook mode: `CONFIG_KSU_MANUAL_HOOK=y`** (wajib non-GKI). TP-hook (`CONFIG_KSU_TRACEPOINT_HOOK`) **hard error** di Kbuild untuk Non-GKI/GKI1. Manual hooks di-patch di tree kernel:
+  - `fs/exec.c` → `ksu_handle_execveat` di `do_execve` + `compat_do_execve`
+  - `fs/open.c` → `ksu_handle_faccessat` di `SYSCALL_DEFINE3(faccessat)`
+  - `fs/stat.c` → `ksu_handle_stat` di `newfstatat` + `fstatat64`; `ksu_handle_newfstat_ret` di `newfstat`; `ksu_handle_fstat64_ret` di `fstat64`
+  - `kernel/reboot.c` → `ksu_handle_sys_reboot` di `SYSCALL_DEFINE4(reboot)`
+  - setuid/initrc(read)/input: **otomatis** via LSM/input_handler — `KSU_MANUAL_HOOK_AUTO_SETUID_HOOK`/`AUTO_INITRC_HOOK`/`AUTO_INPUT_HOOK` (default y, hanya untuk <6.8; kita 4.14 aman). Jangan patch `kernel/sys.c`/`fs/read_write.c`/`drivers/input/input.c` manual selama AUTO_* on.
+  - `tools/manual_hook_check.mk` mem-verify SEMUA hook saat build (grep string di file kernel) — hook hilang/ekstra = compile error. Juga menolak hook lama (`ksu_vfs_read_hook`, `is_ksu_transition`, `ksu_handle_rename`).
+- **Versi di-pin via fallback di `Kbuild`** (patch lokal — upstream `$(error ...)` kalau bukan git submodule): `KSU_LOCAL_VERSION := 4371`, `KSU_TAG_NAME := v4.2.0-rc1`, `KSU_COMMIT_SHA := faccf4c5`, `KSU_BRANCH_NAME := main`. Formula `KSU_VERSION = 30000 + commits + 700` → 35071. Jangan set ke 1 (manager tidak deteksi root).
+- **Manager:** `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` (default) — manager KernelSU/MKSU/RKSU/SukiSU-Ultra diterima. Rekomendasi: ReSukiSU manager (nightly.link build-manager / t.me/ReSukiSU) — match KSU_VERSION.
+- Compat layer: `tools/kernel_compat.mk` auto-detect API 4.14 (flex_array policydb, hashtab 3-arg, `struct selinux_ss`, status_lock global, dst) — tidak perlu port manual seperti KSU-Next dulu.
 - Build system: `Kbuild` (bukan Makefile) — `kernelsu-objs` multi-file, bukan unity build.
 
-### KernelSU-Next 4.14 SELinux & Link Port (v0.8.0-nightly.20260802)
-Semua fix di bawah SUDAH diterapkan & build hijau. Jangan revert tanpa alasan.
-- **Model policy:** `struct selinux_policy` + `selinux_state.policy` + `policy_mutex` hanya ada di 5.10+. 4.14 pakai `struct selinux_ss` (`security/selinux/ss/services.h`) — `sidtab`, `policydb`, `policy_rwlock`, `latest_granting`, `status_page`, `status_lock`. `rules.c`/`sepolicy.c`: macro `SELINUX_POLICY_INSTEAD_SELINUX_SS` hanya didefinisikan `>=5.10`; di bawahnya aturan diedit **in-place** ke `selinux_state.ss->policydb` di bawah `policy_rwlock`. `ksu_dup/destroy_sepolicy` = stub no-op <5.10. Reference: branch `legacy` KernelSU-Next.
-- **Policydb 4.14 pakai `flex_array`:** `te_avtab.htable`, `type_attr_map_array`, `type_val_to_struct_array`, `sym_val_to_name[SYM_TYPES]` bukan array langsung (flex_array baru 5.1 jadi array). Helper `ksu_avtab_get_node`/`ksu_avtab_put_node` + branch flex_array di `add_type`.
-- **filename_trans:** `policydb_filenametr_search`/`filename_trans_key`/`filenametr_key_params` hanya 5.9+. <5.9 pakai `struct filename_trans` + hashtab **3-arg** (4.14 `hashtab.h` = `hashtab_insert(h,k,d)`; hash/cmp disimpan di struct `hashtab`).
-- **Link fixes:** `path_mount` (5.9+) → wrapper `d_path()` + `do_mount()` + `set_fs(KERNEL_DS)` (pola legacy `kernel/compat/kernel_compat.c`); `seccomp_filter_release` static di 4.14 → pakai `put_seccomp_filter(current)` (global di `kernel/seccomp.c:523`).
-- **API 4.14 lain:** `ktime_get_boottime_ts64` → `getboottime64()` (<5.6); `__poll_t` → `unsigned int` (<4.16); `tasklist_lock`/`init_task` butuh `#include <linux/sched/task.h>`; `status_lock`/`status_page`/`status` akses via `selinux_state.ss->` (<5.10) di `feature/selinux_hide.c`.
+### ReSukiSU 4.14 SELinux & Link Notes (referensi port)
+Kontek 4.14 yang sudah ditangani upstream `kernel_compat.mk` + `compat/kernel_compat.c` (jangan revert):
+- **Model policy:** `struct selinux_policy` + `selinux_state.policy` + `policy_mutex` hanya ada di 5.10+. 4.14 pakai `struct selinux_ss` (`security/selinux/ss/services.h`) — `sidtab`, `policydb`, `policy_rwlock`, `latest_granting`, `status_page`, `status_lock`. `rules.c`/`sepolicy.c`: di <5.10 aturan diedit **in-place** ke `selinux_state.ss->policydb` di bawah `policy_rwlock`; `ksu_dup/destroy_sepolicy` = stub no-op.
+- **Policydb 4.14 pakai `flex_array`:** `te_avtab.htable`, `type_attr_map_array`, `type_val_to_struct_array`, `sym_val_to_name[SYM_TYPES]` bukan array langsung (flex_array baru 5.1 jadi array). Guard `KSU_COMPAT_HAS_MODERN_POLICYDB` dari `kernel_compat.mk` (flex_array ada di 4.14 → tidak di-set → branch legacy).
+- **filename_trans:** `policydb_filenametr_search`/`filename_trans_key`/`filenametr_key_params` hanya 5.9+. <5.9 pakai `struct filename_trans` + hashtab **3-arg** (4.14 `hashtab.h` = `hashtab_insert(h,k,d)`). Guard `KSU_COMPAT_HAS_FILENAME_TRANS_KEY`/`KSU_COMPAT_HAS_HASHTAB_KEY_PARAMS`.
+- **API 4.14 lain:** `path_mount` (5.9+) → wrapper `d_path()` + `do_mount()` + `set_fs(KERNEL_DS)`; `seccomp_filter_release` static → `put_seccomp_filter(current)`; `ktime_get_boottime_ts64` → `getboottime64()` (<5.6); `__poll_t` → `unsigned int` (<4.16); `status_lock`/`status_page` akses via `selinux_state.ss->` (<5.10).
+- Kalau error API muncul, cek dulu guard di `tools/kernel_compat.mk` sudah cover atau belum — baru patch manual (lihat skill `linux-version-compat`).
 
 ### NoMount Integration
 - Source: `maxsteeel/nomount` — kernel-level path redirection + virtual file injection.
@@ -228,7 +233,7 @@ Semua fix di bawah SUDAH diterapkan & build hijau. Jangan revert tanpa alasan.
 - **Workflow:** `.github/workflows/update-kernel.yml` — manual trigger, `workflow_dispatch`
 - **Source:** kernel.org (≤4.14.336) / OpenELA LTS (>4.14.336)
 - **Logic:** Compare repo file vs vanilla 4.14.186 — if identical → replace with target version. If different (Xiaomi modified) → skip.
-- **Skip list:** `net/wireguard/`, `ksu-next/`, `fs/nomount.*`, `lib/string.c`, `selene_defconfig`, `arch/arm64/lib/{memcpy,memmove,memset}.S`, `arch/arm64/crypto/aes-modes.S`, `include/uapi/linux/netfilter/xt_*.h`, `drivers/goodix/`, `drivers/fpc1020/`, `drivers/misc/mediatek*/`
+- **Skip list:** `net/wireguard/`, `resukisu/`, `fs/nomount.*`, `lib/string.c`, `selene_defconfig`, `arch/arm64/lib/{memcpy,memmove,memset}.S`, `arch/arm64/crypto/aes-modes.S`, `include/uapi/linux/netfilter/xt_*.h`, `drivers/goodix/`, `drivers/fpc1020/`, `drivers/misc/mediatek*/`
 - **Target versions:** Configurable via `workflow_dispatch` input. Default: latest stable below 350.
 - **Known issue:** 4.14.357+ has blank screen issue on MTK devices (screen blank, system alive, need power cycle).
 

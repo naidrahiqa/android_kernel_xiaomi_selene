@@ -1,163 +1,140 @@
-# Perbandingan Hook Mode: Hookless vs Kprobes (KernelSU-Next)
+# Perbandingan Hook Mode: ReSukiSU Manual Hook (non-GKI) vs TP-Hook (GKI2)
 
-Dokumen ini menjelaskan dua mekanisme hook yang dipakai KernelSU-Next v3.3.0
-(dev @ `e7536f0`) di Phrolova Kernel (Linux 4.14.356, non-GKI, MT6768 selene).
+Dokumen ini menjelaskan mekanisme hook root solution ReSukiSU (main @
+`faccf4c5`, KSU_VERSION 35071) di Phrolova Kernel (Linux 4.14.356, non-GKI,
+MT6768 selene).
 
-**Kesimpulan singkat:** KernelSU-Next di kernel ini berjalan **hybrid** —
-core root pakai **hookless** (syscall table patch + tracepoint), sedangkan
-**kprobes** hanya untuk fitur opsional dan bersifat fail-safe (gagal register
-= fitur mati, root tetap jalan).
+**Kesimpulan singkat:** Kernel 4.14 non-GKI **wajib manual hook** — patch
+langsung ke source kernel (`fs/exec.c`, `fs/open.c`, `fs/stat.c`,
+`kernel/reboot.c`) dengan fungsi `ksu_handle_*`. TP-hook (syscall table
+redirect) hanya jalan di GKI2 (5.10+); di non-GKI Kbuild ReSukiSU menolak
+dengan `$(error)`.
 
 ---
 
-## 1. Hookless (Syscall Table Patch + sys_enter Tracepoint)
+## 1. Manual Hook (dipakai di selene)
 
 ### Mekanisme
 
-1. **Resolusi simbol** (`infra/symbol_resolver.c`): cari alamat `sys_call_table`
-   via `kallsyms_lookup_name` / `kallsyms_on_each_symbol`. Butuh
-   `CONFIG_KALLSYMS=y` + `CONFIG_KALLSYMS_ALL=y`.
-2. **Cari slot kosong** (`hook/arm64/syscall_hook.c`): scan `sys_call_table`,
-   temukan slot yang masih menunjuk ke `sys_ni_syscall` (syscall yang tidak
-   dipakai). Slot ini jadi **dispatcher**.
+1. **Patch source kernel** — fungsi `ksu_handle_*` dipanggil langsung di
+   syscall handler kernel:
+
+   | File | Hook | Posisi |
+   |---|---|---|
+   | `fs/exec.c` | `ksu_handle_execveat` | `do_execve` + `compat_do_execve` |
+   | `fs/open.c` | `ksu_handle_faccessat` | `SYSCALL_DEFINE3(faccessat)` |
+   | `fs/stat.c` | `ksu_handle_stat` | `newfstatat` + `fstatat64` |
+   | `fs/stat.c` | `ksu_handle_newfstat_ret` | `newfstat` |
+   | `fs/stat.c` | `ksu_handle_fstat64_ret` | `fstat64` |
+   | `kernel/reboot.c` | `ksu_handle_sys_reboot` | `SYSCALL_DEFINE4(reboot)` |
+
+2. **Hook tambahan otomatis** (`<6.8`, tidak perlu patch manual):
+   - setuid → LSM (`CONFIG_KSU_MANUAL_HOOK_AUTO_SETUID_HOOK`, `hook/setuid_hook.c`)
+   - initrc/read → LSM (`CONFIG_KSU_MANUAL_HOOK_AUTO_INITRC_HOOK`)
+   - input key event → input_handler (`CONFIG_KSU_MANUAL_HOOK_AUTO_INPUT_HOOK`)
+
+3. **Verifikasi build-time** — `resukisu/kernel/tools/manual_hook_check.mk`
+   grep tiap string `ksu_handle_*` di file kernel saat build; hook hilang
+   atau hook lama (`ksu_vfs_read_hook`, `is_ksu_transition`,
+   `ksu_handle_rename`) = compile error.
+
+### Persyaratan Kconfig
+
+| Config | Alasan |
+|---|---|
+| `CONFIG_KSU=y` | Aktifkan ReSukiSU |
+| `CONFIG_KSU_MANUAL_HOOK=y` | Mode manual hook (wajib non-GKI) |
+| `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` | Terima manager KernelSU/MKSU/RKSU/SukiSU-Ultra (default y) |
+| `CONFIG_KALLSYMS=y` + `CONFIG_KALLSYMS_ALL=y` | Resolusi simbol tanpa static export patch |
+| `CONFIG_TRACEPOINTS=y` | Dibutuhkan driver FPSGO (bukan ReSukiSU) |
+
+Kprobes **tidak dibutuhkan** sama sekali. `CONFIG_EXT4_FS=y` dipertahankan
+(boot_event pakai ext4 helpers).
+
+### Kelebihan
+
+- **Jalan di semua kernel 3.4+** — tidak tergantung tracepoint GKI,
+  kprobes, atau patch memori.
+- **Deterministik** — hook ada di source, bukan hasil patch runtime;
+  boot gagal-hook tidak mungkin (compile-time).
+- **Overhead ~0** — 1 call langsung per syscall yang di-hook.
+- **Verifikasi build-time** — salah pasang hook = tidak lolos compile
+  (bukan crash di runtime).
+
+### Kekurangan
+
+- **Wajib patch source kernel** — setiap update kernel harus cek ulang
+  posisi hook (4.14 source stabil, tapi tetap).
+- Hook hanya menutupi syscall tertentu — fitur yang butuh fungsi lain
+  (mis. avc_spoof via `slow_avc_audit`) tidak tersedia di mode ini.
+
+---
+
+## 2. TP-Hook (Tracepoint Syscall Redirect, GKI2 only)
+
+### Mekanisme
+
+1. **Resolusi simbol** (`infra/symbol_resolver.c`): cari `sys_call_table`
+   via kallsyms (butuh KALLSYMS_ALL).
+2. **Slot dispatcher** (`hook/arm64/syscall_hook.c`): scan slot
+   `sys_ni_syscall` kosong di `sys_call_table`.
 3. **Patch memori** (`hook/arm64/patch_memory.c`, `ksu_patch_text`):
-   - Walk page table `init_mm` (`phys_from_virt`) → dapatkan physical address.
-   - Map via fixmap `FIX_TEXT_POKE0` → `copy_to_kernel_nofault` tulis handler
-     dispatcher ke slot tersebut.
-   - Flush dcache + icache, semua di dalam `stop_machine()` (semua CPU berhenti
-     sesaat → tidak ada race).
-   - Tidak menyentuh PTE langsung → kompatibel dengan proteksi vendor
-     (mis. MTK MKP di EL2) karena meniru `aarch64_insn_write` (fixmap).
+   walk page table → fixmap `FIX_TEXT_POKE0` → tulis handler, flush
+   dcache/icache di dalam `stop_machine()`.
 4. **Routing** (`hook/syscall_hook_manager.c`): `register_trace_prio_sys_enter`
-   — saat syscall yang di-hook (setresuid, execve, newfstatat, faccessat)
-   dipanggil, tracepoint menulis ulang `regs->syscallno` ke slot dispatcher,
-   lalu dispatcher meneruskan ke handler asli (`ksu_handle_*`).
+   menulis ulang `regs->syscallno` ke slot dispatcher.
 
-### Persyaratan Kconfig
+### Kenapa tidak dipakai di selene
 
-| Config | Alasan |
-|---|---|
-| `CONFIG_KALLSYMS=y` | Resolusi `sys_call_table` |
-| `CONFIG_KALLSYMS_ALL=y` | Simbol non-function ikut di-export |
-| `CONFIG_TRACEPOINTS=y` | `register_trace_prio_sys_enter` |
-| `CONFIG_FIXMAP` (selalu aktif di arm64) | `FIX_TEXT_POKE0` untuk patch |
-| `CONFIG_STOP_MACHINE` (bawaan) | Sinkronisasi patch antar CPU |
-
-### Kelebihan
-
-- **Deterministik** — tidak bergantung pada breakpoint/opcode rewrite kernel.
-- **Overhead runtime ~0** — syscall diarahkan lewat slot yang sudah di-patch;
-  per-syscall cuma 1 jump tambahan + 1 tracepoint check.
-- **Tidak perlu kprobes** — jalan di kernel mana pun yang punya KALLSYMS +
-  TRACEPOINTS (termasuk 4.14 vanilla yang tidak punya kprobes arm64).
-- **Fail-safe boot** — kalau patch gagal (slot tidak ketemu dll.), hanya
-  dicatat di log; tidak ada bootloop.
-
-### Kekurangan
-
-- Bergantung pada **`sys_ni_syscall` slot yang tersedia** — butuh setidaknya
-  1 slot kosong di `sys_call_table` (hampir selalu ada).
-- **Tracepoint overhead** — `sys_enter` tracepoint tetap dipasang meski tidak
-  ada syscall yang di-hook (kecil, tapi ada).
-- Butuh **KALLSYMS_ALL** — sedikit menambah ukuran image + informasi simbol
-  kernel lebih terbuka (tradeoff keamanan vs kebutuhan root).
-- Patch memori kernel text = **teknik rootkit**; antivirus/anti-cheat modern
-  (KNOX, Play Integrity) bisa mendeteksi syscall table yang berubah.
-
----
-
-## 2. Kprobes (Dynamic Instrumentation)
-
-### Mekanisme
-
-Kprobes adalah framework instrumentasi kernel (breakpoint-based, via
-`register_kprobe` / `register_kretprobe`). KernelSU-Next menggunakannya untuk
-fitur **opsional**:
-
-| Fitur | File | Kprobe target | Efek kalau gagal register |
-|---|---|---|---|
-| Reboot supercall | `supercall/supercall.c` | `sys_reboot` (pre-handler) | Supercall reboot mati, sisanya jalan |
-| AVC spoof (log hiding) | `extras.c` (dalam `#ifdef CONFIG_KPROBES`) | `slow_avc_audit` | Log avc tidak di-spoof |
-| Key event detection | `runtime/ksud_integration.c` | `input_handle_event` | Kombinasi tombol untuk aksi khusus mati |
-| Tracepoint refcount tracking | `hook/syscall_hook_manager.c` (dalam `#ifdef CONFIG_KRETPROBES`) | `syscall_regfunc` / `syscall_unregfunc` (kretprobe) | Proses tidak di-mark otomatis saat tracepoint dipakai tool lain |
-
-### Persyaratan Kconfig
-
-| Config | Alasan |
-|---|---|
-| `CONFIG_KPROBES=y` | Kconfig KernelSU-Next `depends on KPROBES && EXT4_FS`; kode memakai `<linux/kprobes.h>` secara unconditional di beberapa file |
-| `CONFIG_MODULES=y` | Di tree 4.14 ini `KPROBES depends on MODULES` |
-| `CONFIG_KRETPROBES=y` | Untuk kretprobe `syscall_regfunc` (di-select otomatis oleh HAVE_KRETPROBES) |
-| Backport arm64 kprobes | **Wajib ada di tree** — vanilla upstream 4.14 arm64 TIDAK punya (kprobes arm64 masuk upstream 4.16); vendor MTK sudah backport (`arch/arm64/Kconfig`: `select HAVE_KPROBES`) |
-
-### Kelebihan
-
-- **Fleksibel** — bisa hook fungsi kernel apa pun tanpa mengubah source-nya.
-- **Tidak mengubah syscall table** — tidak ada tanda "tampered syscall table"
-  yang mudah dideteksi anti-cheat (tapi breakpoint juga bisa dideteksi).
-- **Per-fit&start** — fitur yang gagal register tidak merusak yang lain.
-
-### Kekurangan
-
-- **Overhead per-call** — trap ke debugger trap handler + handler callback,
-  lebih mahal dari 1 jump syscall table (relevan untuk hot path seperti
-  `input_handle_event` saat disentuh terus-menerus).
-- **Kestabilan kernel-dependent** — kalau kprobes kernelnya buggy/berkonflik
-  (kprobe pada fungsi yang dipakai vendor, race dengan ftrace, dsb.) bisa
-  crash/bootloop. Dokumentasi resmi KernelSU-Next menyarankan: kalau kprobe
-  rusak, perbaiki atau pakai metode manual (fs/ hooks).
-- **Kompatibilitas API** — tiap versi kernel beda-beda (`kprobe_opcode_t`,
-  handler signature); backport vendor bisa beda perilaku.
+- Kbuild ReSukiSU: `$(error TP hooks are incompatible with Non-GKI/GKI 1.0
+  kernels.)` — dukungan resmi hanya GKI2 (5.10+).
+- Kernel 4.14 non-GKI tidak punya infrastruktur syscall tracepoint GKI.
+- Dokumentasi resmi: https://resukisu.github.io/guide/manual-integrate.html
 
 ---
 
 ## 3. Tabel Perbandingan
 
-| Aspek | Hookless (syscall table + tracepoint) | Kprobes |
+| Aspek | Manual Hook (selene) | TP-Hook (GKI2) |
 |---|---|---|
-| Target hook | 1 slot `sys_call_table` (dispatcher) | Fungsi kernel bebas (breakpoint) |
-| Mekanisme | Patch memori (fixmap) + tracepoint routing | Trap handler (breakpoint/opcode rewrite) |
-| Overhead runtime | Sangat rendah (1 jump + tracepoint check) | Lebih tinggi (trap + callback per-call) |
-| Kebutuhan simbol | KALLSYMS + KALLSYMS_ALL | Hanya nama simbol (kallsyms optional via `kallsyms_lookup_name`) |
-| Kebutuhan kernel API | `stop_machine`, fixmap, tracepoint, `copy_to_kernel_nofault` | `register_kprobe`/`register_kretprobe` + arch kprobes support |
-| Jalan di 4.14 arm64 vanilla (tanpa backport)? | **Ya** | **Tidak** (arm64 kprobes baru di upstream 4.16) |
-| Resiko bootloop | Sangat rendah (gagal = log saja) | Ada (kprobe bug/konflik) |
-| Deteksi anti-cheat | Syscall table termodifikasi bisa dideteksi | Breakpoint/opcode juga bisa dideteksi |
-| Pemakaian di KernelSU-Next | **Core root** (execve, setresuid, newfstatat, faccessat) | Fitur opsional (reboot supercall, avc_spoof, key event, kretprobe refcount) |
-| Failure mode | Root tidak aktif, log error | Fitur terkait mati, root tetap jalan |
+| Target hook | Source kernel (compile-time) | 1 slot `sys_call_table` (runtime patch) |
+| Mekanisme | Call `ksu_handle_*` langsung di syscall handler | Patch memori fixmap + tracepoint routing |
+| Support kernel | 3.4+ (termasuk 4.14 non-GKI) | GKI2 5.10+ saja |
+| Overhead runtime | ~0 (1 call langsung) | 1 jump + tracepoint check |
+| Kebutuhan simbol | KALLSYMS_ALL (opsional via static export) | KALLSYMS + KALLSYMS_ALL |
+| Verifikasi | Build-time (manual_hook_check.mk) | Runtime (gagal = log, root tidak aktif) |
+| Resiko bootloop | Hampir nol (compile-time) | Rendah (gagal = log saja) |
+| Deteksi anti-cheat | Tidak ada patch memori | Syscall table termodifikasi bisa dideteksi |
 
 ---
 
 ## 4. Kondisi di Phrolova (selene)
 
-- **Hookless-only (sejak v0.8.1):** kprobes di-disable total.
-  - `CONFIG_KPROBES=n` di `selene_defconfig` — framework kprobes tidak ada di kernel image sama sekali (tidak ada breakpoint infrastructure, lebih aman).
-  - Kconfig KernelSU-Next di-patch: `depends on KPROBES && EXT4_FS` → `depends on EXT4_FS` (upstream beda).
-  - Kode kprobe di `ksu-next/kernel` di-guard `#ifdef CONFIG_KPROBES` → compiled-out.
-- Konsekuensi (fitur ini mati, root **tetap** jalan):
-  - Reboot supercall via `sys_reboot` magic (fd-install via reboot — aman, karena manager fd-install utama lewat `ksu_handle_setresuid` di `hook/setuid_hook.c:37`).
-  - AVC spoof (`slow_avc_audit`) — log avc denial tidak di-hide.
-  - Key-event hook (`input_event` kprobe) — kombinasi tombol ksud mati.
-  - `syscall_regfunc` kretprobe — fallback aktif: `#ifndef CONFIG_KRETPROBES` → `ksu_mark_running_process_locked()` langsung di `ksu_syscall_hook_manager_init`.
-- Yang jalan (semua hookless):
-  - Dispatcher `sys_call_table` (execve, setresuid, newfstatat, faccessat, read, fstat) via `ksu_patch_text`.
-  - Routing `register_trace_prio_sys_enter`.
-  - KALLSYMS_ALL untuk resolusi simbol.
+- **Manual hook (sejak v0.9.0):** ReSukiSU main @ `faccf4c5` (v4.2.0-rc1 + 10
+  commits, KSU_VERSION 35071) menggantikan KernelSU-Next hookless
+  (syscall table + tracepoint) yang dipakai sejak v0.8.0.
+- `CONFIG_KPROBES` tidak dibutuhkan dan tidak di-enable.
+- Kbuild di-patch lokal: fallback version pin tanpa `.git`
+  (`KSU_LOCAL_VERSION := 4371` → `KSU_VERSION = 30000 + 4371 + 700 = 35071`).
+- Manager: multi-manager (`CONFIG_KSU_MULTI_MANAGER_SUPPORT=y`). Rekomendasi
+  ReSukiSU manager — match KSU_VERSION 35071:
+  - https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip
+  - https://t.me/ReSukiSU
 - Diagnosa cepat saat boot:
   ```bash
-  dmesg | grep -i -E "ksu|hook_manager"
-  # "registered syscall hook for nr=..."  → hookless OK
-  # "hook_manager: sys_enter tracepoint registered" → routing OK
-  # TIDAK ada baris reboot kprobe / input_event_kp — memang mati
+  dmesg | grep -i -E "ksu|resuki"
+  # "-- ReSukiSU version code: 35071" → versi benar
+  # "ksu: ..." dari hook/setuid_hook.c dll → hook aktif
   ```
 
 ---
 
-## 5. Jika Suatu Saat Kprobes Benar-Benar Rusak
+## 5. Sejarah
 
-KernelSU-Next menyediakan jalur fallback **manual hooks** (patch `fs/exec.c`,
-`fs/open.c`, `fs/read_write.c`, `fs/stat.c`, `kernel/reboot.c` dengan
-`ksu_handle_*`) — metode ini tidak butuh kprobes maupun tracepoint, tapi
-wajib patch source kernel. Dokumentasi resmi: [Integrate for non-GKI
-devices](https://kernelsu-next.github.io/webpage/pages/how-to-integrate-for-non-gki.html).
-Phrolova saat ini **tidak** memakai jalur ini.
+| Versi | Root solution | Hook mode |
+|---|---|---|
+| ≤ v0.7.x | backslashxx/KernelSU | Syscall table patch |
+| v0.8.0 – v0.8.1 | KernelSU-Next v3.3.0 | Hookless: syscall table + sys_enter tracepoint (kprobes off) |
+| v0.9.0+ | ReSukiSU main @ faccf4c5 | Manual hook (fs/exec.c, fs/open.c, fs/stat.c, kernel/reboot.c) |
+
+Referensi: https://resukisu.github.io/guide/manual-integrate.html

@@ -20,14 +20,14 @@ on:
       base_version:
         description: 'Base version (e.g. 0.1.0, 0.2.0, 1.0.0)'
         required: false
-        default: '0.8.0'
+        default: '0.9.0'
         type: string
 
 env:
   PHROLOVA_VARIANT: ${{ inputs.variant || '0' }}
-  PHROLOVA_BASE: ${{ inputs.base_version || '0.8.0' }}
+  PHROLOVA_BASE: ${{ inputs.base_version || '0.9.0' }}
   TOOLCHAIN_NAME: "Greenforce Clang 24.0.0"
-  KERNELSU_VERSION: "KernelSU-Next v3.3.0 (e7536f0)"
+  KERNELSU_VERSION: "ReSukiSU main @ faccf4c5 (v4.2.0-rc1+10)"
 
 jobs:
   build:
@@ -93,7 +93,7 @@ jobs:
 
       - name: Setup KernelSU symlink
         run: |
-          ln -sf "$(realpath ksu-next/kernel)" drivers/kernelsu
+          ln -sf "$(realpath resukisu/kernel)" drivers/kernelsu
           test -L drivers/kernelsu && echo "Symlink OK" || { echo "Symlink failed"; exit 1; }
 
       - name: Build kernel (selene_defconfig)
@@ -165,6 +165,20 @@ jobs:
         if: steps.final-check.outputs.status == 'success'
         run: |
           cp changelog.md release_body.md
+          cat >> release_body.md << 'EOF'
+
+---
+
+### 🔐 Root Solution — ReSukiSU
+
+**Manager (versi harus match KSU_VERSION 35071):**
+- [ReSukiSU Manager (nightly build)](https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip)
+- [Telegram @ReSukiSU](https://t.me/ReSukiSU)
+
+> ⚠️ Gunakan **ReSukiSU Manager** — manager KernelSU / KernelSU-Next / MKSU / RKSU **tidak** terdeteksi sebagai manager bawaan kernel ini (root tetap jalan via su, tapi fitur manager nonaktif).
+
+**Flash:** flash zip via custom recovery (AnyKernel3), lalu install manager APK di atas.
+EOF
 
       - name: Create GitHub Release
         if: steps.final-check.outputs.status == 'success'

@@ -461,13 +461,15 @@ CONFIG_CRYPTO_TWOFISH=y
 # CONFIG_CRYPTO_HW is not set
 CONFIG_FORCE_NR_CPUS=y
 
-# KernelSU (KernelSU-Next, hookless: syscall table hook + sys_enter tracepoint)
-# EXT4_FS required by KernelSU-Next Kconfig (depends on)
-# KPROBES disabled: hookless mode, optional kprobe features compiled out
+# ReSukiSU (ReSukiSU/ReSukiSU, main @ faccf4c5, KSU_VERSION 35071)
+# Manual hook mode (non-GKI 4.14): fs/exec.c, fs/open.c, fs/stat.c, kernel/reboot.c
+# setuid/initrc/input hooks otomatis via LSM/input_handler (AUTO_* default y, <6.8)
 CONFIG_KSU=y
+CONFIG_KSU_MANUAL_HOOK=y
+CONFIG_KSU_MULTI_MANAGER_SUPPORT=y
 CONFIG_MODULES=y
 
-# KernelSU requires KALLSYMS_ALL for symbol resolution
+# ReSukiSU requires KALLSYMS_ALL untuk symbol resolution (tanpa static export)
 CONFIG_KALLSYMS=y
 CONFIG_KALLSYMS_ALL=y
 

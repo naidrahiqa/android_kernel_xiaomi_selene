@@ -6,7 +6,7 @@
 
 ## Fase 1 — Foundation Stabil (done)
 
-- [x] KernelSU-Next v3.3.0 (syscall table hook + sys_enter tracepoint)
+- [x] ReSukiSU main @ faccf4c5 (manual hook, non-GKI 4.14, KSU_VERSION 35071) — menggantikan KernelSU-Next
 - [x] NoMount path redirection
 - [x] TCP BBR + ZRAM ZSTD + BFQ
 - [x] CI/CD pipeline functional (Void Linux container)
@@ -66,7 +66,7 @@ Target: Cutting-edge / long-term.
 - [ ] **MGLRU** — backport multi-gen LRU (massive effort, ditunda)
 - [ ] **KCAL** — display color control (MTK panel not compatible)
 - [ ] **AutoSMP** — hotplug alternatif
-- [x] **KernelSU next-gen** — migrasi ke KernelSU-Next v3.3.0 (v0.8.0)
+- [x] **KernelSU next-gen** — migrasi ke KernelSU-Next v3.3.0 (v0.8.0), lalu ReSukiSU manual hook (v0.9.0)
 - [ ] **Toolchain benchmarking** — evaluasi performa Clang 24 vs 19 vs Gino
 - [ ] **Upstream 4.14.x terbaru** — kernel.org update aman selama < 357
 
@@ -76,7 +76,7 @@ Target: Cutting-edge / long-term.
 
 | Fitur | Phrolova | Tendou-Arisu |
 |---|---|---|
-| KernelSU | ✓ (KernelSU-Next v3.3.0) | ✓ |
+| KernelSU | ✓ (ReSukiSU main @ faccf4c5) | ✓ |
 | NoMount | ✓ | ✗ |
 | WireGuard | ✓ | ✗ |
 | BBR | ✓ | ✓ |
