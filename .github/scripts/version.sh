@@ -11,7 +11,7 @@
 
 VARIANT="${1%% *}"  # Strip trailing text from workflow_dispatch choice (e.g. "0 — Nightly" -> "0")
 VARIANT="${VARIANT:-0}"
-BASE_VERSION="${2:-0.7.0}"
+BASE_VERSION="${2:-0.9.1}"
 DATE_TAG=$(date +%Y%m%d)
 
 case "$VARIANT" in
