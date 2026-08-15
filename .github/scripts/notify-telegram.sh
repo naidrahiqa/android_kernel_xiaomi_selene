@@ -108,7 +108,7 @@ function build_success() {
 ${changelog_items}
 
 <b>Download</b> (<a href='${REPO_URL}/releases/tag/${TAG}'>GitHub Releases</a>)
-<b>Manager</b> (<a href='https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip'>ReSukiSU</a> · <a href='https://t.me/ReSukiSU'>t.me/ReSukiSU</a>) | <b>NoMount</b> (<a href='https://github.com/maxsteeel/nomount/releases'>GitHub</a>)
+<b>Manager</b> (<a href='https://t.me/ReSukiSU/5/271281'>Telegram APK Release</a> · <a href='https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip'>Nightly CI ZIP</a>) | <b>NoMount</b> (<a href='https://github.com/maxsteeel/nomount/releases'>GitHub</a>)
 
 <b>Credits:</b>
 yuki-saisei (<a href='https://github.com/yuki-saisei'>Base kernel</a>)
