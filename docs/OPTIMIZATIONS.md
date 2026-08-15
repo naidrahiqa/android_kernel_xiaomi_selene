@@ -41,6 +41,8 @@ Dokumen ini mencatat seluruh optimasi performa, kompresi memori, dan pengatur la
 ### Konfigurasi Kernel:
 - `CONFIG_IOSCHED_BFQ=y`
 - `CONFIG_BFQ_GROUP_IOSCHED=y`
+- `CONFIG_DEFAULT_BFQ=y`
+- `CONFIG_DEFAULT_IOSCHED="bfq"`
 
 ### Penjelasan & Manfaat:
 - **BFQ (Budget Fair Queueing):** I/O Scheduler berbasis BLK-MQ yang mengalokasikan bandwidth storage secara adil berdasarkan bobot proses.
