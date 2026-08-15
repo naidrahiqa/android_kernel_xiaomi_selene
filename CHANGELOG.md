@@ -11,6 +11,11 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.9.1 — Performance Tuning: BFQ Default I/O Scheduler
+- `3f44a5eb21` `arch/arm64/configs/selene_defconfig`: Set `CONFIG_DEFAULT_BFQ=y` dan `CONFIG_DEFAULT_IOSCHED="bfq"`.
+  - **Alasan:** Mengoptimalkan throughput storage eMMC 5.1 pada Helio G88 (selene) dengan prioritas latensi rendah untuk aplikasi interaktif foreground (UI/touch) di atas background disk write.
+  - **Sumber:** Internal performance tuning Phrolova.
+
 ## v0.9.0 — Migrasi Root Solution: KernelSU-Next → ReSukiSU
 - **Root solution diganti: KernelSU-Next → ReSukiSU** (`ReSukiSU/ReSukiSU`, fork SukiSU-Ultra, main @ `faccf4c5` = v4.2.0-rc1 + 10 commits, 4371 commits, **KSU_VERSION 35071**; formula `30000 + commit_count + 700`).
   - `ksu-next/kernel/` dihapus → source baru di `resukisu/kernel/` (direct copy, bukan submodule).
