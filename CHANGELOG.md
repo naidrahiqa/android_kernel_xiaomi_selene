@@ -11,9 +11,12 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
-## v0.9.1 — Performance Tuning: BFQ & VM Memory Optimization
+## v0.9.2 — Performance Tuning: Virtual Memory (VM) Dirty Ratios
 - `a853a4bab8` `arch/arm64/configs/selene_defconfig`: Tambahkan `vm.dirty_background_ratio=5` dan `vm.dirty_ratio=15` di boot `CONFIG_CMDLINE`.
   - **Alasan:** Memulai flush dirty pages lebih awal ke storage eMMC 5.1 agar queue I/O tidak macet (menghilangkan lag saat proses instalasi/download di background).
+  - **Sumber:** Internal performance tuning Phrolova.
+
+## v0.9.1 — Performance Tuning: BFQ Default I/O Scheduler
 - `3f44a5eb21` `arch/arm64/configs/selene_defconfig`: Set `CONFIG_DEFAULT_BFQ=y` dan `CONFIG_DEFAULT_IOSCHED="bfq"`.
   - **Alasan:** Mengoptimalkan throughput storage eMMC 5.1 pada Helio G88 (selene) dengan prioritas latensi rendah untuk aplikasi interaktif foreground (UI/touch) di atas background disk write.
   - **Sumber:** Internal performance tuning Phrolova.
