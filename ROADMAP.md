@@ -1,6 +1,6 @@
 # Phrolova Kernel — Roadmap
 
-## Versi Saat Ini: v0.8.0
+## Versi Saat Ini: v0.9.2 (Performance Tuning — BFQ + VM Dirty Optimization)
 
 ---
 
