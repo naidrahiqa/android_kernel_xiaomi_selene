@@ -11,6 +11,34 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.9.3 — Log Noise Reduction + Fix Layar Mati Sendiri + Fast Charge Tanpa Module
+- **Log noise reduction (12 titik):** `pr_err` spam vendor diturunkan ke `pr_debug` (perilaku identik, nol biaya output):
+  - `drivers/misc/mediatek/io_boost/mtk_io_boost.c`: "failed to open task file" (17x/boot)
+  - `drivers/power/supply/mediatek/battery/mtk_battery.c`: "phone is to high skip batterty otg boost check" (68x, loop 5 detik)
+  - `drivers/power/supply/mediatek/charger/bq2589x_charger.c`: `id_dis`, `vbus_stat/chg_type`, `charger_detect_count`, `prev_pg/power_good`, `foce UNKNOWN ti/silergy` (spam polling charger IC)
+  - `drivers/power/supply/mediatek/charger/mtk_charger.c`: `hq_config()` `printk` tiap panggilan → `pr_debug` (+ newline hilang diperbaiki)
+  - `drivers/power/supply/mediatek/charger/mtk_chg_type_det.c`: "dhx--hvdcp" tiap poll psy REAL_TYPE
+  - **Alasan:** kurangi kerja kernel (CPU/log buffer) dan buat dmesg bersih untuk debugging; temuan audit log device live.
+- **Fix layar mati sendiri:** `drivers/misc/mediatek/thermal/mtk_cooler_backlight_cus.c`
+  - Cooler `mtk-cl-backlight` tidak lagi menghormati clamp brightness dari thermal policy userspace (`setMaxbrightness(state, enable=1)` dinetralkan); hanya jalur reset (state == max) yang dihormati.
+  - **Akar masalah:** daemon thermal ROM menulis `cur_state` cooler → panel diblank/dim padahal sistem hidup (terverifikasi live: `cooler/backlight 1610` tepat sebelum `FB_BLANK_POWERDOWN`). Mitigasi panas asli tetap jalan via cpufreq/GPU cooler.
+- **Fix fast charge tanpa module:** `drivers/power/supply/mediatek/charger/mtk_charger.c`
+  - `charger_manager_set_prop_system_temp_level()`: input current limit dari tabel `thermal_mitigation_*` tidak lagi diterapkan (`thermal_icl_ua = -1` permanen).
+  - **Akar masalah:** thermal HAL userspace menulis `charge_control_limit` (psy CHARGE_CONTROL_LIMIT) → `system_temp_level` ≥1 → QC/HVDCP drop dari 3A ke 1.5A bahkan 900mA meski suhu aman — inilah yang selama ini "disembuhkan" thermal module.
+  - **Keamanan tetap terjaga:** sw_jeita (threshold dts, T4=45°C) + hardware JEITA bq2589x tetap membatasi CC/CV berdasarkan suhu cell asli; yang dihapus hanya throttle policy-level.
+- **Fix congestion control tertimpa vendor init:** `arch/arm64/configs/selene_defconfig`
+  - `# CONFIG_TCP_CONG_BIC is not set` — modul BIC dihilangkan dari kernel.
+  - **Akar masalah:** `/vendor/etc/init/networksetting.rc` (bawaan Huaqin) menulis `tcp_congestion_control=bic` di early-init, menimpa `CONFIG_DEFAULT_BBR=y`. Bic buruk di link lossy (seluler) → throughput turun.
+  - Dengan BIC tidak tersedia di kernel, sysctl write dari vendor rc gagal diam-diam dan default tetap **BBR**.
+- **Fix silent-drop Kconfig DEFAULT_BFQ (akar masalah "cfq" di artefak):** `block/Kconfig.iosched`
+  - Choice "Default I/O scheduler" milik tree ini tidak punya member `DEFAULT_BFQ` → baris `CONFIG_DEFAULT_BFQ=y` diabaikan diam-diam dan fallback ke `DEFAULT_CFQ`. Terbukti via repro lokal `make selene_defconfig`.
+  - Fix: tambah member `config DEFAULT_BFQ` (`bool "BFQ" if IOSCHED_BFQ=y`) + mapping string `default "bfq" if DEFAULT_BFQ`. Verified: `.config` kini memuat `CONFIG_DEFAULT_BFQ=y`, `IOSCHED="bfq"`.
+- **Droidspaces/container configs:** `selene_defconfig` tambah `CONFIG_IPC_NS=y`; CI gate baru memverifikasi `USER_NS/IPC_NS/CGROUP_PIDS/POSIX_MQUEUE/VETH/OVERLAY_FS/BBR/BFQ/KSU*/NOMOUNT` benar-benar mendarat di `out/.config` (anti silent-drop) + upload `.config` sebagai artifact build untuk audit.
+- **ReSukiSU refresh:** snapshot `resukisu/kernel/` faccf4c5 → **03b60f26** (main, v4.2.0-rc1 + 19 commits, 4390 commits) — termasuk sync susfs upstream & compat update. Pin Kbuild lokal di-apply ulang: `KSU_LOCAL_VERSION := 4390` → **KSU_VERSION 35090**. `manual_hook_check.mk` baru ternyata conditional-aware: dengan `AUTO_SETUID/INITRC/INPUT=y`, ketiga hook manual baru (setresuid/sys_read/input) tidak wajib; hook lama (execveat/faccessat/stat/reboot) tetap terverifikasi. Hook incompatible (ksu_vfs_read_hook/is_ksu_transition/ksu_handle_rename) dipastikan nihil di tree.
+- **NoMount TIDAK di-update** (keputusan sadar): upstream maxsteeel/nomount @ b8d26835 me-rewrite arsitektur total (dentry-op hijacking menggantikan `nomount_handle_*`, kontrol userspace genetlink → keyring). Port penuh = rombak 6 titik VFS hook + ABI userspace baru — dijadwalkan kerjaan terpisah v0.9.4 dengan siklus build-test sendiri. Tree tetap pakai NoMount v1.1.0 yang stabil.
+- **Dokumentasi:** AGENTS.md dapat section "Device Debugging Findings 2026-08-25" (artifact mismatch, contexthub WTF ROM bug, netd tether counters, bic override, fast charge clamp, backlight cooler); docs/OPTIMIZATIONS.md + section 5–8 (BBR enforcement, fast charge unlock, backlight neutralized, verifikasi artefak).
+- **Sumber:** Internal Phrolova (analisis audit log device live + trace source mtk_charger/mtk_battery/bq2589x).
+
 ## v0.9.2 — Performance Tuning: Virtual Memory (VM) Dirty Ratios
 - `a853a4bab8` `arch/arm64/configs/selene_defconfig`: Tambahkan `vm.dirty_background_ratio=5` dan `vm.dirty_ratio=15` di boot `CONFIG_CMDLINE`.
   - **Alasan:** Memulai flush dirty pages lebih awal ke storage eMMC 5.1 agar queue I/O tidak macet (menghilangkan lag saat proses instalasi/download di background).

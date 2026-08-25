@@ -858,7 +858,7 @@ static int chip_num(struct bq2589x *bq)
 	ret = bq2589x_read_byte(bq,BQ2589X_REG_14,&reg_val);
 	id_dis = (reg_val & BQ2589X_PN_MASK);
 	id_dis >>= BQ2589X_PN_SHIFT;
-	pr_err(" bq2589x:id_dis:%d", id_dis);
+	pr_debug(" bq2589x:id_dis:%d", id_dis);
 	return id_dis;
 }
 /*K19A HQ-138863 K19A  cdp by zhixueyin at 2021/7/10 end*/
@@ -943,7 +943,7 @@ static int bq2589x_get_charger_type(struct bq2589x *bq, enum charger_type *type)
 		mt_chg->usb_desc.type = smblib_apsd_results[chg_type];
 	/*K19A HQ-129052 K19A charger of thermal by wangqi at 2021/4/22 end*/
 	/*K19A-104 charge by wangchao at 2021/4/8 start*/
-	pr_err("vbus_stat:%d ,chg_type:%d\n", vbus_stat,chg_type);
+	pr_debug("vbus_stat:%d ,chg_type:%d\n", vbus_stat,chg_type);
 	/*K19A-104 charge by wangchao at 2021/4/8 end*/
 	return 0;
 }
@@ -1097,7 +1097,7 @@ static void bq2589x_read_byte_work(struct work_struct *work)
 	ret = bq2589x_read_byte(bq,BQ2589X_REG_14,&reg_val);
 	id_dis = (reg_val & BQ2589X_PN_MASK);
 	id_dis >>= BQ2589X_PN_SHIFT;
-	pr_err(" bq2589x:id_dis:%d",id_dis);
+	pr_debug(" bq2589x:id_dis:%d",id_dis);
 /* Huaqin add for HQ-134476 by miaozhichao at 2021/5/29 start */
 	if(id_dis == 3){
 		if(charger_detect_count > 0){
@@ -1119,7 +1119,7 @@ static void bq2589x_read_byte_work(struct work_struct *work)
 				} else {
 					charger_float_count = 31;//avoid overflow
 				}
-				pr_err(" foce UNKNOWN ti,charger_float_count:%d\n",charger_float_count);
+				pr_debug(" foce UNKNOWN ti,charger_float_count:%d\n",charger_float_count);
 			}else if (vbus_gd && vbus_stat == BQ2589X_VBUS_TYPE_NON_STD) {
 				Charger_Detect_Init();
 				bq2589x_dp_set_3P3V(bq);
@@ -1131,7 +1131,7 @@ static void bq2589x_read_byte_work(struct work_struct *work)
 				pr_err("foce NONSTD ti\n");
 			} 
 			charger_detect_count --;
-			pr_err("charger_detect_count:%d\n",charger_detect_count);
+			pr_debug("charger_detect_count:%d\n",charger_detect_count);
 		}
 	}else{
 		if(vbus_gd && vbus_stat == BQ2589X_VBUS_TYPE_SDP ){
@@ -1146,7 +1146,7 @@ static void bq2589x_read_byte_work(struct work_struct *work)
 				charger_float_count = 31;//avoid overflow
 			}
 			std_mode_dec = false;
-			pr_err(" foce UNKNOWN silergy,charger_float_count:%d\n",charger_float_count);
+			pr_debug(" foce UNKNOWN silergy,charger_float_count:%d\n",charger_float_count);
 		} else if (vbus_gd && vbus_stat == BQ2589X_VBUS_TYPE_NON_STD && !std_mode_dec) {
 			std_mode_dec = true;
 			ret = bq2589x_enter_hiz_mode(bq);
@@ -1155,7 +1155,7 @@ static void bq2589x_read_byte_work(struct work_struct *work)
 			pr_err("non std foce dpdm\n");
 		} else {
 			std_mode_dec = true;
-			pr_err("vbus_stat = %d\n", vbus_stat);
+			pr_debug("vbus_stat = %d\n", vbus_stat);
 		}
 	}
 /* Huaqin add for HQ-134476 by miaozhichao at 2021/5/29 end */
@@ -1192,7 +1192,7 @@ static irqreturn_t bq2589x_irq_handler(int irq, void *data)
 		charger_detect_count = 0;
 		charger_float_count = 30;
 	}else{
-		pr_err("prev_pg = %d  bq->power_good = %d\n",prev_pg,bq->power_good);
+		pr_debug("prev_pg = %d  bq->power_good = %d\n",prev_pg,bq->power_good);
 	}
 /* Huaqin add for HQ-134476 by miaozhichao at 2021/5/29 end */
 /* Huaqin modify for WXYFB-592 by miaozhichao at 2021/3/29 end */

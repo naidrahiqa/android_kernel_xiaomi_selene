@@ -996,8 +996,15 @@ void charger_manager_set_prop_system_temp_level(int temp_level)
 		}
 	}
 
-	if (pinfo->system_temp_level == 0)
-		thermal_icl_ua = -1;
+	/*
+	 * Phrolova: ignore userspace thermal input-current throttling
+	 * (charge_control_limit / system_temp_level). It made QC/HVDCP
+	 * fast charging drop to USB speeds as soon as the thermal HAL
+	 * raised the level, even at benign temperatures.
+	 * Battery safety is unaffected: sw_jeita (dts thresholds) and
+	 * bq2589x hardware JEITA still limit CV/CC by real cell temp.
+	 */
+	thermal_icl_ua = -1;
 	if (thermal_icl_ua == 500000) {
 		thermal_is_500 = true;
 	} else {
@@ -1306,7 +1313,7 @@ int hq_config(void)
 		config = K19V;
 	else
 		config = K19D;
-	printk("%s: config = %d",__func__,config);
+	pr_debug("%s: config = %d\n", __func__, config);
 	return config;
 }
 void hq_jeita_config(struct charger_manager *info)

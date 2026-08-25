@@ -4338,7 +4338,7 @@ static void otg_boost_limit_work(struct work_struct *work)
 		}
 	}
 	if (otg_limit == 1) {
-		pr_err("phone is to high skip batterty otg boost check\n");
+		pr_debug("phone is to high skip batterty otg boost check\n");
 		schedule_delayed_work(&otg_boost_current_work, msecs_to_jiffies(5000));
 		return;
 	}

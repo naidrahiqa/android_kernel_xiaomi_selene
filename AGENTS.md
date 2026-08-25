@@ -34,10 +34,10 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 
 - **Device:** Redmi 10 2022, codename **selene**, MediaTek Helio G88 (MT6768).
 - **Kernel:** Linux 4.14.356 (yuki-saisei base), **non-GKI**. Banyak API beda drastis dari 5.x/6.x — jangan apply patch GKI 5.10+ tanpa cek dulu.
-- **Root solution:** ReSukiSU (`ReSukiSU/ReSukiSU`, fork SukiSU-Ultra, main @ `faccf4c5` = v4.2.0-rc1 + 10 commits, **KSU_VERSION 35071**).
+- **Root solution:** ReSukiSU (`ReSukiSU/ReSukiSU`, fork SukiSU-Ultra, main @ `03b60f26` = v4.2.0-rc1 + 19 commits, **KSU_VERSION 35090**).
   - **Hook mode: manual hook (`CONFIG_KSU_MANUAL_HOOK=y`)** — TP-hook (syscall table) cuma GKI 5.10+; di non-GKI 4.14 wajib manual hook. Patch manual di: `fs/exec.c` (`ksu_handle_execveat`), `fs/open.c` (`ksu_handle_faccessat`), `fs/stat.c` (`ksu_handle_stat`/`ksu_handle_newfstat_ret`/`ksu_handle_fstat64_ret`), `kernel/reboot.c` (`ksu_handle_sys_reboot`). setuid/initrc/read via LSM (`KSU_MANUAL_HOOK_AUTO_SETUID_HOOK`/`AUTO_INITRC_HOOK`) + input via input_handler (`AUTO_INPUT_HOOK`) — otomatis, default y (<6.8). `manual_hook_check.mk` meng-verify tiap hook saat build — hook hilang = compile error.
-  - Kbuild di-patch lokal: fallback version pin tanpa `.git` (`KSU_LOCAL_VERSION := 4371`, tag `v4.2.0-rc1`, sha `faccf4c5`, branch `main`). `CONFIG_KPROBES` tidak dibutuhkan; `CONFIG_EXT4_FS=y` dipertahankan.
-  - **Manager:** `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` (default) — manager KernelSU/MKSU/RKSU/SukiSU-Ultra bisa dipakai. Disarankan **ReSukiSU manager** (nightly.link build-manager / t.me/ReSukiSU) — match KSU_VERSION 35071.
+  - Kbuild di-patch lokal: fallback version pin tanpa `.git` (`KSU_LOCAL_VERSION := 4390`, tag `v4.2.0-rc1`, sha `03b60f26`, branch `main`). `CONFIG_KPROBES` tidak dibutuhkan; `CONFIG_EXT4_FS=y` dipertahankan.
+  - **Manager:** `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` (default) — manager KernelSU/MKSU/RKSU/SukiSU-Ultra bisa dipakai. Disarankan **ReSukiSU manager** (nightly.link build-manager / t.me/ReSukiSU) — match KSU_VERSION 35090.
 - **Systemless path redirection:** NoMount (`maxsteeel/nomount`).
   - Virtual file injection + path redirection tanpa mount filesystem.
   - Compiled into kernel (`CONFIG_NOMOUNT=y`), netlink-based userspace control.
@@ -48,7 +48,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 
 - Base kernel: `MiCode/Xiaomi_Kernel_OpenSource`, branch `selene-r-oss-update`.
 - Reference-only: `Ronald826/xiaomi_kernel_selene`, branch `4.14-baxter_EXPERIMENTAL` (jangan merge mentah).
-- ReSukiSU: `ReSukiSU/ReSukiSU` main @ `faccf4c5` (local copy di `resukisu/kernel/`).
+- ReSukiSU: `ReSukiSU/ReSukiSU` main @ `03b60f26` (local copy di `resukisu/kernel/`).
 - NoMount: `maxsteeel/nomount` (source di `fs/nomount.c` + `fs/nomount.h`).
 
 ## Dokumentasi Project
@@ -96,7 +96,7 @@ make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
 - **Docs-only push di-skip:** `paths-ignore: ['*.md', '**/*.md']` — commit yang cuma mengubah dokumentasi tidak memicu build/notif/release (mencegah release body tertimpa changelog "docs:" saja).
 - Runner: `ubuntu-24.04` + Docker hybrid (Void Linux build env)
 - Toolchain: Greenforce Clang 24.0.0 (`CC=clang HOSTCC=gcc`)
-- ReSukiSU: ReSukiSU main @ `faccf4c5` via `drivers/kernelsu` symlink (manual hook, non-GKI)
+- ReSukiSU: ReSukiSU main @ `03b60f26` via `drivers/kernelsu` symlink (manual hook, non-GKI)
 - CI matrix: **Single build** (universal kernel, 1 zip fits all)
 - Telegram notifications: ObsidianKernel-style format with credits/download links
   - Start/success/failed (error log ke `TELEGRAM_ERROR_CHANNEL_ID` channel terpisah)
@@ -147,7 +147,7 @@ If switching to a different Clang version, check if this is still needed.
 - Without `-Wno-error`: `CONFIG_CC_STACKPROTECTOR_STRONG` fails, `CONFIG_BLK_INLINE_ENCRYPTION` broken.
 
 ### ReSukiSU Integration
-- Source: `resukisu/kernel/` (direct copy, not submodule). Current: main @ `faccf4c5` (v4.2.0-rc1 + 10 commits, 4371 commits, **KSU_VERSION 35071**).
+- Source: `resukisu/kernel/` (direct copy, not submodule). Current: main @ `03b60f26` (v4.2.0-rc1 + 19 commits, 4390 commits, **KSU_VERSION 35090**).
 - Symlink: `ln -sf "$(realpath resukisu/kernel)" drivers/kernelsu` — created at CI time, not in git.
 - `drivers/Kconfig`: already has `source "drivers/kernelsu/Kconfig"` (line 223).
 - `drivers/Makefile`: already has `obj-$(CONFIG_KSU) += kernelsu/` (line 191).
@@ -159,7 +159,7 @@ If switching to a different Clang version, check if this is still needed.
   - `kernel/reboot.c` → `ksu_handle_sys_reboot` di `SYSCALL_DEFINE4(reboot)`
   - setuid/initrc(read)/input: **otomatis** via LSM/input_handler — `KSU_MANUAL_HOOK_AUTO_SETUID_HOOK`/`AUTO_INITRC_HOOK`/`AUTO_INPUT_HOOK` (default y, hanya untuk <6.8; kita 4.14 aman). Jangan patch `kernel/sys.c`/`fs/read_write.c`/`drivers/input/input.c` manual selama AUTO_* on.
   - `tools/manual_hook_check.mk` mem-verify SEMUA hook saat build (grep string di file kernel) — hook hilang/ekstra = compile error. Juga menolak hook lama (`ksu_vfs_read_hook`, `is_ksu_transition`, `ksu_handle_rename`).
-- **Versi di-pin via fallback di `Kbuild`** (patch lokal — upstream `$(error ...)` kalau bukan git submodule): `KSU_LOCAL_VERSION := 4371`, `KSU_TAG_NAME := v4.2.0-rc1`, `KSU_COMMIT_SHA := faccf4c5`, `KSU_BRANCH_NAME := main`. Formula `KSU_VERSION = 30000 + commits + 700` → 35071. Jangan set ke 1 (manager tidak deteksi root).
+- **Versi di-pin via fallback di `Kbuild`** (patch lokal — upstream `$(error ...)` kalau bukan git submodule): `KSU_LOCAL_VERSION := 4390`, `KSU_TAG_NAME := v4.2.0-rc1`, `KSU_COMMIT_SHA := 03b60f26`, `KSU_BRANCH_NAME := main`. Formula `KSU_VERSION = 30000 + commits + 700` → 35090. Jangan set ke 1 (manager tidak deteksi root).
 - **Manager:** `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` (default) — manager KernelSU/MKSU/RKSU/SukiSU-Ultra diterima. Rekomendasi: ReSukiSU manager (nightly.link build-manager / t.me/ReSukiSU) — match KSU_VERSION.
 - Compat layer: `tools/kernel_compat.mk` auto-detect API 4.14 (flex_array policydb, hashtab 3-arg, `struct selinux_ss`, status_lock global, dst) — tidak perlu port manual seperti KSU-Next dulu.
 - Build system: `Kbuild` (bukan Makefile) — `kernelsu-objs` multi-file, bukan unity build.
@@ -178,6 +178,26 @@ Kontek 4.14 yang sudah ditangani upstream `kernel_compat.mk` + `compat/kernel_co
 - VFS hooks in: `fs/dcache.c` (d_path), `fs/namei.c` (getname, permission), `fs/readdir.c` (iterate_dir), `fs/stat.c` (vfs_getattr), `fs/statfs.c` (vfs_statfs), `fs/proc/task_mmu.c` (mmap metadata).
 - Netlink-based userspace control (genetlink family "nomount").
 - All hooks wrapped in `#ifdef CONFIG_NOMOUNT` guards.
+- **Upstream divergence (2026-08-25):** maxsteeel/nomount main @ `b8d26835` me-rewrite arsitektur (dentry-op hijack, keyring control) — TIDAK kompatibel dengan integrasi `nomount_handle_*` kita. Jangan copy mentah upstream; port terencana = v0.9.4 (rombak fs/dcache,namei,readdir,stat,statfs,task_mmu).
+
+### Device Debugging Findings (2026-08-25, LOS20-unofficial hasan build)
+Full live-debugging session via ADB on Redmi 10 2022 + LineageOS 20 (20.0-20250905-UNOFFICIAL-selene). Kernel 4.14.356-Phrolova boots clean: 0 panic, root/hooks OK. Temuan penting:
+
+**ARTIFACT MISMATCH (kritis):** Kernel yang ter-flash menunjukkan config era lama (`cfq` default, tanpa dirty-ratio cmdline, `# USER_NS is not set`, `vmalloc=496M`) padahal source CI run-nya (`574a7669`, verified via `git show`) memuat semuanya (`bfq`, dirty-ratio, `USER_NS=y`, `vmalloc=320M`). Repro lokal `make selene_defconfig` menghasilkan config benar → **tree sehat; artefak yang dipakai user bukan dari run tersebut** (stale release asset / salah download zip lama). MITIGASI:
+- Selalu verifikasi pasca-flash: `zcat /proc/config.gz | grep -E 'DEFAULT_IOSCHED|USER_NS'`.
+- CI wajib punya verification gate + upload `.config` sebagai artifact (v0.9.3).
+
+**ROM bug — soft reboot loop:** `NearbyService.onBootPhase` (A13 code di system_server) memanggil `ContextHubManager` tanpa guard → `Log.wtf("No service published for: contexthub")` tiap boot phase 600 karena vendor selene tidak punya HAL contexthub. Berkorelasi dengan SYSTEM_RESTART di dropbox. **Bukan bug kernel.** Report ke builder ROM.
+
+**ROM bug — hotspot client tidak dapat internet:** netd meninggalkan `tetherctrl_counters` hanya berisi rule `RETURN` (tanpa ACCEPT per-pair) → koneksi baru forward jatuh ke `-j DROP` terakhir di `tetherctrl_FORWARD`. Fix manual terbukti: replace RETURN→ACCEPT untuk pasangan `ap0↔ccmniX` selama tethering aktif. HATI-HATI: mengedit chain milik netd mid-session berkorelasi 2x dengan framework restart — apply saat tether-up, jangan sambil klien aktif.
+
+**Slow internet:** `/vendor/etc/init/networksetting.rc` (bawaan Huaqin) menulis `tcp_congestion_control=bic` di early-init, menimpa `CONFIG_DEFAULT_BBR=y`. Fix kernel v0.9.3: `# CONFIG_TCP_CONG_BIC is not set` sehingga sysctl write vendor gagal diam-diam.
+
+**Fast charge diblok thermal HAL:** userspace menulis psy `CHARGE_CONTROL_LIMIT` → `charger_manager_set_prop_system_temp_level()` → tabel `thermal_mitigation_*` clamp QC/HVDCP ke 1.5A–900mA meski suhu aman. Fix v0.9.3: bypass tabel (ICL selalu -1). Keamanan baterai tetap oleh sw_jeita dts (T4=45°C) + hardware JEITA bq2589x.
+
+**Layar mati sendiri:** cooler `mtk-cl-backlight` (`mtk_cooler_backlight_cus.c`) menerima tulisan `cur_state` dari daemon thermal userspace → `setMaxbrightness()` clamp/blank panel (terverifikasi: log `cooler/backlight 1610` tepat sebelum `FB_BLANK_POWERDOWN`). Fix v0.9.3: clamp dinetralkan, hanya jalur reset (state==max) dihormati. Mitigasi panas asli = cpufreq/GPU coolers, tidak disentuh.
+
+**Log spam vendor (disilence v0.9.3, pr_err→pr_debug):** `io_boost` task file, `mtk_battery` otg boost check, keluarga polling `bq2589x` (id_dis/vbus_stat/detect_count), `hq_config()` printk, `chg_type_det` hvdcp poll. Normal & aman: `cert length overlimit` (scan APK GMS), package name manager acak (`dqobwk...` = spoofed multi-manager build).
 
 ### Missing UAPI Headers
 - `include/uapi/linux/netfilter/xt_connmark.h` dan `xt_mark.h` — harus dibuat manual.

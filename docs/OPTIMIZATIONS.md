@@ -1,4 +1,5 @@
-# Phrolova Kernel — Performance & Memory Optimizations (v0.4.0)
+# Phrolova Kernel — Performance & Memory Optimizations
+# (v0.4.0 base — diperbarui hingga v0.9.3)
 
 Dokumen ini mencatat seluruh optimasi performa, kompresi memori, dan pengatur lalu lintas jaringan yang diterapkan pada Phrolova Kernel versi `v0.4.0` untuk perangkat Redmi 10 2022 (**selene** / MediaTek Helio G88 MT6768).
 
@@ -60,3 +61,51 @@ Dokumen ini mencatat seluruh optimasi performa, kompresi memori, dan pengatur la
 
 ### Penjelasan & Manfaat:
 - **Schedutil & EAS:** Menyesuaikan frekuensi CPU secara dinamis berdasarkan sinyal beban utilitas dari scheduler kernel, mengoptimalkan konsumsi daya baterai Helio G88 tanpa mengorbankan responsiveness.
+
+---
+
+## 5. BBR Enforcement (v0.9.3)
+
+### Masalah:
+- `/vendor/etc/init/networksetting.rc` (bawaan Huaqin/MIUI) menulis `tcp_congestion_control=bic` di early-init, **menimpa** default BBR dari defconfig. Hasil live device: `bic` aktif → throughput jelek di link seluler lossy.
+
+### Solusi:
+- `# CONFIG_TCP_CONG_BIC is not set` di `selene_defconfig` — modul BIC tidak ada di kernel sehingga sysctl write vendor gagal diam-diam dan default tetap **BBR**.
+
+### Verifikasi pasca-flash:
+```
+cat /proc/sys/net/ipv4/tcp_congestion_control   # harus: bbr
+```
+
+---
+
+## 6. Fast Charge Unlock (v0.9.3)
+
+### Masalah:
+- Thermal HAL userspace menulis psy `CHARGE_CONTROL_LIMIT` → `charger_manager_set_prop_system_temp_level()` → tabel `thermal_mitigation_dcp/qc2/qc3[]` menurunkan input current limit QC/HVDCP dari 2–3A ke 1.5A bahkan 900mA meski suhu baterai aman. Inilah alasan "butuh thermal module" untuk fast charge.
+
+### Solusi:
+- `mtk_charger.c`: input current clamp dari `system_temp_level` dinetralkan (`thermal_icl_ua = -1` permanen).
+- **Keamanan tetap terjaga oleh lapisan asli:** sw_jeita dts (T4=45°C menurunkan CV/CC) + hardware JEITA bq2589x. Yang dihilangkan hanya throttle policy-level userspace.
+- Tabel arus per-tipe charger di dts sudah optimal: DCP 2.05A / HVDCP 2A-in 3A-chg / HVDCP_3 3A.
+
+---
+
+## 7. Display: Backlight Cooler Neutralized (v0.9.3)
+
+### Masalah:
+- Cooler `mtk-cl-backlight` menerima tulisan `cur_state` dari daemon thermal userspace → `setMaxbrightness()` meng-clamp/membuang panel (layar mati sendiri padahal sistem hidup). Live evidence: log `cooler/backlight 1610` tepat sebelum `FB_BLANK_POWERDOWN`.
+
+### Solusi:
+- `mtk_cooler_backlight_cus.c`: `set_cur_state()` hanya menghormati jalur reset (state == max). Clamp brightness dari thermal policy tidak pernah diterapkan lagi. Mitigasi panas asli (cpufreq/GPU cooler) tidak disentuh.
+
+---
+
+## 8. Verifikasi Artefak (WAJIB pasca-flash)
+
+Kernel yang ter-flash kadang bukan yang dikira (stale release asset). Selalu cek:
+```
+adb shell su -c 'zcat /proc/config.gz | grep -E "DEFAULT_IOSCHED|USER_NS"'
+adb shell cat /proc/sys/net/ipv4/tcp_congestion_control   # bbr
+```
+Harapannya: `bfq`, `CONFIG_USER_NS=y`. CI (v0.9.3+) punya verification gate + upload `.config` sebagai artifact build.

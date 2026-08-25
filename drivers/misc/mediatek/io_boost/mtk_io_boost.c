@@ -140,7 +140,7 @@ static int mtk_iobst_add_task(void)
 	ret = mtk_iobst_open_task_file();
 
 	if (ret < 0) {
-		pr_err("failed to open task file, ret=%d\n", ret);
+		pr_debug("failed to open task file, ret=%d\n", ret);
 		return ret;
 	}
 
