@@ -788,7 +788,7 @@ static const struct inode_operations nm_dir_iops = {
 static inline void nomount_hijack_superblock(struct super_block *sb)
 {
     struct nm_sop *nm_sop;
-    int count = 0;
+    int count = 0, i;
 
     if (unlikely(!sb || !sb->s_op ||
                 __get_nm(smp_load_acquire(&sb->s_op), struct nm_sop, fake_sop, destroy_inode, nomount_hijacked_destroy_inode) ||
@@ -808,7 +808,7 @@ static inline void nomount_hijack_superblock(struct super_block *sb)
         while (sb->s_xattr[count]) count++;
         if ((new_array = kzalloc((count + 1) * sizeof(void *) + (count * sizeof(*proxies)), GFP_KERNEL))) {
             proxies = (void *)(new_array + count + 1);
-            for (int i = 0; i < count; i++) {
+            for (i = 0; i < count; i++) {
                 proxies[i].orig = sb->s_xattr[i];
                 proxies[i].fake = *sb->s_xattr[i];
                 if (proxies[i].fake.get) proxies[i].fake.get = nm_xattr_get;
@@ -991,12 +991,12 @@ static void __nomount_delete_child_locked(struct nomount_rule *rule)
     struct nomount_dir_node *dir_node = rule->parent_dir;
     struct nomount_child_node *child_to_free = NULL;
     struct nomount_child_array *old_arr;
-    int old_count, target_idx = -1, shift_len;
+    int old_count, i, target_idx = -1, shift_len;
     u64 mask = 0;
 
     if (unlikely(!dir_node || !(old_arr = dir_node->children))) return;
 
-    for (int i = 0; i < (old_count = old_arr->count); i++) {
+    for (i = 0; i < (old_count = old_arr->count); i++) {
         if (old_arr->nodes[i]->rule == rule) {
             target_idx = i;
             child_to_free = old_arr->nodes[i];
@@ -1022,7 +1022,7 @@ static void __nomount_delete_child_locked(struct nomount_rule *rule)
     }
     old_arr->count--;
 
-    for (int i = 0; i < old_arr->count; i++) mask |= (1ULL << (old_arr->hashes[i] & 63));
+    for (i = 0; i < old_arr->count; i++) mask |= (1ULL << (old_arr->hashes[i] & 63));
     dir_node->bloom_mask = mask;
     write_seqcount_end(&dir_node->seq);
     synchronize_srcu(&nomount_srcu);
@@ -1439,7 +1439,7 @@ static struct key_type nm_key_type = {
 static int __init nomount_init(void)
 {
     nm_dir_cachep   = KMEM_CACHE(nomount_dir_node, SLAB_HWCACHE_ALIGN);
-    nm_inode_cachep = KMEM_CACHE(nomount_inode_info, SLAB_HWCACHE_ALIGN);
+    nm_inode_cachep = KMEM_CACHE(nm_inode_info, SLAB_HWCACHE_ALIGN);
     nm_iop_cachep   = KMEM_CACHE(nm_iop, SLAB_HWCACHE_ALIGN);
     nm_fop_cachep   = KMEM_CACHE(nm_fop, SLAB_HWCACHE_ALIGN);
 

@@ -173,12 +173,13 @@ Kontek 4.14 yang sudah ditangani upstream `kernel_compat.mk` + `compat/kernel_co
 - Kalau error API muncul, cek dulu guard di `tools/kernel_compat.mk` sudah cover atau belum — baru patch manual (lihat skill `linux-version-compat`).
 
 ### NoMount Integration
-- Source: `maxsteeel/nomount` — kernel-level path redirection + virtual file injection.
+- Source: `maxsteeel/nomount` v20 — kernel-level path redirection + virtual file injection.
 - Compiled as `fs/nomount.c` + `fs/nomount.h`, enabled via `CONFIG_NOMOUNT=y`.
-- VFS hooks in: `fs/dcache.c` (d_path), `fs/namei.c` (getname, permission), `fs/readdir.c` (iterate_dir), `fs/stat.c` (vfs_getattr), `fs/statfs.c` (vfs_statfs), `fs/proc/task_mmu.c` (mmap metadata).
-- Netlink-based userspace control (genetlink family "nomount").
-- All hooks wrapped in `#ifdef CONFIG_NOMOUNT` guards.
-- **Upstream divergence (2026-08-25):** maxsteeel/nomount main @ `b8d26835` me-rewrite arsitektur (dentry-op hijack, keyring control) — TIDAK kompatibel dengan integrasi `nomount_handle_*` kita. Jangan copy mentah upstream; port terencana = v0.9.4 (rombak fs/dcache,namei,readdir,stat,statfs,task_mmu).
+- **Arsitektur v20:** dentry/inode/superblock operation hijacking + keyring control (`register_key_type("nomount")`, `SYS_ADD_KEY` syscall). TIDAK lagi pakai genetlink atau handle_* functions manual.
+- VFS hooks dibersihkan (v0.9.4): semua panggilan `nomount_handle_*` dihapus dari `dcache.c`, `namei.c`, `readdir.c`, `stat.c`, `statfs.c`, `proc/task_mmu.c`. Interception otomatis via hijacked i_op/fop/s_op/d_op.
+- **gnu89 requirement:** Kernel 4.14 compile `-std=gnu89` — semua `for (int i ...)` dalam satu fungsi harus dihoist (redefinition error).
+- **ABI userspace berubah:** tool `nm` lama berbasis genetlink TIDAK kompatibel dengan v20. Wajib pakai binary `nm` baru (`tools/nomount/nm.c`, freestanding static arm64, raw `SYS_ADD_KEY` syscall). Di-build di CI & di-upload sebagai release asset kedua.
+- Kconfig vendor caveat: `drivers/misc/mediatek/Kconfig.default` punya `select TCP_CONG_BIC` yang bisa mengaktifkan BIC secara diam-diam — sudah dihapus di v0.9.4. CI gate memverifikasi absennya BIC post-build.
 
 ### Device Debugging Findings (2026-08-25, LOS20-unofficial hasan build)
 Full live-debugging session via ADB on Redmi 10 2022 + LineageOS 20 (20.0-20250905-UNOFFICIAL-selene). Kernel 4.14.356-Phrolova boots clean: 0 panic, root/hooks OK. Temuan penting:

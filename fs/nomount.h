@@ -290,6 +290,14 @@ struct nm_del_hdr {
     #define NM_ACTOR_CONTINUE 0
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 12, 0) && LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0)
+    #define FLAGS_ARG , int flags
+    #define FLAGS_VAL , flags
+#else
+    #define FLAGS_ARG /* Nothing */
+    #define FLAGS_VAL /* Nothing */
+#endif
+
 static inline void nm_sync_inode_times(struct inode *v_inode, struct inode *r_inode)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 12, 0)

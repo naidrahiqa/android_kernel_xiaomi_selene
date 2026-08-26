@@ -11,6 +11,43 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.9.4 — NoMount v20 Port + BBR Fix Regresi + Defconfig Hardening & Features
+
+- **NoMount v20 port (dentry-op hijack + keyring control):** `fs/nomount.c` + `fs/nomount.h`
+  - Upgrade dari v1.1.0 (genetlink + handle_* hooks) ke v20 (maxsteeel/nomount @ b8d26835).
+  - Arsitektur baru: superblock/dentry/inode operation hijacking menggantikan 7 hook functions manual di 6 file VFS.
+  - Kontrol userspace pindah dari genetlink ke keyring (`register_key_type("nomount")`, `SYS_ADD_KEY` syscall).
+  - Adaptasi 4.14: `iterate` (bukan `iterate_shared`), `getattr` 3-arg, `notify_change` 3-arg, `generic_fillattr` 2-arg, gnu89 declaration hoist.
+  - Fix build: `FLAGS_ARG`/`FLAGS_VAL` compat macros, `KMEM_CACHE(nm_inode_info)` typo, `int i` redefinition.
+  - VFS hooks dibersihkan: `dcache.c`, `namei.c`, `readdir.c`, `stat.c`, `statfs.c`, `proc/task_mmu.c` — semua panggilan `nomount_handle_*` dihapus.
+  - ABI userspace berubah: tool `nm` lama (genetlink) TIDAK kompatibel — wajib pakai binary `nm` baru (`SYS_ADD_KEY`), di-build static arm64 & di-upload sebagai release asset.
+  - **Sumber:** maxsteeel/nomount v20 (rewrite total).
+
+- **Fix BBR regresi (CRITICAL):** `drivers/misc/mediatek/Kconfig.default`
+  - `ANDROID_DEFAULT_SETTING` (line 1) punya `select TCP_CONG_BIC` (line 235) yang memaksa BIC=y meski defconfig menolak.
+  - Kconfig `select` selalu menang melawan user choice → fix v0.9.3 (defconfig `# TCP_CONG_BIC is not set`) **dibatalkan secara diam-diam** oleh vendor Kconfig.
+  - Result: zip v0.9.3 yang sudah di-flash masih punya BIC → vendor rc `networksetting.rc` tetep bisa override BBR → bug internet lambat belum fix di production.
+  - Fix: hapus baris `select TCP_CONG_BIC` dari `Kconfig.default`.
+  - **Lesson:** CI gate v0.9.3 gak ngecek absennya BIC — sekarang ditambahkan.
+
+- **CI gate ekspansi:** `.github/workflows/build.yml`
+  - Verifikasi `CONFIG_TCP_CONG_BIC is not set` post-build (anti-regresi permanen).
+
+- **Defconfig features & hardening:** `arch/arm64/configs/selene_defconfig`
+  - **Memory:** `CONFIG_KSM=y` (dedup halaman, runtime tunable via `/sys/kernel/mm/ksm/run`)
+  - **Container networking:** `CONFIG_MACVLAN=y` + `CONFIG_MACVTAP=y` (Droidspaces LXC networking modes)
+  - **Security:** `CONFIG_SECURITYFS=y`, `CONFIG_SLAB_FREELIST_HARDENED=y`, `CONFIG_SLAB_FREELIST_RANDOM=y`
+  - **Performance:** `CONFIG_SQUASHFS_DECOMP_MULTI_PERCPU=y` (decompress paralel), `CONFIG_ZRAM_WRITEBACK=y` (dorman sampai di-setup)
+  - **Power:** `CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y`
+  - **Stack protection:** `CONFIG_VMAP_STACK=y`
+  - Catatan: `SCHED_AUTOGROUP` tidak diaktifkan (konflik dengan `SCHED_HMP` di Helio G88).
+
+- **Userspace nm binary:** `tools/nomount/nm.c` + `nm.h` (freestanding, raw syscalls, arm64 static)
+  - CI step baru: compile via Greenforce Clang → upload sebagai release asset kedua.
+  - Wajib dipakai dengan NoMount v20 kernel — tool lama berbasis genetlink tidak akan jalan.
+
+- **Sumber:** Internal Phrolova (NoMount v20 port, Kconfig vendor audit, defconfig optimization).
+
 ## v0.9.3 — Log Noise Reduction + Fix Layar Mati Sendiri + Fast Charge Tanpa Module
 - **Log noise reduction (12 titik):** `pr_err` spam vendor diturunkan ke `pr_debug` (perilaku identik, nol biaya output):
   - `drivers/misc/mediatek/io_boost/mtk_io_boost.c`: "failed to open task file" (17x/boot)
