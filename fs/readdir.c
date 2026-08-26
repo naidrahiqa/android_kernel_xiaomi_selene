@@ -23,10 +23,6 @@
 
 #include <linux/uaccess.h>
 
-#ifdef CONFIG_NOMOUNT
-extern int nomount_handle_iterate_dir(struct file *file, struct dir_context *ctx);
-#endif
-
 int iterate_dir(struct file *file, struct dir_context *ctx)
 {
 	struct inode *inode = file_inode(file);
@@ -65,13 +61,6 @@ int iterate_dir(struct file *file, struct dir_context *ctx)
 	else
 		inode_unlock(inode);
 out:
-#ifdef CONFIG_NOMOUNT
-	{
-		int nomount_res = nomount_handle_iterate_dir(file, ctx);
-		if (nomount_res)
-			return nomount_res;
-	}
-#endif
 	return res;
 }
 EXPORT_SYMBOL(iterate_dir);

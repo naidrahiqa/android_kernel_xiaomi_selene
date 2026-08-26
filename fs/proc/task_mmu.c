@@ -511,12 +511,7 @@ show_map_vma(struct seq_file *m, struct vm_area_struct *vma)
 		dev = inode->i_sb->s_dev;
 		ino = inode->i_ino;
 		pgoff = ((loff_t)vma->vm_pgoff) << PAGE_SHIFT;
-#ifdef CONFIG_NOMOUNT
-		{
-			extern bool nomount_spoof_mmap_metadata(struct inode *inode, dev_t *dev, unsigned long *ino);
-			nomount_spoof_mmap_metadata(inode, &dev, &ino);
-		}
-#endif
+
 	}
 
 	start = vma->vm_start;

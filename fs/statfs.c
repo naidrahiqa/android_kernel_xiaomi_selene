@@ -67,21 +67,13 @@ static int statfs_by_dentry(struct dentry *dentry, struct kstatfs *buf)
 	return retval;
 }
 
-#ifdef CONFIG_NOMOUNT
-extern void nomount_spoof_statfs(const struct path *path, struct kstatfs *buf);
-#endif
-
 int vfs_statfs(const struct path *path, struct kstatfs *buf)
 {
 	int error;
 
 	error = statfs_by_dentry(path->dentry, buf);
-	if (!error) {
+	if (!error)
 		buf->f_flags = calculate_f_flags(path->mnt);
-#ifdef CONFIG_NOMOUNT
-		nomount_spoof_statfs(path, buf);
-#endif
-	}
 	return error;
 }
 EXPORT_SYMBOL(vfs_statfs);
