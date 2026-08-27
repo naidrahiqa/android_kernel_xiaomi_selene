@@ -7,22 +7,24 @@ cat >> release_body.md << 'EOF'
 
 ---
 
-### 🔐 Root Solution — ReSukiSU
+## 🔐 Root Solution
 
-| Component | Version |
+| | |
 |---|---|
-| ReSukiSU Driver | **KSU_VERSION 35090** (main @ `03b60f26`) |
-| Tag | v4.2.0-rc1 + 19 commits |
-| Hook Mode | Manual Hook (non-GKI 4.14) |
-| Source | [ReSukiSU/ReSukiSU](https://github.com/ReSukiSU/ReSukiSU) |
+| **Driver** | ReSukiSU v4.2.0-rc1 · KSU_VERSION `35090` |
+| **Hook** | Manual Hook (non-GKI 4.14) |
+| **Path Redirection** | NoMount v20 (keyring + VFS hijack) |
+| **Source** | [ReSukiSU/ReSukiSU](https://github.com/ReSukiSU/ReSukiSU) |
 
-**Manager (wajib match KSU_VERSION 35090):**
-- [ReSukiSU Manager (Telegram APK Release)](https://t.me/ReSukiSU/5/271281)
-- [ReSukiSU Manager (Nightly CI ZIP)](https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip)
+### Manager
 
-> ⚠️ Gunakan **ReSukiSU Manager** — manager lain (KernelSU / KernelSU-Next / MKSU / RKSU) **tidak** terdeteksi sebagai manager bawaan kernel ini (root tetap jalan via su, tapi fitur manager nonaktif).
+Wajib match KSU_VERSION `35090`:
+- [ReSukiSU Manager](https://t.me/ReSukiSU/5/271281) (Telegram APK)
+- [ReSukiSU Manager](https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip) (Nightly CI)
 
-**Systemless Path Redirection:** [NoMount v20](https://github.com/maxsteeel/nomount) — kernel-level path redirection via keyring + VFS hijack.
+> Manager lain (KernelSU / MKSU / RKSU) tidak terdeteksi — root jalan, fitur manager nonaktif.
 
-**Flash:** flash zip via custom recovery (AnyKernel3), lalu install manager APK di atas.
+### Flash
+
+Flash zip via AnyKernel3 recovery, lalu install manager APK.
 EOF

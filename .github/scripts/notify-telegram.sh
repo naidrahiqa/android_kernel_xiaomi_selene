@@ -75,15 +75,14 @@ function tg_photo() {
 }
 
 function build_start() {
-	local msg="<b>🎻 Phrolova Kernel!</b>
-<b>Update:</b> ${DATE}
-<b>Version:</b> ${VERSION} (${VARIANT_NAME}) · Linux 4.14 (Non-GKI)
-<b>Device:</b> Redmi 10 (selene)
-<b>Root:</b> ReSukiSU v4.2.0-rc1 · KSU_VERSION <code>35090</code>
+	local msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
+━━━━━━━━━━━━━━━━━━━
+Redmi 10 (selene) · Linux 4.14 Non-GKI
+ReSukiSU v4.2.0-rc1 · KSU_VERSION <code>35090</code>
 
-<b>Status:</b> Building...
-<b>Commit:</b> <code>${SHA}</code> — ${COMMIT_MSG}
-🔍 <a href='${BUILD_URL}'>Build Log</a>"
+⏳ Building...
+<code>${SHA}</code> ${COMMIT_MSG}
+<a href='${BUILD_URL}'>Build Log</a>"
 	tg_send "$CHANNEL_ID" "$msg" && echo "Start notification sent." || echo "Start notification FAILED."
 }
 
@@ -91,39 +90,29 @@ function build_success() {
 	local changelog_file="${1:-}"
 	local changelog_items=""
 	if [ -n "$changelog_file" ] && [ -f "$changelog_file" ]; then
-		changelog_items=$(grep '^- ' "$changelog_file" 2>/dev/null | head -20)
-	fi
-	if [ -z "$changelog_items" ]; then
-		changelog_items="- No changes"
+		changelog_items=$(grep '^- ' "$changelog_file" 2>/dev/null | head -8)
 	fi
 
 	local BANNER_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY:-naidrahiqa/phrolova_kernel_xiaomi_selene}/phrolova/docs/assets/banner_landscape.jpg"
 
-	local msg="<b>🎻 Phrolova Kernel!</b>
-<b>Update:</b> ${DATE}
-<b>Version:</b> ${VERSION} (${VARIANT_NAME}) · Linux 4.14 (Non-GKI)
-<b>Device:</b> Redmi 10 (selene)
-<b>By:</b> <a href='https://github.com/naidrahiqa'>naidrahiqa</a>
+	local msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
+━━━━━━━━━━━━━━━━━━━
+Redmi 10 (selene) · Linux 4.14 Non-GKI
+ReSukiSU v4.2.0-rc1 · KSU_VERSION <code>35090</code> · Manual Hook
+NoMount v20"
 
-<b>Root:</b> ReSukiSU v4.2.0-rc1 · KSU_VERSION <code>35090</code> · Manual Hook
-<b>NoMount:</b> v20 (keyring + VFS hijack)
+	if [ -n "$changelog_items" ]; then
+		msg="${msg}
 
 <b>Changelog:</b>
-${changelog_items}
+${changelog_items}"
+	fi
 
-<b>Download</b> (<a href='${REPO_URL}/releases/tag/${TAG}'>GitHub Releases</a>)
-<b>Manager</b> (<a href='https://t.me/ReSukiSU/5/271281'>Telegram APK</a> · <a href='https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip'>Nightly CI</a>)
+	msg="${msg}
 
-<b>Credits:</b>
-yuki-saisei (<a href='https://github.com/yuki-saisei'>Base</a>)
-ReSukiSU (<a href='https://github.com/ReSukiSU/ReSukiSU'>Root</a>)
-maxsteeel (<a href='https://github.com/maxsteeel/nomount'>NoMount</a>)
-greenforce-project (<a href='https://github.com/greenforce-project/greenforce_clang'>Clang 24</a>)
-osm0sis (<a href='https://github.com/osm0sis/AnyKernel3'>AK3</a>)
+<a href='${REPO_URL}/releases/tag/${TAG}'>⬇ Download</a> · <a href='https://t.me/ReSukiSU/5/271281'>📦 Manager</a>
 
-<a href='${REPO_URL}'>Phrolova Kernel</a>
-
-#PhrolovaKernel #Redmi10 #MT6768 #ReSukiSU #NoMount"
+<i>naidrahiqa</i> · <a href='${REPO_URL}'>GitHub</a>"
 
 	if tg_photo "$CHANNEL_ID" "$BANNER_URL" "$msg"; then
 		echo "Success notification sent with banner."
@@ -162,31 +151,19 @@ function build_failed() {
 		fi
 	fi
 
-	local simple_msg="<b>🎻 Phrolova Kernel!</b>
-<b>Update:</b> ${DATE}
-<b>Version:</b> ${VERSION} (${VARIANT_NAME}) · Linux 4.14 (Non-GKI)
-<b>Device:</b> Redmi 10 (selene)
-<b>Root:</b> ReSukiSU v4.2.0-rc1 · KSU_VERSION <code>35090</code>
-
-<b>Status:</b> ❌ BUILD FAILED
-<b>Error:</b> ${error_type}
-<b>Step:</b> ${failed_step}
-
-🔍 <a href='${BUILD_URL}'>Check Actions Log</a>"
+	local simple_msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
+━━━━━━━━━━━━━━━━━━━
+❌ <b>${error_type}</b> · ${failed_step}
+<a href='${BUILD_URL}'>Check Log</a>"
 	tg_send "$CHANNEL_ID" "$simple_msg" && echo "Fail notification sent to channel." || echo "Fail notification to channel FAILED."
 
 	if [ -n "$ERROR_CHANNEL_ID" ]; then
-		local detail_msg="<b>🎻 Phrolova Kernel — Error Log</b>
-<b>Version:</b> ${VERSION} · Linux 4.14 (Non-GKI)
-<b>Root:</b> ReSukiSU v4.2.0-rc1 · KSU_VERSION <code>35090</code>
-<b>Error Type:</b> ${error_type}
-<b>Step:</b> ${failed_step}
-<b>Tag:</b> <code>${TAG}</code>
-<b>Commit:</b> <code>${SHA}</code>
+		local detail_msg="🎻 <b>Phrolova Error Log</b>
+<code>${VERSION}</code> · <code>${SHA}</code>
+<b>${error_type}</b> · ${failed_step}
 
 <pre><code>${error_context}</code></pre>
-
-🔍 <a href='${BUILD_URL}'>Check full log</a>"
+<a href='${BUILD_URL}'>Full Log</a>"
 		tg_send "$ERROR_CHANNEL_ID" "$detail_msg" && echo "Error log sent to error channel." || echo "Error log to error channel FAILED."
 	fi
 }
