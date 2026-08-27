@@ -42,7 +42,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
   - Virtual file injection + path redirection tanpa mount filesystem.
   - Compiled into kernel (`CONFIG_NOMOUNT=y`), netlink-based userspace control.
 - **Build variants:** Single universal kernel — works on MIUI/HyperOS and AOSP-based ROMs (LineageOS, crDroid, etc.). Satu zip buat semua.
-- **Bootloader:** Masih locked. Tidak ada device testing sampai unlock manual. Semua validasi = compile-time saja.
+- **Bootloader:** UBL'd. Device testing via ADB available.
 
 ## Source of Truth
 
@@ -53,10 +53,10 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 
 ## Dokumentasi Project
 
-- [CHANGELOG.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/CHANGELOG.md) — Record cherry-pick & versi rilis kernel.
-- [docs/OPTIMIZATIONS.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/docs/OPTIMIZATIONS.md) — Detail optimasi BBR, ZSTD ZRAM, & BFQ I/O.
-- [docs/HOOK_MODES.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/docs/HOOK_MODES.md) — Perbandingan hook mode root solution: ReSukiSU manual hook (non-GKI) vs TP-hook (GKI2).
-- [FIX_PROMPT.md](file:///D:/Dev/Project-Coding/2026/7Juli/android_kernel_xiaomi_selene/FIX_PROMPT.md) — Panduan perbaikan cepat jika terjadi masalah kompilasi.
+- [CHANGELOG.md](CHANGELOG.md) — Record cherry-pick & versi rilis kernel.
+- [docs/OPTIMIZATIONS.md](docs/OPTIMIZATIONS.md) — Detail optimasi BBR, ZSTD ZRAM, & BFQ I/O.
+- [docs/HOOK_MODES.md](docs/HOOK_MODES.md) — Perbandingan hook mode root solution: ReSukiSU manual hook (non-GKI) vs TP-hook (GKI2).
+- [FIX_PROMPT.md](FIX_PROMPT.md) — Panduan perbaikan cepat jika terjadi masalah kompilasi.
 
 ## Build Commands (Greenforce Clang 24.0.0)
 
@@ -64,7 +64,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 # Install deps
 sudo apt-get install -y bc bison build-essential flex \
   libssl-dev libelf-dev zstd python3 \
-  binutils-aarch64-linux-gnu zip
+  binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu zip
 
 # Setup Greenforce Clang (CI uses get_clang.sh)
 bash <(wget -qO- https://raw.githubusercontent.com/greenforce-project/greenforce_clang/refs/heads/main/get_clang.sh)
@@ -108,6 +108,7 @@ make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
 - Changelog: `.github/scripts/generate-changelog.sh` (commit-type based)
 - Artifact naming: `Phrolova-selene-{tag}.zip`
 - Release body: clean table format with device info + changelog + flash instructions
+- **KSU auto-extract:** `.github/scripts/get_ksu_info.sh` parses `resukisu/kernel/Kbuild` for `KSU_VERSION_NUM`, `KSU_TAG`, `KSU_COMMIT`, `KSU_BRANCH`. CI passes these as env vars to notify-telegram.sh. Fallback: script auto-extracts from Kbuild if env vars absent.
 
 ## Known Gotchas (Hard-Won Context)
 
@@ -246,7 +247,6 @@ Full live-debugging session via ADB on Redmi 10 2022 + LineageOS 20 (20.0-202509
 1. **Cek API di source tree dulu** (`grep -r`) sebelum nulis patch. Jangan asumsikan API modern ada di 4.14.
 2. **Setiap cherry-pick wajib dicatat** di `CHANGELOG.md`: commit hash, file, alasan. Tidak ada silent merge.
 3. **CI-first.** Semua perubahan harus lolos GitHub Actions. Build merah = blocker.
-4. **Tidak ada device testing** sampai bootloader unlock. Semua = compile-verified artifact ready.
 
 ## Kernel Update Workflow
 

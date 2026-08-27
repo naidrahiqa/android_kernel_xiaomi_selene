@@ -11,6 +11,37 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.9.5 — Phase 1: DT2W + Dynamic FPS + CI Auto-Extract KSU Version
+
+- **DT2W (Double-Tap to Wake):** `drivers/input/touchscreen/mediatek/focaltech_touch_k19a/focaltech_config.h`
+  - `FTS_GESTURE_EN` flipped 0→1 — mengaktifkan fitur gesture Focaltech untuk double-tap wake.
+  - Gesture handling sudah ada di `focaltech_gesture.c` (Focaltech vendor driver) — hanya perlu enable di Kconfig.
+  - **Sumber:** Focaltech vendor driver untuk selene (MT6768).
+
+- **Dynamic FPS (DFRC):** `arch/arm64/configs/selene_defconfig`
+  - `CONFIG_MTK_DYNAMIC_FPS_FRAMEWORK_SUPPORT=y` — mengaktifkan Dynamic Frame Rate Control driver (`drivers/misc/mediatek/dfrc/`).
+  - Memungkinkan perubahan refresh rate dinamis berdasarkan konteks (game, video, idle).
+  - **Sumber:** MTK vendor driver untuk MT6768.
+
+- **USB Boost:** Sudah aktif — `drivers/misc/mediatek/usb_boost/` dikompilasi otomatis ketika `CONFIG_USB=y`. Tidak perlu perubahan defconfig.
+  - **Sumber:** MTK vendor driver.
+
+- **Vibrator:** Sudah aktif — `CONFIG_MTK_VIBRATOR=y` di defconfig. Tidak perlu perubahan.
+  - **Sumber:** MTK vendor driver.
+
+- **CI Auto-Extract KSU Version:** `.github/scripts/get_ksu_info.sh` (baru)
+  - Script baru yang parse `resukisu/kernel/Kbuild` untuk extract `KSU_VERSION_NUM`, `KSU_TAG`, `KSU_COMMIT`, `KSU_BRANCH`.
+  - CI workflow (`build.yml`) sekarang extract KSU info via step `ksu` → pass sebagai env vars ke `notify-telegram.sh`.
+  - Fallback: script auto-extract dari Kbuild jika env vars tidak ada.
+  - Notifikasi Telegram otomatis tampilkan versi KSU yang benar (tidak hardcode).
+
+- **KSU snapshot update:** `resukisu/kernel/` — KSU_VERSION 35090 (03b60f26, v4.2.0-rc1 + 19 commits).
+  - Kbuild pin re-applied: `KSU_LOCAL_VERSION := 4390`, `KSU_TAG_NAME := v4.2.0-rc1`, `KSU_COMMIT_SHA := 03b60f26`.
+
+- **PHROLOVA_BASE bumped:** 0.9.4 → 0.9.5 di `build.yml` + `version.sh` fallback.
+
+- **Sumber:** Internal Phrolova (Phase 1 features + CI automation).
+
 ## v0.9.4 — NoMount v20 Port + BBR Fix Regresi + Defconfig Hardening & Features
 
 - **NoMount v20 port (dentry-op hijack + keyring control):** `fs/nomount.c` + `fs/nomount.h`

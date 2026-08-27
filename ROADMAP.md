@@ -1,12 +1,12 @@
 # Phrolova Kernel — Roadmap
 
-## Versi Saat Ini: v0.9.2 (Performance Tuning — BFQ + VM Dirty Optimization)
+## Versi Saat Ini: v0.9.5 (Phase 1 — DT2W, Dynamic FPS, KSU Auto-Extract)
 
 ---
 
 ## Fase 1 — Foundation Stabil (done)
 
-- [x] ReSukiSU main @ faccf4c5 (manual hook, non-GKI 4.14, KSU_VERSION 35071) — menggantikan KernelSU-Next
+- [x] ReSukiSU main @ 03b60f26 (manual hook, non-GKI 4.14, KSU_VERSION 35090) — menggantikan KernelSU-Next
 - [x] NoMount path redirection
 - [x] TCP BBR + ZRAM ZSTD + BFQ
 - [x] CI/CD pipeline functional (Void Linux container)
@@ -76,7 +76,7 @@ Target: Cutting-edge / long-term.
 
 | Fitur | Phrolova | Tendou-Arisu |
 |---|---|---|
-| KernelSU | ✓ (ReSukiSU main @ faccf4c5) | ✓ |
+| KernelSU | ✓ (ReSukiSU main @ 03b60f26) | ✓ |
 | NoMount | ✓ | ✗ |
 | WireGuard | ✓ | ✗ |
 | BBR | ✓ | ✓ |

@@ -1,7 +1,7 @@
 # Perbandingan Hook Mode: ReSukiSU Manual Hook (non-GKI) vs TP-Hook (GKI2)
 
 Dokumen ini menjelaskan mekanisme hook root solution ReSukiSU (main @
-`faccf4c5`, KSU_VERSION 35071) di Phrolova Kernel (Linux 4.14.356, non-GKI,
+`03b60f26`, KSU_VERSION 35090) di Phrolova Kernel (Linux 4.14.356, non-GKI,
 MT6768 selene).
 
 **Kesimpulan singkat:** Kernel 4.14 non-GKI **wajib manual hook** — patch
@@ -110,20 +110,20 @@ Kprobes **tidak dibutuhkan** sama sekali. `CONFIG_EXT4_FS=y` dipertahankan
 
 ## 4. Kondisi di Phrolova (selene)
 
-- **Manual hook (sejak v0.9.0):** ReSukiSU main @ `faccf4c5` (v4.2.0-rc1 + 10
-  commits, KSU_VERSION 35071) menggantikan KernelSU-Next hookless
+- **Manual hook (sejak v0.9.0):** ReSukiSU main @ `03b60f26` (v4.2.0-rc1 + 10
+  commits, KSU_VERSION 35090) menggantikan KernelSU-Next hookless
   (syscall table + tracepoint) yang dipakai sejak v0.8.0.
 - `CONFIG_KPROBES` tidak dibutuhkan dan tidak di-enable.
 - Kbuild di-patch lokal: fallback version pin tanpa `.git`
-  (`KSU_LOCAL_VERSION := 4371` → `KSU_VERSION = 30000 + 4371 + 700 = 35071`).
+  (`KSU_LOCAL_VERSION := 4390` → `KSU_VERSION = 30000 + 4390 + 700 = 35090`).
 - Manager: multi-manager (`CONFIG_KSU_MULTI_MANAGER_SUPPORT=y`). Rekomendasi
-  ReSukiSU manager — match KSU_VERSION 35071:
+  ReSukiSU manager — match KSU_VERSION 35090:
   - https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip
   - https://t.me/ReSukiSU
 - Diagnosa cepat saat boot:
   ```bash
   dmesg | grep -i -E "ksu|resuki"
-  # "-- ReSukiSU version code: 35071" → versi benar
+  # "-- ReSukiSU version code: 35090" → versi benar
   # "ksu: ..." dari hook/setuid_hook.c dll → hook aktif
   ```
 
@@ -135,6 +135,6 @@ Kprobes **tidak dibutuhkan** sama sekali. `CONFIG_EXT4_FS=y` dipertahankan
 |---|---|---|
 | ≤ v0.7.x | backslashxx/KernelSU | Syscall table patch |
 | v0.8.0 – v0.8.1 | KernelSU-Next v3.3.0 | Hookless: syscall table + sys_enter tracepoint (kprobes off) |
-| v0.9.0+ | ReSukiSU main @ faccf4c5 | Manual hook (fs/exec.c, fs/open.c, fs/stat.c, kernel/reboot.c) |
+| v0.9.0+ | ReSukiSU main @ 03b60f26 | Manual hook (fs/exec.c, fs/open.c, fs/stat.c, kernel/reboot.c) |
 
 Referensi: https://resukisu.github.io/guide/manual-integrate.html
