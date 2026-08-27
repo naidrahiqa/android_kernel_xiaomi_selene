@@ -62,12 +62,12 @@ Do NOT use the selective update script. Instead:
 
 ### Step 5: ReSukiSU + NoMount
 
-- ReSukiSU: main @ `03b60f26` (KSU_VERSION 35090), source at `resukisu/kernel/`, symlink at `drivers/kernelsu`
+- ReSukiSU: main @ `7bb6f0df` (KSU_VERSION 35093), source at `resukisu/kernel/`, symlink at `drivers/kernelsu`
 - Hook mode: manual hook (`CONFIG_KSU_MANUAL_HOOK=y`) — `ksu_handle_execveat`/`faccessat`/`stat`/`newfstat_ret`/`fstat64_ret`/`sys_reboot` di fs/exec.c, fs/open.c, fs/stat.c, kernel/reboot.c
 - setuid/initrc/input hooks otomatis via LSM/input_handler (AUTO_* default y, <6.8) — jangan patch manual
 - `manual_hook_check.mk` verify tiap hook saat build — hook hilang = compile error; hook lama (`ksu_vfs_read_hook`, `is_ksu_transition`, `ksu_handle_rename`) ditolak
 - Deps: `CONFIG_KSU=y`, `CONFIG_KSU_MANUAL_HOOK=y`, `CONFIG_KALLSYMS_ALL=y` (tanpa KALLSYMS_ALL butuh static export patch di security/selinux/), `CONFIG_MODULES=y`, `CONFIG_EXT4_FS=y`
-- Kbuild fallback version pin: `KSU_LOCAL_VERSION := 4390`, tag `v4.2.0-rc1`, sha `03b60f26` — jangan set ke 1 (manager tidak deteksi root)
+- Kbuild fallback version pin: `KSU_LOCAL_VERSION := 4393`, tag `v4.2.0-rc1`, sha `7bb6f0df` — jangan set ke 1 (manager tidak deteksi root)
 - NoMount: `fs/nomount.c` + `fs/nomount.h`, VFS hooks in dcache/namei/readdir/stat/statfs/proc
 - Both work fine at 4.14.356 — no update needed
 
