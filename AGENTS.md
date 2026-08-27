@@ -7,6 +7,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 | Skill | File | Trigger |
 |---|---|---|
 | **Selene Kernel** | `.opencode/skills/selene-kernel/SKILL.md` | **Master skill** — build, update, merge, KSU, NoMount, CI/CD, AK3 |
+| KSU Version Management | `.opencode/skills/ksu-version-management/SKILL.md` | Update ReSukiSU driver, sync source, bump version, keep docs in sync |
 | AK3 Packaging | `.opencode/skills/selene-kernel/references/ak3.md` | AnyKernel3 packaging, anykernel.sh config, flash error debugging |
 | AK3 Reverse Engineering | `.opencode/skills/ak3-reverse-engineering/SKILL.md` | Membandingkan anykernel.sh dengan zip kernel lain yang sudah terbukti work |
 | CI/CD (GitHub Actions) | `.opencode/skills/ci-cd-github-actions/SKILL.md` | Setup/modify GitHub Actions workflows, Telegram notif, release automation |
