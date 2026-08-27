@@ -79,6 +79,7 @@ function build_start() {
 <b>Update:</b> ${DATE}
 <b>Version:</b> ${VERSION} (${VARIANT_NAME}) · Linux 4.14 (Non-GKI)
 <b>Device:</b> Redmi 10 (selene)
+<b>Root:</b> ReSukiSU v4.2.0-rc1 · KSU_VERSION <code>35090</code>
 
 <b>Status:</b> Building...
 <b>Commit:</b> <code>${SHA}</code> — ${COMMIT_MSG}
@@ -104,26 +105,25 @@ function build_success() {
 <b>Device:</b> Redmi 10 (selene)
 <b>By:</b> <a href='https://github.com/naidrahiqa'>naidrahiqa</a>
 
+<b>Root:</b> ReSukiSU v4.2.0-rc1 · KSU_VERSION <code>35090</code> · Manual Hook
+<b>NoMount:</b> v20 (keyring + VFS hijack)
+
 <b>Changelog:</b>
 ${changelog_items}
 
 <b>Download</b> (<a href='${REPO_URL}/releases/tag/${TAG}'>GitHub Releases</a>)
-<b>Manager</b> (<a href='https://t.me/ReSukiSU/5/271281'>Telegram APK Release</a> · <a href='https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip'>Nightly CI ZIP</a>) | <b>NoMount</b> (<a href='https://github.com/maxsteeel/nomount/releases'>GitHub</a>)
+<b>Manager</b> (<a href='https://t.me/ReSukiSU/5/271281'>Telegram APK</a> · <a href='https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip'>Nightly CI</a>)
 
 <b>Credits:</b>
-yuki-saisei (<a href='https://github.com/yuki-saisei'>Base kernel</a>)
-ReSukiSU (<a href='https://github.com/ReSukiSU/ReSukiSU'>ReSukiSU</a>)
-SukiSU-Ultra (<a href='https://github.com/SukiSU-Ultra/SukiSU-Ultra'>SukiSU-Ultra</a>)
+yuki-saisei (<a href='https://github.com/yuki-saisei'>Base</a>)
+ReSukiSU (<a href='https://github.com/ReSukiSU/ReSukiSU'>Root</a>)
 maxsteeel (<a href='https://github.com/maxsteeel/nomount'>NoMount</a>)
 greenforce-project (<a href='https://github.com/greenforce-project/greenforce_clang'>Clang 24</a>)
-osm0sis (<a href='https://github.com/osm0sis/AnyKernel3'>AnyKernel3</a>)
-
-<b>Support me:</b>
-<a href='https://github.com/naidrahiqa'>GitHub</a>
+osm0sis (<a href='https://github.com/osm0sis/AnyKernel3'>AK3</a>)
 
 <a href='${REPO_URL}'>Phrolova Kernel</a>
 
-#PhrolovaKernel #Redmi10 #MT6768 #KernelSU #NoMount"
+#PhrolovaKernel #Redmi10 #MT6768 #ReSukiSU #NoMount"
 
 	if tg_photo "$CHANNEL_ID" "$BANNER_URL" "$msg"; then
 		echo "Success notification sent with banner."
@@ -166,6 +166,7 @@ function build_failed() {
 <b>Update:</b> ${DATE}
 <b>Version:</b> ${VERSION} (${VARIANT_NAME}) · Linux 4.14 (Non-GKI)
 <b>Device:</b> Redmi 10 (selene)
+<b>Root:</b> ReSukiSU v4.2.0-rc1 · KSU_VERSION <code>35090</code>
 
 <b>Status:</b> ❌ BUILD FAILED
 <b>Error:</b> ${error_type}
@@ -177,6 +178,7 @@ function build_failed() {
 	if [ -n "$ERROR_CHANNEL_ID" ]; then
 		local detail_msg="<b>🎻 Phrolova Kernel — Error Log</b>
 <b>Version:</b> ${VERSION} · Linux 4.14 (Non-GKI)
+<b>Root:</b> ReSukiSU v4.2.0-rc1 · KSU_VERSION <code>35090</code>
 <b>Error Type:</b> ${error_type}
 <b>Step:</b> ${failed_step}
 <b>Tag:</b> <code>${TAG}</code>
