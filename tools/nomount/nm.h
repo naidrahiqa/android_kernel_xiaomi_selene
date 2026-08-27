@@ -149,10 +149,14 @@ static noinline int strcmp(const char *s1, const char *s2) {
     return *(unsigned char *)s1 - *(unsigned char *)s2;
 }
 
-static noinline void print_str(const char *s) {
-    long len = 0;
+static noinline unsigned long strlen(const char *s) {
+    unsigned long len = 0;
     while (s[len]) len++;
-    sys3(SYS_WRITE, 1, (long)s, len);
+    return len;
+}
+
+static noinline void print_str(const char *s) {
+    sys3(SYS_WRITE, 1, (long)s, strlen(s));
 }
 
 static noinline void print_strn(const char *s, unsigned long len) {
