@@ -44,6 +44,22 @@ BUILD_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_I
 REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
 DATE=$(date +%d/%m/%y 2>/dev/null || echo "??/??/??")
 
+# KSU info — from CI env or auto-extract from Kbuild
+if [ -n "$KSU_VERSION" ] && [ -n "$KSU_TAG" ]; then
+	KSU_VER_NUM="$KSU_VERSION"
+	KSU_VER_TAG="$KSU_TAG"
+else
+	KSU_SCRIPT="$(dirname "$0")/get_ksu_info.sh"
+	if [ -f "$KSU_SCRIPT" ]; then
+		eval "$("$KSU_SCRIPT")"
+		KSU_VER_NUM="${KSU_VERSION_NUM:-0}"
+		KSU_VER_TAG="${KSU_TAG:-unknown}"
+	else
+		KSU_VER_NUM=0
+		KSU_VER_TAG="unknown"
+	fi
+fi
+
 function tg_send() {
 	local target="$1" message="$2"
 	local resp
@@ -76,9 +92,9 @@ function tg_photo() {
 
 function build_start() {
 	local msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
-━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━
 Redmi 10 (selene) · Linux 4.14 Non-GKI
-ReSukiSU v4.2.0-rc1 · KSU_VERSION <code>35090</code>
+ReSukiSU <code>${KSU_VER_TAG}</code> · KSU_VERSION <code>${KSU_VER_NUM}</code>
 
 ⏳ Building...
 <code>${SHA}</code> ${COMMIT_MSG}
@@ -96,9 +112,9 @@ function build_success() {
 	local BANNER_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY:-naidrahiqa/phrolova_kernel_xiaomi_selene}/phrolova/docs/assets/banner_landscape.jpg"
 
 	local msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
-━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━
 Redmi 10 (selene) · Linux 4.14 Non-GKI
-ReSukiSU v4.2.0-rc1 · KSU_VERSION <code>35090</code> · Manual Hook
+ReSukiSU <code>${KSU_VER_TAG}</code> · KSU_VERSION <code>${KSU_VER_NUM}</code> · Manual Hook
 NoMount v20"
 
 	if [ -n "$changelog_items" ]; then
