@@ -115,7 +115,7 @@ function build_success() {
 ━━━━━━━━━━━━━━━━━━━━
 Redmi 10 (selene) · Linux 4.14 Non-GKI
 ReSukiSU <code>${KSU_VER_TAG}</code> · KSU_VERSION <code>${KSU_VER_NUM}</code> · Manual Hook
-NoMount v20"
+NoMount v20 (module v2.0.0)"
 
 	if [ -n "$changelog_items" ]; then
 		msg="${msg}
@@ -126,9 +126,11 @@ ${changelog_items}"
 
 	msg="${msg}
 
-<a href='${REPO_URL}/releases/tag/${TAG}'>⬇ Download</a> · <a href='https://t.me/ReSukiSU/5/271281'>📦 Manager</a>
+<b>Required:</b>
+• <a href='https://t.me/ReSukiSU/5/271281'>📦 ReSukiSU Manager</a> (match KSU_VERSION ${KSU_VER_NUM})
+• <a href='https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip'>📦 NoMount Module v2.0.0</a> (for kernel v20 keyring)
 
-<i>naidrahiqa</i> · <a href='${REPO_URL}'>GitHub</a>"
+<a href='${REPO_URL}/releases/tag/${TAG}'>⬇ Download Kernel</a> · <a href='${REPO_URL}'>GitHub</a>"
 
 	if tg_photo "$CHANNEL_ID" "$BANNER_URL" "$msg"; then
 		echo "Success notification sent with banner."
