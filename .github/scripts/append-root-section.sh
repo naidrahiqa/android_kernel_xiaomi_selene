@@ -22,7 +22,7 @@ cat >> release_body.md << 'EOF'
 
 | Component | Version | Link |
 |---|---|---|
-| ReSukiSU Manager | KSU_VERSION `35093` | [Telegram APK](https://t.me/ReSukiSU/5/271281) · [Nightly CI](https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip) |
+| ReSukiSU Manager | KSU_VERSION `35093` | [Nightly CI (always latest)](https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip) · [Telegram Channel](https://t.me/ReSukiSU) |
 | NoMount Module | v2.0.0 (kernel v20) | [GitHub Release](https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip) |
 
 > **NoMount:** Kernel driver uses keyring (v20), NOT netlink. Module v1.x uses netlink detection → **false negative** on v20 kernels. Always use NoMount module v2.0.0+.
