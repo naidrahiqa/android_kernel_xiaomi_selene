@@ -127,7 +127,7 @@ ${changelog_items}"
 	msg="${msg}
 
 <b>Required:</b>
-• <a href='https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip'>📦 ReSukiSU Manager</a> (match KSU_VERSION ${KSU_VER_NUM})
+• <a href='https://t.me/ReSukiSU/5/276176'>📦 ReSukiSU Manager</a> (match KSU_VERSION ${KSU_VER_NUM})
 • <a href='https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip'>📦 NoMount Module v2.0.0</a> (for kernel v20 keyring)
 
 <a href='${REPO_URL}/releases/tag/${TAG}'>⬇ Download Kernel</a> · <a href='${REPO_URL}'>GitHub</a>"
