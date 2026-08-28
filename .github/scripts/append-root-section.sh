@@ -11,7 +11,7 @@ cat >> release_body.md << 'EOF'
 
 | | |
 |---|---|
-| **Driver** | ReSukiSU v4.2.0-rc1 · KSU_VERSION `35093` |
+| **Driver** | ReSukiSU v4.2.0-rc1 · KSU_VERSION `35097` |
 | **Hook** | Manual Hook (non-GKI 4.14) |
 | **Path Redirection** | NoMount v20 (keyring + VFS hijack) |
 | **Source** | [ReSukiSU/ReSukiSU](https://github.com/ReSukiSU/ReSukiSU) |
@@ -22,7 +22,7 @@ cat >> release_body.md << 'EOF'
 
 | Component | Version | Link |
 |---|---|---|
-| ReSukiSU Manager | KSU_VERSION `35093` | [Nightly CI (always latest)](https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip) · [Telegram Channel](https://t.me/ReSukiSU) |
+| ReSukiSU Manager | KSU_VERSION `35097` | [Nightly CI (always latest)](https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main/Manager-release.zip) · [Telegram Channel](https://t.me/ReSukiSU) |
 | NoMount Module | v2.0.0 (kernel v20) | [GitHub Release](https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip) |
 
 > **NoMount:** Kernel driver uses keyring (v20), NOT netlink. Module v1.x uses netlink detection → **false negative** on v20 kernels. Always use NoMount module v2.0.0+.
