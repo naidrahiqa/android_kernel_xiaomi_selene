@@ -11,6 +11,20 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.9.6 — ReSukiSU 35097 + NoMount Module v2.0.0
+
+- **ReSukiSU 35097 (25d94deb, v4.2.0-rc1+36):** `resukisu/kernel/Kbuild`
+  - KSU_LOCAL_VERSION 4393→4397, KSU_COMMIT_SHA 25d94deb.
+  - CI auto-extract: version 35097, tag v4.2.0-rc1, sha 25d94deb, branch main.
+
+- **NoMount module v2.0.0 required:** Module v1.x (netlink detection) → false negative on v20 kernels (keyring).
+  - Download: `https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip`
+  - Verification: `nm version` should return `20`.
+
+- **Release notif updated:** ReSukiSU manager link → Telegram post (`t.me/ReSukiSU/5/276176`), NoMount module link added, version matching warning.
+
+- **PHROLOVA_BASE bumped:** 0.9.5 → 0.9.6.
+
 ## v0.9.5 — Phase 1: DT2W + Dynamic FPS + CI Auto-Extract KSU Version
 
 - **DT2W (Double-Tap to Wake):** `drivers/input/touchscreen/mediatek/focaltech_touch_k19a/focaltech_config.h`

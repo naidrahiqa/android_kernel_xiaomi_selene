@@ -1,6 +1,6 @@
 # Phrolova Kernel — Roadmap
 
-## Versi Saat Ini: v0.9.5 (Phase 1 — DT2W, Dynamic FPS, KSU Auto-Extract)
+## Versi Saat Ini: v0.9.6 (Phase 1 — DT2W, Dynamic FPS, KSU Auto-Extract, ReSukiSU 35097)
 
 ---
 
