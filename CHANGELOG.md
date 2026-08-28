@@ -35,12 +35,19 @@ Format:
   - Fallback: script auto-extract dari Kbuild jika env vars tidak ada.
   - Notifikasi Telegram otomatis tampilkan versi KSU yang benar (tidak hardcode).
 
-- **KSU snapshot update:** `resukisu/kernel/` — KSU_VERSION 35090 (03b60f26, v4.2.0-rc1 + 19 commits).
-  - Kbuild pin re-applied: `KSU_LOCAL_VERSION := 4390`, `KSU_TAG_NAME := v4.2.0-rc1`, `KSU_COMMIT_SHA := 03b60f26`.
+- **KSU update to 35093:** `resukisu/kernel/` updated to `7bb6f0df` (v4.2.0-rc1 + 32 commits).
+  - Kbuild pin: `KSU_LOCAL_VERSION := 4393`, `KSU_COMMIT_SHA := 7bb6f0df`.
+  - Bugfix: input hook sleep-in-atomic-context (ReSukiSU#363) — `ksu_stop_input_hook_runtime()` commented out, deferred to `on_post_fs_data`.
+
+- **NoMount module v2.0.0 required:** Metamodule v1.x uses netlink detection → false negative on v20 kernels (keyring-based). Wajib pakai module v2.0.0+.
+  - Download: `https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip`
+  - Verification: `nm version` should return `20`.
+
+- **Release notif updated:** ReSukiSU manager link changed to `nightly.link` (always latest), NoMount module v2.0.0 link added, version matching warning.
 
 - **PHROLOVA_BASE bumped:** 0.9.4 → 0.9.5 di `build.yml` + `version.sh` fallback.
 
-- **Sumber:** Internal Phrolova (Phase 1 features + CI automation).
+- **Sumber:** Internal Phrolova (Phase 1 features + CI automation + NoMount module fix).
 
 ## v0.9.4 — NoMount v20 Port + BBR Fix Regresi + Defconfig Hardening & Features
 

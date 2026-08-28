@@ -41,7 +41,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
   - **Manager:** `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` (default) — manager KernelSU/MKSU/RKSU/SukiSU-Ultra bisa dipakai. Disarankan **ReSukiSU manager** (nightly.link build-manager / t.me/ReSukiSU) — match KSU_VERSION 35093.
 - **Systemless path redirection:** NoMount (`maxsteeel/nomount`).
   - Virtual file injection + path redirection tanpa mount filesystem.
-  - Compiled into kernel (`CONFIG_NOMOUNT=y`), netlink-based userspace control.
+  - Compiled into kernel (`CONFIG_NOMOUNT=y`), keyring-based userspace control.
 - **Build variants:** Single universal kernel — works on MIUI/HyperOS and AOSP-based ROMs (LineageOS, crDroid, etc.). Satu zip buat semua.
 - **Bootloader:** UBL'd. Device testing via ADB available.
 
@@ -181,6 +181,8 @@ Kontek 4.14 yang sudah ditangani upstream `kernel_compat.mk` + `compat/kernel_co
 - VFS hooks dibersihkan (v0.9.4): semua panggilan `nomount_handle_*` dihapus dari `dcache.c`, `namei.c`, `readdir.c`, `stat.c`, `statfs.c`, `proc/task_mmu.c`. Interception otomatis via hijacked i_op/fop/s_op/d_op.
 - **gnu89 requirement:** Kernel 4.14 compile `-std=gnu89` — semua `for (int i ...)` dalam satu fungsi harus dihoist (redefinition error).
 - **ABI userspace berubah:** tool `nm` lama berbasis genetlink TIDAK kompatibel dengan v20. Wajib pakai binary `nm` baru (`tools/nomount/nm.c`, freestanding static arm64, raw `SYS_ADD_KEY` syscall). Di-build di CI & di-upload sebagai release asset kedua.
+- **Module v2.0.0 required:** NoMount metamodule v1.x uses netlink detection → **false negative** on v20 kernels (keyring-based). Wajib pakai **NoMount module v2.0.0+** (`maxsteeel/nomount` v2.0.0 release). Download: `https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip`
+- **Verification:** `nm version` should return `20`. If "KERNEL DRIVER NOT DETECTED" → wrong module version (v1.x), not a kernel issue.
 - Kconfig vendor caveat: `drivers/misc/mediatek/Kconfig.default` punya `select TCP_CONG_BIC` yang bisa mengaktifkan BIC secara diam-diam — sudah dihapus di v0.9.4. CI gate memverifikasi absennya BIC post-build.
 
 ### Device Debugging Findings (2026-08-25, LOS20-unofficial hasan build)

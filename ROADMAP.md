@@ -53,7 +53,7 @@ Target: New functionality beyond base kernel.
 Target: User-facing polish.
 
 - [ ] **KernelSU WebUI default theme** — dark mode, custom preset
-- [ ] **NoMount userspace control app** — netlink-based control
+- [ ] **NoMount userspace control app** — keyring-based control via WebUI (module v2.0.0+)
 - [ ] **Perf mode toggle** — gaming vs day-to-day via Kprofiles
 - [ ] **Sound control** — speaker/headphone gain (if codec supports)
 - [ ] **Build variant** — separate "Lite" build
