@@ -1,6 +1,6 @@
 # Phrolova Kernel — Roadmap
 
-## Versi Saat Ini: v0.9.7 (Performance Tuning: BFQ + ZRAM ZSTD + MTK Stock Configs)
+## Versi Saat Ini: v0.9.8 (Security Hardening: Corruption Detection + Heap Zeroing)
 
 ---
 
@@ -122,21 +122,19 @@ Target: Cutting-edge / long-term.
 
 Mitigasi ringan yang ga ngaruh performa:
 
+- [x] **`CONFIG_DEBUG_LIST=y`** — detect corrupted list operations (v0.9.8, auto-selected by BUG_ON_DATA_CORRUPTION)
+- [x] **`CONFIG_BUG_ON_DATA_CORRUPTION=y`** — panic on data corruption (v0.9.8)
 - [ ] **Enable `ARM64_SSBD`** — Speculative Store Bypass Disable
-  - Overhead: minimal (hanya set 1 bit di firmware/hardware)
+  - Overhead: 2-5% on memory-intensive workloads
   - Covers: CVE-2018-3639
-  - Guard di AGENTS.md: MTK CPU mungkin perlu SMC call — verify dulu
+  - **Deferred:** gaming-first kernel, lower risk on phones
 - [ ] **Enable `HARDEN_BRANCH_PREDICTOR`** — Spectre v2 mitigation
-  - Overhead: negligible on ARM64 with KASLR
+  - Overhead: 1-3% on syscall-heavy workloads
   - Covers: CVE-2017-5715
+  - **Deferred:** gaming-first kernel, lower risk on phones
 - [ ] **Enable `MITIGATE_SPECTRE_BRANCH_HISTORY`** — Spectre-BHB
-  - Re-enable (currently disabled for perf)
-  - Benchmark dulu — overhead reported minimal on MTK G88
-- [ ] **`CONFIG_DEBUG_LIST=y`** — detect corrupted list operations
-  - Overhead: very small, catches memory corruption bugs
-  - Covers: kernel memory safety
-- [ ] **`CONFIG_BUG_ON_DATA_CORRUPTION=y`** — panic on data corruption
-  - Better than silent corruption leading to exploitable states
+  - Requires HARDEN_BRANCH_PREDICTOR
+  - **Deferred:** bundled with Spectre v2
 
 ### Phase S3 — Stack Protector Re-eval (v0.9.0)
 
@@ -151,22 +149,14 @@ Mitigasi ringan yang ga ngaruh performa:
 
 ### Phase S4 — Kernel Self Protection (v0.9.x)
 
-- [ ] **`CONFIG_INIT_ON_ALLOC_DEFAULT=y`** — zero-initialize heap allocations
-  - Overhead: boot-time only (pages pre-zeroed), runtime zeroing of slab objects
-  - Covers: info leaks via uninit memory
-  - Alternative: `CONFIG_INIT_STACK_ALL_ZERO=y` (Clang only, safer)
-- [ ] **`CONFIG_SLAB_FREELIST_HARDENED=y`** — random freelist for slab
-  - Overhead: minimal (XOR with random canary)
-  - Covers: heap spraying attacks
-- [ ] **`CONFIG_SLAB_FREELIST_RANDOM=y`** — randomize slab freelist order
-  - Overhead: minimal (random shuffle at alloc time)
-  - Covers: deterministic heap layout prevention
+- [x] **`CONFIG_INIT_ON_ALLOC_DEFAULT_ON=y`** — zero-initialize heap allocations (v0.9.8)
+- [x] **`CONFIG_SLAB_FREELIST_HARDENED=y`** — random freelist for slab (v0.9.4)
+- [x] **`CONFIG_SLAB_FREELIST_RANDOM=y`** — randomize slab freelist order (v0.9.4)
+- [x] **`CONFIG_STRICT_KERNEL_RWX=y`** — mark kernel text as read-only (v0.9.8, auto-selected by ARM64)
 - [ ] **`CONFIG_RANDOMIZE_KSTACK_OFFSET=y`** — randomize kernel stack offset
-  - Overhead: negligible (adds random nop at entry)
-  - Covers: stack-based info leaks
+  - Not available in 4.14 (5.13+ feature)
 - [ ] **`CONFIG_HARDEN_EL2_VECTORS=y`** — harden hyp vectors (ARM64)
-  - Overhead: none (boot-time config)
-  - Covers: EL2 exploitation
+  - Not available in 4.14 (5.9+ feature)
 
 ### Phase S5 — SELinux + KSU Hardening (v1.0.0)
 

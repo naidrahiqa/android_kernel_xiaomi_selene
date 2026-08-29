@@ -560,6 +560,11 @@ CONFIG_SECURITYFS=y
 CONFIG_SLAB_FREELIST_HARDENED=y
 CONFIG_SLAB_FREELIST_RANDOM=y
 
+# Kernel Self Protection — corruption detection + heap zeroing
+CONFIG_BUG_ON_DATA_CORRUPTION=y
+CONFIG_INIT_ON_ALLOC_DEFAULT_ON=y
+CONFIG_STRICT_KERNEL_RWX=y
+
 # Additional TCP Congestion Control (Westwood for cellular, BIC)
 CONFIG_TCP_CONG_WESTWOOD=y
 # CONFIG_TCP_CONG_BIC is not set

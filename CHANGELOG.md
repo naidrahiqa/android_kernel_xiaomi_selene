@@ -11,6 +11,37 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.9.8 — Security Hardening: Corruption Detection + Heap Zeroing
+
+- **BUG_ON_DATA_CORRUPTION=y:** `lib/Kconfig.debug`
+  - Triggers `BUG()` when kernel data corruption is detected (corrupted linked lists, etc.).
+  - Auto-selects `DEBUG_LIST=y` — validates list integrity on `list_del`/`list_add`.
+  - **Alasan:** Deteksi dini exploitation attempts yang corrupt kernel structures. Silent corruption = exploitable state.
+  - **Overhead:** Minimal (<0.5%).
+  - **Sumber:** Security Roadmap Phase S2.
+
+- **INIT_ON_ALLOC_DEFAULT_ON=y:** `security/Kconfig.hardening`
+  - Zeroes all page/slab allocator memory on allocation.
+  - Eliminates uninitialized heap memory exposures (info leaks via uninit memory).
+  - **Alasan:** Prevents use-of-uninitialized-data vulnerabilities. Can be disabled at boot via `init_on_alloc=0` if issues arise.
+  - **Overhead:** <1% typical, up to 7% synthetic.
+  - **Sumber:** Security Roadmap Phase S4.
+
+- **STRICT_KERNEL_RWX=y:** `arch/Kconfig`
+  - Marks kernel text as read-only, rodata as read-only+no-execute.
+  - Prevents runtime modification of kernel code (rootkit injection, etc.).
+  - **Alasan:** Defense-in-depth against kernel code modification attacks.
+  - **Overhead:** None (boot-time page table setup only).
+  - **Sumber:** Security Roadmap Phase S5.
+
+- **Not enabled (performance tradeoff):**
+  - `HARDEN_BRANCH_PREDICTOR` — Spectre v2, 1-3% overhead. Deferred to future release.
+  - `ARM64_SSBD` — Speculative Store Bypass Disable, 2-5% overhead. Deferred.
+  - `MITIGATE_SPECTRE_BRANCH_HISTORY` — Spectre-BHB. Requires HARDEN_BRANCH_PREDICTOR.
+  - **Alasan:** Gaming-first kernel. Spectre mitigations are lower risk on phones (requires local code execution). Will evaluate after benchmarking.
+
+- **PHROLOVA_BASE bumped:** 0.9.7 → 0.9.8.
+
 ## v0.9.7 — Performance Tuning + ReSukiSU 35104
 
 - **ReSukiSU 35104 (83614d892d, v4.2.0-rc1+43):** `resukisu/kernel/`
