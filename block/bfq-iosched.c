@@ -139,7 +139,7 @@ BFQ_BFQQ_FNS(softrt_update);
 #undef BFQ_BFQQ_FNS						\
 
 /* Expiration time of sync (0) and async (1) requests, in ns. */
-static const u64 bfq_fifo_expire[2] = { NSEC_PER_SEC / 4, NSEC_PER_SEC / 8 };
+static const u64 bfq_fifo_expire[2] = { 150 * NSEC_PER_MSEC, NSEC_PER_SEC / 8 };
 
 /* Maximum backwards seek (magic number lifted from CFQ), in KiB. */
 static const int bfq_back_max = 16 * 1024;
@@ -147,8 +147,8 @@ static const int bfq_back_max = 16 * 1024;
 /* Penalty of a backwards seek, in number of sectors. */
 static const int bfq_back_penalty = 2;
 
-/* Idling period duration, in ns. */
-static u64 bfq_slice_idle = NSEC_PER_SEC / 125;
+/* Idling period duration, in ns. Reduced from 8ms to 2ms for eMMC latency. */
+static u64 bfq_slice_idle = NSEC_PER_SEC / 500;
 
 /* Minimum number of assigned budgets for which stats are safe to compute. */
 static const int bfq_stats_min_budgets = 194;

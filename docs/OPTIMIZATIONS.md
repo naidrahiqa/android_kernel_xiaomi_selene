@@ -35,6 +35,11 @@ Dokumen ini mencatat seluruh optimasi performa, kompresi memori, dan pengatur la
 - **ZSTD (Zstandard) Compression:** Menggantikan algoritma LZO standar di ZRAM. ZSTD memberikan rasio kompresi jauh lebih tinggi (~1.5x lebih padat daripada LZO) dengan kecepatan dekompresi yang mendekati kecepatan RAM fisik.
 - **Hasil untuk RAM 4GB/6GB:** Memungkinkan sistem menyimpan lebih banyak aplikasi di background tanpa triggering OOM (Out Of Memory) killer atau app reload, sangat membantu pada MIUI/HyperOS maupun Custom ROM.
 
+### ZRAM ZSTD Level Tuning (v0.9.7):
+- `ZSTD_DEF_LEVEL` 3 → 5: ZSTD level 5 pakai `ZSTD_greedy` strategy → ~15-20% better compression ratio.
+- CPU overhead ~30% lebih tinggi tapi masih aman di Cortex-A75/A55 (MT6768).
+- Lebih banyak data terkompresi di 2GB ZRAM → lebih sedikit app reload di 4GB RAM device.
+
 ---
 
 ## 3. Storage & Disk I/O Scheduling (BFQ)
@@ -48,6 +53,11 @@ Dokumen ini mencatat seluruh optimasi performa, kompresi memori, dan pengatur la
 ### Penjelasan & Manfaat:
 - **BFQ (Budget Fair Queueing):** I/O Scheduler berbasis BLK-MQ yang mengalokasikan bandwidth storage secara adil berdasarkan bobot proses.
 - **Mencegah UI Lag:** Saat ada background write/install aplikasi yang intensif, BFQ memberikan prioritas tinggi pada proses UI interaktif dan layar sentuh, sehingga perangkat tidak terasa patah-patah (*stutter-free*).
+
+### BFQ Default Tuning (v0.9.7):
+- `slice_idle` 8ms → 2ms: eMMC 5.1 gak butuh idle sepanjang HDD. 2ms kurangi latency multi-queue saat game load asset.
+- `fifo_expire_sync` 250ms → 150ms: tighter sync expiry, background I/O gak block game I/O.
+- Runtime tunable via `/sys/block/*/queue/iosched/` — user bisa override kapan saja.
 
 ---
 
@@ -109,3 +119,21 @@ adb shell su -c 'zcat /proc/config.gz | grep -E "DEFAULT_IOSCHED|USER_NS"'
 adb shell cat /proc/sys/net/ipv4/tcp_congestion_control   # bbr
 ```
 Harapannya: `bfq`, `CONFIG_USER_NS=y`. CI (v0.9.3+) punya verification gate + upload `.config` sebagai artifact build.
+
+---
+
+## 9. MTK Stock Configs (v0.9.7)
+
+### Yang Diaktifkan:
+- **MTK_PERF_OBSERVER=y** — Performance metric aggregation hub untuk FPSGO/EARA thermal feedback. Reads EMI BW counters dari SSPM SRAM. Monitoring only, no hardware control.
+- **MTK_PERF_TRACKER=y** — Performance tracking framework, provides metrics consumed by FPSGO/GBE.
+- **MTK_RESYM=y** — Resource Symphony — system resource coordination untuk boost engines.
+- **MTK_SWPM=y** — Software Power Meter — per-rail power estimation (VPROC12/VCORE/VGPU/VDRAM1). procfs: `/proc/swpm/`.
+- **MTK_QOS_V1=y** — QoS framework untuk DRAM BW management via SSPM IPI. sysfs: `qos_bound_enable`, `qos_bound_status`.
+- **MTK_RAM_CONSOLE=y** — Crash log persistence ke reserved DRAM. 26+ MTK drivers write diagnostic data. `/proc/last_kmsg` untuk crash forensics.
+
+### Catatan:
+- Semua configs ada di `stock_defconfig` tapi sebelumnya tidak diaktifkan di Phrolova.
+- `MTK_RAM_CONSOLE` perlu reserved memory di DTS — driver gagal gracefully kalau tidak ada (no crash).
+- `MTK_QOS_V1` depends on `MTK_TINYSYS_SSPM_SUPPORT=y` (sudah aktif).
+- `MTK_SWPM` consume 3 PMU counters per CPU — overhead moderat tapi acceptable untuk monitoring.

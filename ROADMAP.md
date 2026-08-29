@@ -1,6 +1,6 @@
 # Phrolova Kernel — Roadmap
 
-## Versi Saat Ini: v0.9.6 (Phase 1 — DT2W, Dynamic FPS, KSU Auto-Extract, ReSukiSU 35097)
+## Versi Saat Ini: v0.9.7 (Performance Tuning: BFQ + ZRAM ZSTD + MTK Stock Configs)
 
 ---
 
@@ -31,11 +31,12 @@ Target: Benchmark gain + responsivitas.
 - [x] **Stack protector disabled** — `CC_STACKPROTECTOR_STRONG=n`
 - [x] **HID bloat** — 25→4 drivers
 - [x] **Simple LMK v1.0.1** — 200MB threshold, 500ms, race fix
-- [ ] **GPU frequency table** — adjust Mali G52 MC2 freq steps
-- [ ] **BFQ tuning** — slice_idle, timeout_sync
-- [ ] **VM sysctl** — dirty ratio, vfs_cache_pressure (runtime)
-- [ ] **BBR tuning** — pacing gain, TCP buffer sizes
-- [ ] **ZRAM tuning** — stream count, compression level
+- [x] **BFQ tuning** — slice_idle 8→2ms, fifo_expire_sync 250→150ms (v0.9.7)
+- [x] **ZRAM ZSTD level** — compression level 3→5 (v0.9.7)
+- [x] **MTK stock configs** — PERF_OBSERVER, PERF_TRACKER, RESYM, SWPM, QOS_V1, RAM_CONSOLE (v0.9.7)
+- [ ] **GPU frequency table** — adjust Mali G52 MC2 freq steps (hardcoded, skip for now)
+- [ ] **VM sysctl** — dirty ratio, vfs_cache_pressure (runtime, userspace init script)
+- [ ] **BBR tuning** — pacing gain, TCP buffer sizes (BBR v1 zero runtime knobs)
 
 ## Fase 3 — Fitur Tambahan (v0.8.0)
 

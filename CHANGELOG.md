@@ -11,6 +11,61 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.9.7 — Performance Tuning: BFQ + ZRAM ZSTD + MTK Stock Configs
+
+- **BFQ default tuning:** `block/bfq-iosched.c`
+  - `slice_idle` 8ms → 2ms (`NSEC_PER_SEC / 500`): kurangi idle wait eMMC, better multi-queue throughput saat game load asset.
+  - `fifo_expire_sync` 250ms → 150ms (`150 * NSEC_PER_MSEC`): tighter sync expiry, background I/O gak block game I/O.
+  - **Alasan:** eMMC 5.1 di Helio G88 gak butuh idle sepanjang HDD. BFQ defaults terlalu konservatif untuk mobile storage.
+  - **Sumber:** Internal Phrolova performance tuning.
+
+- **ZRAM ZSTD compression level:** `crypto/zstd.c`
+  - `ZSTD_DEF_LEVEL` 3 → 5: ZSTD level 5 pakai `ZSTD_greedy` strategy → ~15-20% better compression ratio.
+  - CPU overhead ~30% lebih tinggi tapi masih aman di Cortex-A75/A55 (MT6768).
+  - **Alasan:** Lebih banyak data terkompresi di 2GB ZRAM → lebih sedikit app reload di 4GB RAM device.
+  - **Sumber:** Internal Phrolova performance tuning.
+
+- **MTK_PERF_OBSERVER=y:** `drivers/misc/mediatek/performance/observer/`
+  - Performance metric aggregation hub untuk FPSGO/EARA thermal feedback.
+  - reads EMI BW counters dari SSPM SRAM, fires notifier chain on bandwidth events.
+  - **Risk:** Low — monitoring only, no hardware control.
+  - **Sumber:** Stock MTK defconfig.
+
+- **MTK_PERF_TRACKER=y:** `drivers/misc/mediatek/performance/`
+  - Performance tracking framework, provides metrics consumed by FPSGO/GBE.
+  - **Risk:** Low — informational only.
+  - **Sumber:** Stock MTK defconfig.
+
+- **MTK_RESYM=y:** `drivers/misc/mediatek/performance/resym/`
+  - Resource Symphony — system resource coordination for performance.
+  - **Risk:** Low — coordinates existing boost engines.
+  - **Sumber:** Stock MTK defconfig.
+
+- **MTK_SWPM=y:** `drivers/misc/mediatek/base/power/swpm_v1/`
+  - Software Power Meter — per-rail average power estimation (VPROC12, VPROC11, VGPU, VCORE, VDRAM1, VDD1).
+  - Uses 3 PMU counters per CPU + 1s timer for activity-based power modeling.
+  - procfs: `/proc/swpm/` for power debugging.
+  - **Risk:** Low-Medium — monitoring only, consumes 3 PMU counters per CPU.
+  - **Sumber:** Stock MTK defconfig.
+
+- **MTK_QOS_V1=y:** `drivers/misc/mediatek/base/power/mtk_qos/`
+  - QoS framework for DRAM bandwidth management via SSPM IPI.
+  - BW bound detector tracks congestive/full/free bandwidth states.
+  - sysfs: `qos_bound_enable`, `qos_bound_status`.
+  - **Risk:** Medium — controls DRAM OPP via BW prediction. SSPM firmware must be active.
+  - **Dependencies:** `MTK_TINYSYS_SSPM_SUPPORT=y` (already set).
+  - **Sumber:** Stock MTK defconfig.
+
+- **MTK_RAM_CONSOLE=y:** `drivers/misc/mediatek/ram_console/`
+  - Crash log persistence — writes to reserved DRAM region, survives reboots.
+  - 26+ MTK drivers write diagnostic data (thermal, GPU freq, SPM, EEM, PPM, etc.).
+  - Provides `/proc/last_kmsg` for crash forensics.
+  - **Note:** DTS tanpa reserved memory entry → driver fails to init gracefully (no crash).
+  - **Risk:** Low — console write to reserved memory only.
+  - **Sumber:** Stock MTK defconfig.
+
+- **PHROLOVA_BASE bumped:** 0.9.6 → 0.9.7.
+
 ## v0.9.6 — ReSukiSU 35097 + NoMount Module v2.0.0
 
 - **ReSukiSU 35097 (25d94deb, v4.2.0-rc1+36):** `resukisu/kernel/Kbuild`
