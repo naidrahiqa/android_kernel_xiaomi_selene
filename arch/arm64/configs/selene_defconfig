@@ -465,7 +465,7 @@ CONFIG_CRYPTO_TWOFISH=y
 # CONFIG_CRYPTO_HW is not set
 CONFIG_FORCE_NR_CPUS=y
 
-# ReSukiSU (ReSukiSU/ReSukiSU, main @ 25d94deb, KSU_VERSION 35097)
+# ReSukiSU (ReSukiSU/ReSukiSU, main @ 83614d892d, KSU_VERSION 35104)
 # Manual hook mode (non-GKI 4.14): fs/exec.c, fs/open.c, fs/stat.c, kernel/reboot.c
 # setuid/initrc/input hooks otomatis via LSM/input_handler (AUTO_* default y, <6.8)
 CONFIG_KSU=y

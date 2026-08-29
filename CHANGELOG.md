@@ -11,7 +11,17 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
-## v0.9.7 — Performance Tuning: BFQ + ZRAM ZSTD + MTK Stock Configs
+## v0.9.7 — Performance Tuning + ReSukiSU 35104
+
+- **ReSukiSU 35104 (83614d892d, v4.2.0-rc1+43):** `resukisu/kernel/`
+  - KSU_LOCAL_VERSION 4397→4404, KSU_COMMIT_SHA 83614d892d.
+  - CI auto-extract: version 35104, tag v4.2.0-rc1, sha 83614d892d, branch main.
+  - 7 commits baru dari upstream:
+    - umount for webview zygote (kernel + ksud + manager)
+    - selinux context in su (ksud)
+    - selinux hide: spoof status page and avd seqno
+    - Fix su identity argument handling
+    - manager: fix android lints, update translations
 
 - **BFQ default tuning:** `block/bfq-iosched.c`
   - `slice_idle` 8ms → 2ms (`NSEC_PER_SEC / 500`): kurangi idle wait eMMC, better multi-queue throughput saat game load asset.
