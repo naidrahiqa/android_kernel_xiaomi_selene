@@ -560,8 +560,9 @@ CONFIG_SECURITYFS=y
 CONFIG_SLAB_FREELIST_HARDENED=y
 CONFIG_SLAB_FREELIST_RANDOM=y
 
-# Kernel Self Protection — corruption detection + heap zeroing
-CONFIG_BUG_ON_DATA_CORRUPTION=y
+# Kernel Self Protection — heap zeroing + kernel text read-only
+# NOTE: BUG_ON_DATA_CORRUPTION disabled — MTK vendor drivers trigger false positives
+# CONFIG_BUG_ON_DATA_CORRUPTION is not set
 CONFIG_INIT_ON_ALLOC_DEFAULT_ON=y
 CONFIG_STRICT_KERNEL_RWX=y
 
