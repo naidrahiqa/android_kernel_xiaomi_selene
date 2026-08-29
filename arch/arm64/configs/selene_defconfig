@@ -560,10 +560,12 @@ CONFIG_SECURITYFS=y
 CONFIG_SLAB_FREELIST_HARDENED=y
 CONFIG_SLAB_FREELIST_RANDOM=y
 
-# Kernel Self Protection — heap zeroing + kernel text read-only
-# NOTE: BUG_ON_DATA_CORRUPTION disabled — MTK vendor drivers trigger false positives
+# Kernel Self Protection — kernel text read-only only
+# NOTE: INIT_ON_ALLOC_DEFAULT_ON + BUG_ON_DATA_CORRUPTION disabled
+# INIT_ON_ALLOC causes bootloop on MTK vendor drivers (depend on uninit memory)
+# BUG_ON_DATA_CORRUPTION triggers false positives on MTK vendor list operations
+# CONFIG_INIT_ON_ALLOC_DEFAULT_ON is not set
 # CONFIG_BUG_ON_DATA_CORRUPTION is not set
-CONFIG_INIT_ON_ALLOC_DEFAULT_ON=y
 CONFIG_STRICT_KERNEL_RWX=y
 
 # Additional TCP Congestion Control (Westwood for cellular, BIC)
