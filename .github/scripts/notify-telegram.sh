@@ -91,10 +91,10 @@ function tg_photo() {
 }
 
 function build_start() {
-	local msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
+	local msg="🎻 Phrolova · <code>${VERSION}</code>
 ━━━━━━━━━━━━━━━━━━━━
-Redmi 10 (selene) · Linux 4.14 Non-GKI
-ReSukiSU <code>${KSU_VER_TAG}</code> · KSU_VERSION <code>${KSU_VER_NUM}</code>
+selene · Redmi 10 2022 · linux 4.14.356 · Non-GKI
+ReSukiSU <code>${KSU_VER_TAG}</code> (KSU_VERSION <code>${KSU_VER_NUM}</code>) · Manual Hook
 
 ⏳ Building...
 <code>${SHA}</code> ${COMMIT_MSG}
@@ -111,26 +111,31 @@ function build_success() {
 
 	local BANNER_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY:-naidrahiqa/phrolova_kernel_xiaomi_selene}/phrolova/docs/assets/banner_landscape.jpg"
 
-	local msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
+	local msg="🎻 Phrolova · <code>${VERSION}</code>
 ━━━━━━━━━━━━━━━━━━━━
-Redmi 10 (selene) · Linux 4.14 Non-GKI
-ReSukiSU <code>${KSU_VER_TAG}</code> · KSU_VERSION <code>${KSU_VER_NUM}</code> · Manual Hook
+selene · Redmi 10 2022 · linux 4.14.356 · Non-GKI
+ReSukiSU <code>${KSU_VER_TAG}</code> (KSU_VERSION <code>${KSU_VER_NUM}</code>) · Manual Hook
 NoMount v20 (module v2.0.0)"
 
 	if [ -n "$changelog_items" ]; then
 		msg="${msg}
 
-<b>Changelog:</b>
-${changelog_items}"
+changelog
+${changelog_items}
+- fix screen going black under thermal load: backlight cooler had no floor, added 10%
+- fix fast charge throttle: thermal HAL was clamping QC/HVDCP to 1.5A even at safe temps"
 	fi
 
 	msg="${msg}
 
-<b>Required:</b>
-• <a href='https://t.me/ReSukiSU/5/276176'>📦 ReSukiSU Manager</a> (match KSU_VERSION ${KSU_VER_NUM})
-• <a href='https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip'>📦 NoMount Module v2.0.0</a> (for kernel v20 keyring)
+works: boot, audio, touch, wifi/bt/data, charging, fingerprint, sensors, camera, root
+untested: ir blaster, volte, video rec, nfc
 
-<a href='${REPO_URL}/releases/tag/${TAG}'>⬇ Download Kernel</a> · <a href='${REPO_URL}'>GitHub</a>"
+dtbo does not matter, stock dtbo works.
+
+⬇ Download Kernel
+
+#selene #Redmi10 #mt6768 #kernel #ReSukiSU #NoMount"
 
 	if tg_photo "$CHANNEL_ID" "$BANNER_URL" "$msg"; then
 		echo "Success notification sent with banner."
@@ -169,14 +174,14 @@ function build_failed() {
 		fi
 	fi
 
-	local simple_msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
-━━━━━━━━━━━━━━━━━━━
+	local simple_msg="🎻 Phrolova · <code>${VERSION}</code>
+━━━━━━━━━━━━━━━━━━━━
 ❌ <b>${error_type}</b> · ${failed_step}
 <a href='${BUILD_URL}'>Check Log</a>"
 	tg_send "$CHANNEL_ID" "$simple_msg" && echo "Fail notification sent to channel." || echo "Fail notification to channel FAILED."
 
 	if [ -n "$ERROR_CHANNEL_ID" ]; then
-		local detail_msg="🎻 <b>Phrolova Error Log</b>
+		local detail_msg="🎻 Phrolova Error Log
 <code>${VERSION}</code> · <code>${SHA}</code>
 <b>${error_type}</b> · ${failed_step}
 
