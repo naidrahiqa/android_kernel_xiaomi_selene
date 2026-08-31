@@ -11,34 +11,27 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
-## v0.9.8 — Security Hardening: Corruption Detection + Heap Zeroing
+## v0.9.8 — Security Hardening + ReSukiSU 35114
 
-- **BUG_ON_DATA_CORRUPTION=y:** `lib/Kconfig.debug`
-  - Triggers `BUG()` when kernel data corruption is detected (corrupted linked lists, etc.).
-  - Auto-selects `DEBUG_LIST=y` — validates list integrity on `list_del`/`list_add`.
-  - **Alasan:** Deteksi dini exploitation attempts yang corrupt kernel structures. Silent corruption = exploitable state.
-  - **Overhead:** Minimal (<0.5%).
-  - **Sumber:** Security Roadmap Phase S2.
-
-- **INIT_ON_ALLOC_DEFAULT_ON=y:** `security/Kconfig.hardening`
-  - Zeroes all page/slab allocator memory on allocation.
-  - Eliminates uninitialized heap memory exposures (info leaks via uninit memory).
-  - **Alasan:** Prevents use-of-uninitialized-data vulnerabilities. Can be disabled at boot via `init_on_alloc=0` if issues arise.
-  - **Overhead:** <1% typical, up to 7% synthetic.
-  - **Sumber:** Security Roadmap Phase S4.
+- **ReSukiSU 35114 (0b5efe9e01, v4.2.0-rc1+53):** `resukisu/kernel/`
+  - KSU_LOCAL_VERSION 4404→4414, KSU_COMMIT_SHA 0b5efe9e01.
+  - 10 commits baru dari upstream:
+    - ksud: reuse ZIP archive and validate module IDs
+    - ksud: call post_ota() only once after OTA flash
+    - ksud: improve slot info parsing speed
+    - kernel: synchronization the first track_throne of the late-load
+    - build: bump ddk to 20260828, support android17-6.18
+    - LICENSE updates, dependency bumps
 
 - **STRICT_KERNEL_RWX=y:** `arch/Kconfig`
   - Marks kernel text as read-only, rodata as read-only+no-execute.
   - Prevents runtime modification of kernel code (rootkit injection, etc.).
-  - **Alasan:** Defense-in-depth against kernel code modification attacks.
   - **Overhead:** None (boot-time page table setup only).
-  - **Sumber:** Security Roadmap Phase S5.
 
-- **Not enabled (performance tradeoff):**
-  - `HARDEN_BRANCH_PREDICTOR` — Spectre v2, 1-3% overhead. Deferred to future release.
-  - `ARM64_SSBD` — Speculative Store Bypass Disable, 2-5% overhead. Deferred.
-  - `MITIGATE_SPECTRE_BRANCH_HISTORY` — Spectre-BHB. Requires HARDEN_BRANCH_PREDICTOR.
-  - **Alasan:** Gaming-first kernel. Spectre mitigations are lower risk on phones (requires local code execution). Will evaluate after benchmarking.
+- **BUG_ON_DATA_CORRUPTION DISABLED:** MTK vendor drivers punya benign list corruption → trigger `BUG()` → bootloop.
+- **INIT_ON_ALLOC_DEFAULT_ON DISABLED:** MTK vendor drivers depend on uninitialized memory behavior → bootloop.
+- **SLAB_FREELIST_HARDENED DISABLED:** MTK modem driver (CCCI/CLDMA) punya heap corruption (use-after-free) di `ccci_free_skb` → kernel panic setelah ~81 menit uptime. SLAB_FREELIST_HARDENED nangkep corruption, tapi modem crash = radio restart.
+- **Sumber:** Device live debugging — bootloop + modem crash reproduction.
 
 - **PHROLOVA_BASE bumped:** 0.9.7 → 0.9.8.
 

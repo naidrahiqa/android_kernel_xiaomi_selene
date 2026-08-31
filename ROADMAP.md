@@ -6,7 +6,7 @@
 
 ## Fase 1 — Foundation Stabil (done)
 
-- [x] ReSukiSU main @ 83614d892d (manual hook, non-GKI 4.14, KSU_VERSION 35104) — menggantikan KernelSU-Next
+- [x] ReSukiSU main @ 0b5efe9e01 (manual hook, non-GKI 4.14, KSU_VERSION 35114) — menggantikan KernelSU-Next
 - [x] NoMount path redirection
 - [x] TCP BBR + ZRAM ZSTD + BFQ
 - [x] CI/CD pipeline functional (Void Linux container)
@@ -77,7 +77,7 @@ Target: Cutting-edge / long-term.
 
 | Fitur | Phrolova | Tendou-Arisu |
 |---|---|---|
-| KernelSU | ✓ (ReSukiSU main @ 83614d892d) | ✓ |
+| KernelSU | ✓ (ReSukiSU main @ 0b5efe9e01) | ✓ |
 | NoMount | ✓ | ✗ |
 | WireGuard | ✓ | ✗ |
 | BBR | ✓ | ✓ |

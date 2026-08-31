@@ -465,7 +465,7 @@ CONFIG_CRYPTO_TWOFISH=y
 # CONFIG_CRYPTO_HW is not set
 CONFIG_FORCE_NR_CPUS=y
 
-# ReSukiSU (ReSukiSU/ReSukiSU, main @ 83614d892d, KSU_VERSION 35104)
+# ReSukiSU (ReSukiSU/ReSukiSU, main @ 0b5efe9e01, KSU_VERSION 35114)
 # Manual hook mode (non-GKI 4.14): fs/exec.c, fs/open.c, fs/stat.c, kernel/reboot.c
 # setuid/initrc/input hooks otomatis via LSM/input_handler (AUTO_* default y, <6.8)
 CONFIG_KSU=y
@@ -557,13 +557,17 @@ CONFIG_FORTIFY_SOURCE=y
 CONFIG_HARDENED_USERCOPY=y
 CONFIG_SECURITY_PERF_EVENTS_RESTRICT=y
 CONFIG_SECURITYFS=y
-CONFIG_SLAB_FREELIST_HARDENED=y
-CONFIG_SLAB_FREELIST_RANDOM=y
+# SLAB_FREELIST_HARDENED/RANDOM disabled — MTK modem driver (CCCI/CLDMA) has
+# use-after-free in ccci_free_skb → SLAB_FREELIST_HARDENED detects corruption
+# and triggers BUG() → kernel panic after ~81 min uptime.
+# CONFIG_SLAB_FREELIST_HARDENED is not set
+# CONFIG_SLAB_FREELIST_RANDOM is not set
 
 # Kernel Self Protection — kernel text read-only only
-# NOTE: INIT_ON_ALLOC_DEFAULT_ON + BUG_ON_DATA_CORRUPTION disabled
-# INIT_ON_ALLOC causes bootloop on MTK vendor drivers (depend on uninit memory)
-# BUG_ON_DATA_CORRUPTION triggers false positives on MTK vendor list operations
+# NOTE: Several hardening configs DISABLED due to MTK vendor driver incompatibilities
+# INIT_ON_ALLOC_DEFAULT_ON → bootloop (vendor drivers depend on uninit memory)
+# BUG_ON_DATA_CORRUPTION → bootloop (vendor drivers have benign list corruption)
+# SLAB_FREELIST_HARDENED → modem crash (CCCI/CLDMA use-after-free)
 # CONFIG_INIT_ON_ALLOC_DEFAULT_ON is not set
 # CONFIG_BUG_ON_DATA_CORRUPTION is not set
 CONFIG_STRICT_KERNEL_RWX=y
