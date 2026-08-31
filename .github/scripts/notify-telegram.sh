@@ -136,7 +136,7 @@ dtbo does not matter, stock dtbo works.
 ReSukiSU Manager (match KSU_VERSION ${KSU_VER_NUM})
 <a href='https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip'>NoMount Module v2.0.0</a>
 
-⬇ Download Kernel
+<a href='${REPO_URL}/releases/tag/${TAG}'>⬇ Download Kernel</a>
 
 #selene #Redmi10 #mt6768 #kernel #ReSukiSU #NoMount"
 
