@@ -47,6 +47,11 @@ Format:
 
 - **Greenforce Clang updated:** 24.0.0 → 24.0.0 (20260901 build)
 
+- **CVE inventory created:** `docs/CVE-INVENTORY.md`
+  - CVE-2026-31431 (CopyFail) — CVSS 7.8 HIGH, mitigated via `algif_aead` not compiled.
+  - OpenELA 4.14.357 patches tracked.
+  - Non-applicable CVEs documented.
+
 - **PHROLOVA_BASE bumped:** 0.9.8 → 0.9.9.
 
 ## v0.9.8 — Security Hardening + ReSukiSU 35114
