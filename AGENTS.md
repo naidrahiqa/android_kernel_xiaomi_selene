@@ -247,6 +247,12 @@ Full live-debugging session via ADB on Redmi 10 2022 + LineageOS 20 (20.0-202509
 ### Sparse Checkout / Windows
 - Reserved NTFS filenames (`aux.c`, `aux.h` di nouveau/soc/arc) — pakai sparse checkout atau Linux.
 
+### CVE-2026-31431 (CopyFail) — Mitigated
+- **CVSS 7.8 HIGH** — Local privilege escalation via `algif_aead` crypto interface.
+- **Mitigation:** `CONFIG_CRYPTO_USER_API_AEAD` not set → module not compiled.
+- **NOT backported to 4.14** by OpenELA. Mitigation via module disable is sufficient.
+- **Verification:** `grep CRYPTO_USER_API_AEAD arch/arm64/configs/selene_defconfig` should return nothing.
+
 ### MTK Vendor Driver Security Hardening Incompatibilities (v0.9.8 findings)
 MTK vendor drivers di tree ini punya bugs yang bikin kernel hardening configs crash. **Jangan enable** configs ini tanpa vendor driver audit:
 - **`BUG_ON_DATA_CORRUPTION`** — MTK vendor drivers punya benign list corruption → trigger `BUG()` → bootloop. (tested 2026-08-29)
