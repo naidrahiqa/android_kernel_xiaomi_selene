@@ -689,7 +689,10 @@ struct sk_buff {
 #endif
 	};
 
-	struct sock		*sk;
+	union {
+		struct sock		*sk;
+		int			ip_defrag_offset;
+	};
 
 	union {
 		ktime_t		tstamp;
