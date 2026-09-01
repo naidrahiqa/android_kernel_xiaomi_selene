@@ -1,6 +1,6 @@
 # Phrolova Kernel — Roadmap
 
-## Versi Saat Ini: v0.9.8 (Security Hardening: Corruption Detection + Heap Zeroing)
+## Versi Saat Ini: v0.9.9 (Security Hardening + OpenELA 4.14.357)
 
 ---
 
@@ -63,7 +63,7 @@ Target: User-facing polish.
 
 Target: Cutting-edge / long-term.
 
-- [ ] **Kernel 4.14.357+ blank screen** — cari fix atau stay di <357
+- [x] **Kernel 4.14.357+ blank screen** — fixed in v0.9.7 (dirty-ratio cmdline + ZRAM tuning)
 - [ ] **MGLRU** — backport multi-gen LRU (massive effort, ditunda)
 - [ ] **KCAL** — display color control (MTK panel not compatible)
 - [ ] **AutoSMP** — hotplug alternatif
