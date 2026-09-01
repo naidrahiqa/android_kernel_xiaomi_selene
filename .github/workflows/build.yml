@@ -26,7 +26,7 @@ on:
 env:
   PHROLOVA_VARIANT: ${{ inputs.variant || '0' }}
   PHROLOVA_BASE: ${{ inputs.base_version || '0.9.9' }}
-  TOOLCHAIN_NAME: "Greenforce Clang 24.0.0"
+  TOOLCHAIN_NAME: "Greenforce Clang 24.0.0 (20260901)"
   KERNELSU_VERSION: "auto (from resukisu/kernel/Kbuild)"
 
 jobs:
@@ -86,7 +86,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: greenforce-clang
-          key: greenforce-clang-24.0.0
+          key: greenforce-clang-24.0.0-20260901
 
       - name: Install build dependencies
         run: |
