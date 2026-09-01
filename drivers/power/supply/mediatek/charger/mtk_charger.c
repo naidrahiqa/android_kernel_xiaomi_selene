@@ -1341,7 +1341,7 @@ void hq_jeita_config(struct charger_manager *info)
 			default:
 				break;
 		}
-		printk("%s: temp_level = %d",__func__,sw_jeita->sm);
+		pr_debug("%s: temp_level = %d",__func__,sw_jeita->sm);
 	}
 	else
 		return;

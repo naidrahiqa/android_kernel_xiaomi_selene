@@ -543,20 +543,22 @@ CONFIG_TMPFS_XATTR=y
 CONFIG_FW_LOADER=y
 CONFIG_FW_LOADER_USER_HELPER=y
 
-# Memory — THP, CMA, Compaction
+# Memory — THP, CMA, Compaction, idle page tracking
 CONFIG_TRANSPARENT_HUGEPAGE=y
 CONFIG_TRANSPARENT_HUGEPAGE_MADVISE=y
 CONFIG_CMA=y
 CONFIG_COMPACTION=y
+CONFIG_IDLE_PAGE_TRACKING=y
 
 # PSI — Pressure Stall Information (Android ActivityManager uses this)
 CONFIG_PSI=y
 
-# Kernel Hardening — Fortify + usercopy bounds checking
+# Kernel Hardening — Fortify + usercopy bounds checking + shadow call stack
 CONFIG_FORTIFY_SOURCE=y
 CONFIG_HARDENED_USERCOPY=y
 CONFIG_SECURITY_PERF_EVENTS_RESTRICT=y
 CONFIG_SECURITYFS=y
+CONFIG_SHADOW_CALL_STACK=y
 # SLAB_FREELIST_HARDENED/RANDOM disabled — MTK modem driver (CCCI/CLDMA) has
 # use-after-free in ccci_free_skb → SLAB_FREELIST_HARDENED detects corruption
 # and triggers BUG() → kernel panic after ~81 min uptime.

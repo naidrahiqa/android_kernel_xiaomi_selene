@@ -11,6 +11,35 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.9.9 — Security Hardening + OpenELA 4.14.357
+
+- **OpenELA 4.14.357 security patches:** cherry-pick dari `openela/kernel-lts` linux-4.14.y
+  - `81cba5e105` — inet: inet_defrag: prevent sk release while in use (sk_buff UAF fix)
+  - `70649db160` — ima: Fix use-after-free on a dentry's dname.name
+  - Skipped: `30c9d27783` + `a7cd6312e4` — clk: devm_clk_release (different implementation in our tree)
+  - Skipped: `b418fc71a9` — ocfs2: fix slab-use-after-free (ocfs2 not enabled)
+  - CVE-2026-31431 (CopyFail) NOT backported to 4.14 by OpenELA
+
+- **SUBLEVEL bumped:** 356 → 357
+
+- **SHADOW_CALL_STACK=y:** `arch/arm64/Kconfig`
+  - ARM64 Shadow Call Stack protects function return addresses from overwrite.
+  - Uses separate shadow stack for each thread, prevents ROP attacks.
+
+- **IDLE_PAGE_TRACKING=y:** `mm/Kconfig`
+  - Enables tracking of idle pages for memory management tuning.
+  - Useful for profiling memory usage and optimizing memory cgroup limits.
+
+- **Vendor log spam silenced:** pr_err→pr_debug in:
+  - `drivers/misc/mediatek/io_boost/mtk_io_boost.c` (task write errors)
+  - `drivers/power/supply/mediatek/battery/mtk_battery.c` (OTG boost check)
+  - `drivers/power/supply/mediatek/charger/bq2589x_charger.c` (charger detection)
+  - `drivers/power/supply/mediatek/charger/mtk_charger.c` (hq_jeita_config)
+  - `drivers/power/supply/mediatek/charger/mtk_chg_type_det.c` (typec/OTG)
+  - Normal operation logs (not errors) were spamming kernel log buffer.
+
+- **PHROLOVA_BASE bumped:** 0.9.8 → 0.9.9.
+
 ## v0.9.8 — Security Hardening + ReSukiSU 35114
 
 - **ReSukiSU 35114 (0b5efe9e01, v4.2.0-rc1+53):** `resukisu/kernel/`

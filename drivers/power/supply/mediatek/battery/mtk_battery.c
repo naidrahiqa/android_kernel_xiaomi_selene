@@ -512,14 +512,14 @@ void otg_thermal_limit(void)
 		return;
 	}
 	if (!primary_charger) {
-		pr_err("primary_charger is NULL\n");
+		pr_debug("primary_charger is NULL\n");
 		primary_charger = get_charger_by_name("primary_chg");
 		
 		if (!primary_charger) {
-			pr_err("primary_charger is NULL again\n");
+			pr_debug("primary_charger is NULL again\n");
 			return;
 		}
-		pr_err("primary_charger is NULL0331\n");
+		pr_debug("primary_charger is NULL0331\n");
 	}
 
 	if (otg_limit == 1) {
@@ -849,10 +849,10 @@ void battery_update(struct battery_data *bat_data)
 	bool chg_done = false;
 
 	if (!primary_charger) {
-		pr_err("primary_charger is NULL\n");
+		pr_debug("primary_charger is NULL\n");
 		primary_charger = get_charger_by_name("primary_chg");
 		if (!primary_charger) {
-			pr_err("primary_charger is NULL00\n");
+			pr_debug("primary_charger is NULL00\n");
 			return;
 		}
 	}
@@ -4330,10 +4330,10 @@ static void otg_boost_limit_work(struct work_struct *work)
 
 	current_now = fgcurrent * 100;
 	if (!primary_charger) {
-		pr_err("primary_charger is NULL\n");
+		pr_debug("primary_charger is NULL\n");
 		primary_charger = get_charger_by_name("primary_chg");
 		if (!primary_charger) {
-			pr_err("primary_charger is NULL\n");
+			pr_debug("primary_charger is NULL\n");
 			return;
 		}
 	}

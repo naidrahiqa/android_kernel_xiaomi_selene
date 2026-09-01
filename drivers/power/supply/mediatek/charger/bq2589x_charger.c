@@ -514,7 +514,7 @@ int bq2589x_set_ir_compensation(struct bq2589x *bq, int bat_comp, int vclamp)
 {
 	u8 val_bat_comp;
 	u8 val_vclamp;
-	pr_err("bq2589x_set_ir_compensation!!!\n");
+	pr_debug("bq2589x_set_ir_compensation!!!\n");
 
 	val_bat_comp = bat_comp / BQ2589X_BAT_COMP_LSB;
 	val_vclamp = vclamp / BQ2589X_VCLAMP_LSB;
@@ -782,25 +782,25 @@ static struct bq2589x_platform_data *bq2589x_parse_dt(struct device_node *np,
 	ret = of_property_read_u32(np, "ti,bq2589x,usb-vlim", &pdata->usb.vlim);
 	if (ret) {
 		pdata->usb.vlim = 4500;
-		pr_err("Failed to read node of ti,bq2589x,usb-vlim\n");
+		pr_debug("Failed to read node of ti,bq2589x,usb-vlim\n");
 	}
 
 	ret = of_property_read_u32(np, "ti,bq2589x,usb-ilim", &pdata->usb.ilim);
 	if (ret) {
 		pdata->usb.ilim = 2000;
-		pr_err("Failed to read node of ti,bq2589x,usb-ilim\n");
+		pr_debug("Failed to read node of ti,bq2589x,usb-ilim\n");
 	}
 
 	ret = of_property_read_u32(np, "ti,bq2589x,usb-vreg", &pdata->usb.vreg);
 	if (ret) {
 		pdata->usb.vreg = 4200;
-		pr_err("Failed to read node of ti,bq2589x,usb-vreg\n");
+		pr_debug("Failed to read node of ti,bq2589x,usb-vreg\n");
 	}
 
 	ret = of_property_read_u32(np, "ti,bq2589x,usb-ichg", &pdata->usb.ichg);
 	if (ret) {
 		pdata->usb.ichg = 2000;
-		pr_err("Failed to read node of ti,bq2589x,usb-ichg\n");
+		pr_debug("Failed to read node of ti,bq2589x,usb-ichg\n");
 	}
 
 	ret = of_property_read_u32(np, "ti,bq2589x,precharge-current",
@@ -809,14 +809,14 @@ static struct bq2589x_platform_data *bq2589x_parse_dt(struct device_node *np,
 /*K19A HQHW-881 K19A charger of 2.5v by wangqi at 2021/5/20 start*/
 		pdata->iprechg = 256;
 /*K19A HQHW-881 K19A charger of 2.5v by wangqi at 2021/5/20 end*/
-		pr_err("Failed to read node of ti,bq2589x,precharge-current\n");
+		pr_debug("Failed to read node of ti,bq2589x,precharge-current\n");
 	}
 
 	ret = of_property_read_u32(np, "ti,bq2589x,termination-current",
 				   &pdata->iterm);
 	if (ret) {
 		pdata->iterm = 180;
-		pr_err
+		pr_debug
 		    ("Failed to read node of ti,bq2589x,termination-current\n");
 	}
 
@@ -825,7 +825,7 @@ static struct bq2589x_platform_data *bq2589x_parse_dt(struct device_node *np,
 				 &pdata->boostv);
 	if (ret) {
 		pdata->boostv = 5000;
-		pr_err("Failed to read node of ti,bq2589x,boost-voltage\n");
+		pr_debug("Failed to read node of ti,bq2589x,boost-voltage\n");
 	}
 
 	ret =
@@ -833,7 +833,7 @@ static struct bq2589x_platform_data *bq2589x_parse_dt(struct device_node *np,
 				 &pdata->boosti);
 	if (ret) {
 		pdata->boosti = 1200;
-		pr_err("Failed to read node of ti,bq2589x,boost-current\n");
+		pr_debug("Failed to read node of ti,bq2589x,boost-current\n");
 	}
 
 
@@ -996,17 +996,17 @@ static void bq2589x_cdp_work(struct work_struct *work)
 			bq2589x_inform_charger_type_report(bq);
 			cdp_detect = false;
 			wusb3801_intr_handler_resume();
-			pr_err("wlc timer_count more than 10,timer_count:%d \n", timer_count);
+			pr_debug("wlc timer_count more than 10,timer_count:%d \n", timer_count);
 			timer_count = 0;
 			cdp_unattach = false;
 			break;
 		} else if(timer_count < 10  && cdp_unattach) {
-			pr_err("wlc 5S count down! \n");
+			pr_debug("wlc 5S count down! \n");
 			msleep(5000);
 			bq2589x_inform_charger_type_report(bq);
 			cdp_detect = false;
 			wusb3801_intr_handler_resume();
-			pr_err("wlc 5S finish! timer_count less than 10,timer_count:%d \n", timer_count);
+			pr_debug("wlc 5S finish! timer_count less than 10,timer_count:%d \n", timer_count);
 			timer_count = 0;
 			cdp_unattach = false;
 			break;
@@ -1019,17 +1019,17 @@ static void bq2589x_cdp_work(struct work_struct *work)
 
 static void bq2589x_inform_charger_type(struct bq2589x *bq)
 {
-	pr_err("ljj bq2589x_inform_charger_type chg_type = %d, cdp_detect=%d, bq->power_good=%d, \n", bq->chg_type, cdp_detect, bq->power_good);
+	pr_debug("ljj bq2589x_inform_charger_type chg_type = %d, cdp_detect=%d, bq->power_good=%d, \n", bq->chg_type, cdp_detect, bq->power_good);
 	if (chip_num(bq) != 3) {
 		if (((cdp_detect == false) && (bq->chg_type == BQ2589X_VBUS_TYPE_CDP)) || (cdp_detect == true)) {
 			if ((bq->power_good) && (cdp_detect == false)) {
 				cdp_detect = true;
 				bq2589x_inform_charger_type_report(bq);
 				schedule_delayed_work(&bq->cdp_work, msecs_to_jiffies(1));
-				pr_err("wlc cdp detected \n");
+				pr_debug("wlc cdp detected \n");
 			} else if ((!bq->power_good) && (cdp_detect == true)) {
 				cdp_unattach = true;
-				pr_err("wlc cdp unattach happend \n");
+				pr_debug("wlc cdp unattach happend \n");
 			} else {
 				cancel_delayed_work_sync(&bq->cdp_work);
 			}
@@ -1102,14 +1102,14 @@ static void bq2589x_read_byte_work(struct work_struct *work)
 	if(id_dis == 3){
 		if(charger_detect_count > 0){
 			if(vbus_gd && vbus_stat == BQ2589X_VBUS_TYPE_DCP) {
-				pr_err("bq2589x:enable hvdcp\n");
+				pr_debug("bq2589x:enable hvdcp\n");
 				ret = bq2589x_enable_hvdcp(bq);
 				bq2589x_force_dpdm(bq);
 			}else if(vbus_gd && vbus_stat == BQ2589X_VBUS_TYPE_HVDCP ) {
 				ret = bq2589x_disable_hvdcp(bq);
-				pr_err("bq2589x:reset\n");
+				pr_debug("bq2589x:reset\n");
 			}else if(vbus_gd && vbus_stat == BQ2589X_VBUS_TYPE_SDP ) {
-				pr_err("foce dpdm ti\n");
+				pr_debug("foce dpdm ti\n");
 				bq2589x_force_dpdm(bq);
 			}else if(vbus_gd && vbus_stat == BQ2589X_VBUS_TYPE_UNKNOWN ) {
 				charger_detect_count++;
@@ -1128,7 +1128,7 @@ static void bq2589x_read_byte_work(struct work_struct *work)
 				bq2589x_force_dpdm(bq);
 				mdelay(2000);
 				Charger_Detect_Release();
-				pr_err("foce NONSTD ti\n");
+				pr_debug("foce NONSTD ti\n");
 			} 
 			charger_detect_count --;
 			pr_debug("charger_detect_count:%d\n",charger_detect_count);
@@ -1137,7 +1137,7 @@ static void bq2589x_read_byte_work(struct work_struct *work)
 		if(vbus_gd && vbus_stat == BQ2589X_VBUS_TYPE_SDP ){
 			bq2589x_force_dpdm(bq);
 			std_mode_dec = false;
-			pr_err("foce dpdm silergy\n");
+			pr_debug("foce dpdm silergy\n");
 		} else if (vbus_gd && vbus_stat == BQ2589X_VBUS_TYPE_UNKNOWN) {
 			charger_float_count++;
 			if (charger_float_count <= 30) {
@@ -1152,7 +1152,7 @@ static void bq2589x_read_byte_work(struct work_struct *work)
 			ret = bq2589x_enter_hiz_mode(bq);
 			ret = bq2589x_exit_hiz_mode(bq);
 			bq2589x_force_dpdm(bq);
-			pr_err("non std foce dpdm\n");
+			pr_debug("non std foce dpdm\n");
 		} else {
 			std_mode_dec = true;
 			pr_debug("vbus_stat = %d\n", vbus_stat);
@@ -1184,7 +1184,7 @@ static irqreturn_t bq2589x_irq_handler(int irq, void *data)
 /* Huaqin modify for WXYFB-592 by miaozhichao at 2021/3/29 start */
 /* Huaqin add for HQ-134476 by miaozhichao at 2021/5/29 start */
 	if (!prev_pg && bq->power_good) {
-		pr_err("adapter/usb inserted\n");
+		pr_debug("adapter/usb inserted\n");
 		charger_detect_count = 3;
 		charger_float_count = 0;
 	}else if (prev_pg && !bq->power_good){

@@ -170,9 +170,9 @@ void reverse_charger(bool en)
 	struct tcpc_device *tcpc = tcpc_dev_get_by_name("type_c_port0");
 
 	primary_charger = get_charger_by_name("primary_chg");
-	pr_err("dhx---is otg : %d\n", is_otg);
+	pr_debug("dhx---is otg : %d\n", is_otg);
 	if (!primary_charger) {
-		pr_err("primary charger otg is null\n");
+		pr_debug("primary charger otg is null\n");
 		return;
 	}
 	if (en) {
@@ -181,7 +181,7 @@ void reverse_charger(bool en)
 		msleep(1000);
 		pinctrl_select_state(reverse_pinctrl, reverse_enable);
 		gpio_state = gpio_get_value(reverse_gpio);
-		pr_err("dhx-- short DM/DM gpio: %d\n", gpio_state);
+		pr_debug("dhx-- short DM/DM gpio: %d\n", gpio_state);
 		dpdm_disshort = 1;
 		msleep(1000);
 		if (is_otg == 1)
@@ -193,7 +193,7 @@ void reverse_charger(bool en)
 		pinctrl_select_state(reverse_pinctrl, reverse_disable);
 		dpdm_disshort = 0;
 		gpio_state = gpio_get_value(reverse_gpio);
-		pr_err("dhx-- dis short DM/DM gpio: %d\n", gpio_state);
+		pr_debug("dhx-- dis short DM/DM gpio: %d\n", gpio_state);
 		charger_dev_enable_otg(primary_charger, false);
 		tcpc->ops->set_role(tcpc, REVERSE_CHG_DRP);
 		// if (is_otg == 1){
@@ -219,10 +219,10 @@ static int mt_charger_online(struct mt_charger *mtk_chg)
 			msleep(4000);
 			vbus = battery_get_vbus();
 			if (vbus > 3000) {
-				pr_err("vbus is hight return\n");
+				pr_debug("vbus is hight return\n");
 				return 0;
 			}
-			pr_err("vbus is hight return %d\n", vbus);
+			pr_debug("vbus is hight return %d\n", vbus);
 			pr_debug("%s: system_state2=%d\n", __func__,
 				system_state);
 			machine_power_off();
@@ -381,9 +381,9 @@ static int mt_usb_get_property(struct power_supply *psy,
 		/*K19A HQ-134474 K19A for typec mode by langjunjun at 2021/6/1 start*/
 		if (tcpc && tcpc->ops ) {
 			tcpc->ops->get_mode(tcpc, &typec_mode);
-			pr_err("dev %s get mode =  %d\n",tcpc->desc.name,typec_mode);
+			pr_debug("dev %s get mode =  %d\n",tcpc->desc.name,typec_mode);
 		} else {
-			pr_err("tcpc or tcpc->ops is NULL\n");
+			pr_debug("tcpc or tcpc->ops is NULL\n");
 		}
 		/*K19A HQ-134474 K19A for typec mode by langjunjun at 2021/6/1 end*/
 		val->intval = typec_mode;
@@ -708,7 +708,7 @@ static int pd_tcp_notifier_call(struct notifier_block *pnb,
 	static struct charger_device *primary_charger;
 	primary_charger = get_charger_by_name("primary_chg");
 	if (!primary_charger) {
-		pr_err("primary charger notifier is null\n");
+		pr_debug("primary charger notifier is null\n");
 		return 0;
 	}
 	switch (event) {
@@ -794,7 +794,7 @@ static int mt_charger_probe(struct platform_device *pdev)
 #ifdef CONFIG_MTK_REVERSE_CHG_ENABLE
 	reverse_pinctrl = devm_pinctrl_get(&pdev->dev);
 	if (IS_ERR(reverse_pinctrl)) {
-		pr_err("Failed to get reverse_pinctrl.\n");
+		pr_debug("Failed to get reverse_pinctrl.\n");
 		ret = PTR_ERR(reverse_pinctrl);
 		return ret;
 	}
@@ -802,18 +802,18 @@ static int mt_charger_probe(struct platform_device *pdev)
 	reverse_enable = pinctrl_lookup_state(
 			reverse_pinctrl, "reverse_high");
 	if (IS_ERR(reverse_enable)) {
-		pr_err("Failed to init reverse_high\n");
+		pr_debug("Failed to init reverse_high\n");
 		ret = PTR_ERR(reverse_enable);
 	}
 	reverse_disable = pinctrl_lookup_state(
 			reverse_pinctrl, "reverse_low");
 	if (IS_ERR(reverse_disable)) {
-		pr_err("Failed to init reverse_low\n");
+		pr_debug("Failed to init reverse_low\n");
 		ret = PTR_ERR(reverse_disable);
 	}
 
 	reverse_gpio = of_get_named_gpio(pdev->dev.of_node, "reverse-gpio", 0);
-	pr_err("dhx--rever gpio: %d\n", reverse_gpio);
+	pr_debug("dhx--rever gpio: %d\n", reverse_gpio);
 #endif
 	mt_chg->chg_desc.name = "charger";
 	mt_chg->chg_desc.type = POWER_SUPPLY_TYPE_UNKNOWN;

@@ -25,7 +25,7 @@ on:
 
 env:
   PHROLOVA_VARIANT: ${{ inputs.variant || '0' }}
-  PHROLOVA_BASE: ${{ inputs.base_version || '0.9.8' }}
+  PHROLOVA_BASE: ${{ inputs.base_version || '0.9.9' }}
   TOOLCHAIN_NAME: "Greenforce Clang 24.0.0"
   KERNELSU_VERSION: "auto (from resukisu/kernel/Kbuild)"
 
