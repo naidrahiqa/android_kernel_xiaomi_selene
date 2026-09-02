@@ -135,7 +135,8 @@ jobs:
             CONFIG_POSIX_MQUEUE CONFIG_VETH CONFIG_OVERLAY_FS \
             CONFIG_DEFAULT_BBR CONFIG_TCP_CONG_BBR \
             CONFIG_KSU CONFIG_KSU_MANUAL_HOOK CONFIG_NOMOUNT \
-            CONFIG_DEFAULT_BFQ; do
+            CONFIG_DEFAULT_BFQ \
+            CONFIG_SHADOW_CALL_STACK CONFIG_IDLE_PAGE_TRACKING; do
             grep -q "^${sym}=y" out/.config || {
               echo "::error::Config hilang dari .config: ${sym}"
               miss=1
