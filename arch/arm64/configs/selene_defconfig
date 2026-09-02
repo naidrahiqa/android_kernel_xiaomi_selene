@@ -543,6 +543,10 @@ CONFIG_TMPFS_XATTR=y
 CONFIG_FW_LOADER=y
 CONFIG_FW_LOADER_USER_HELPER=y
 
+# Kernel config embedding — enables /proc/config.gz for debugging
+CONFIG_IKCONFIG=y
+CONFIG_IKCONFIG_PROC=y
+
 # Memory — THP, CMA, Compaction, idle page tracking
 CONFIG_TRANSPARENT_HUGEPAGE=y
 CONFIG_TRANSPARENT_HUGEPAGE_MADVISE=y
