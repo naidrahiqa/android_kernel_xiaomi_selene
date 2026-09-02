@@ -257,6 +257,7 @@ Full live-debugging session via ADB on Redmi 10 2022 + LineageOS 20 (20.0-202509
 MTK vendor drivers di tree ini punya bugs yang bikin kernel hardening configs crash. **Jangan enable** configs ini tanpa vendor driver audit:
 - **`BUG_ON_DATA_CORRUPTION`** — MTK vendor drivers punya benign list corruption → trigger `BUG()` → bootloop. (tested 2026-08-29)
 - **`INIT_ON_ALLOC_DEFAULT_ON`** — MTK vendor drivers depend on uninitialized memory behavior → bootloop. (tested 2026-08-29)
+- **`SHADOW_CALL_STACK`** — MTK TrustZone clobbers `x18` register (shadow stack pointer) → "corrupted shadow stack detected inside scheduler" kernel panic after ~2 hours uptime. **Disabled permanently.** (tested 2026-09-02)
 - **`SLAB_FREELIST_HARDENED`** — MTK modem driver (CCCI/CLDMA) punya use-after-free di `ccci_free_skb` → `SLAB_FREELIST_HARDENED` detects corruption → `BUG()` → kernel panic setelah ~81 menit uptime. Crash path: `cldma_tx_done` → `cldma_gpd_bd_tx_collect` → `ccci_free_skb` → `kfree_skb` → `kfree` → `__slab_free` → BUG. (tested 2026-08-29)
 - **`HARDEN_BRANCH_PREDICTOR` / `ARM64_SSBD`** — Spectre mitigations, 1-5% overhead. Deferred (gaming-first kernel).
 

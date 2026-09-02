@@ -553,12 +553,15 @@ CONFIG_IDLE_PAGE_TRACKING=y
 # PSI — Pressure Stall Information (Android ActivityManager uses this)
 CONFIG_PSI=y
 
-# Kernel Hardening — Fortify + usercopy bounds checking + shadow call stack
+# Kernel Hardening — Fortify + usercopy bounds checking
 CONFIG_FORTIFY_SOURCE=y
 CONFIG_HARDENED_USERCOPY=y
 CONFIG_SECURITY_PERF_EVENTS_RESTRICT=y
 CONFIG_SECURITYFS=y
-CONFIG_SHADOW_CALL_STACK=y
+# SHADOW_CALL_STACK disabled — MTK TrustZone clobbers x18 register
+# causing "corrupted shadow stack detected inside scheduler" kernel panic
+# after ~2 hours uptime. TEE does not preserve x18 (shadow stack pointer).
+# CONFIG_SHADOW_CALL_STACK is not set
 # SLAB_FREELIST_HARDENED/RANDOM disabled — MTK modem driver (CCCI/CLDMA) has
 # use-after-free in ccci_free_skb → SLAB_FREELIST_HARDENED detects corruption
 # and triggers BUG() → kernel panic after ~81 min uptime.
