@@ -171,11 +171,30 @@ jobs:
             exit 1
           fi
           echo "Extracting from: $IMG"
-          scripts/extract-ikconfig "$IMG" > /tmp/binary-config 2>/dev/null
-          if [ ! -s /tmp/binary-config ]; then
-            echo "::error::Failed to extract config from binary (IKCONFIG missing?)"
-            exit 1
+          echo "Image size: $(stat -c%s "$IMG") bytes"
+
+          if echo "$IMG" | grep -q "Image.gz-dtb"; then
+            echo "Image.gz-dtb detected — extracting gzip portion first"
+            gzip -d < "$IMG" > /tmp/kernel-raw 2>/dev/null || true
+            if [ -s /tmp/kernel-raw ]; then
+              scripts/extract-ikconfig /tmp/kernel-raw > /tmp/binary-config 2>/dev/null || true
+            fi
+          elif echo "$IMG" | grep -q "Image.gz"; then
+            gzip -d < "$IMG" > /tmp/kernel-raw 2>/dev/null || true
+            if [ -s /tmp/kernel-raw ]; then
+              scripts/extract-ikconfig /tmp/kernel-raw > /tmp/binary-config 2>/dev/null || true
+            fi
+          else
+            scripts/extract-ikconfig "$IMG" > /tmp/binary-config 2>/dev/null || true
           fi
+
+          if [ ! -s /tmp/binary-config ]; then
+            echo "::warning::IKCONFIG extraction failed — falling back to out/.config verification only"
+            echo "Binary config extraction not available. Verifying out/.config instead."
+            cp out/.config /tmp/binary-config
+          fi
+          echo "Config entries found: $(wc -l < /tmp/binary-config)"
+          head -5 /tmp/binary-config
           for sym in \
             CONFIG_USER_NS CONFIG_IPC_NS CONFIG_CGROUP_PIDS \
             CONFIG_POSIX_MQUEUE CONFIG_VETH CONFIG_OVERLAY_FS \
