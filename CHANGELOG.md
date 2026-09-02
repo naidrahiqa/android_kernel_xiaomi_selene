@@ -47,6 +47,12 @@ Format:
 
 - **Greenforce Clang updated:** 24.0.0 → 24.0.0 (20260901 build)
 
+- **IKCONFIG /proc/config.gz FIX (critical):** `kernel/Makefile:125`
+  - Xiaomi/MTK patch hardcoded `config_data.gz` from `arch/arm64/configs/stock_defconfig`
+  - `/proc/config.gz` always showed stale vendor config, NOT the actual build config
+  - Fix: change to `$(KCONFIG_CONFIG)` — now reads from actual `.config` used for compilation
+  - Root cause of "config mismatch" reports since v0.9.3
+
 - **CVE inventory created:** `docs/CVE-INVENTORY.md`
   - CVE-2026-31431 (CopyFail) — CVSS 7.8 HIGH, mitigated via `algif_aead` not compiled.
   - OpenELA 4.14.357 patches tracked.

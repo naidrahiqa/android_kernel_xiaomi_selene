@@ -119,18 +119,6 @@ jobs:
             CC=clang HOSTCC=gcc \
             CROSS_COMPILE=aarch64-linux-gnu- \
             selene_defconfig 2>&1 | tee build.log
-          cp out/.config out/.config.selene_defconfig
-          echo "=== After selene_defconfig ==="
-          grep -E "CONFIG_USER_NS|CONFIG_IDLE_PAGE_TRACKING|CONFIG_DEFAULT_IOSCHED|CONFIG_LOCALVERSION|CONFIG_LOCALVERSION_AUTO|CONFIG_SHADOW_CALL_STACK|CONFIG_TCP_CONG_BBR" out/.config
-          make O=out ARCH=arm64 \
-            CC=clang HOSTCC=gcc \
-            CROSS_COMPILE=aarch64-linux-gnu- \
-            olddefconfig 2>&1 | tee -a build.log
-          echo "=== After olddefconfig ==="
-          grep -E "CONFIG_USER_NS|CONFIG_IDLE_PAGE_TRACKING|CONFIG_DEFAULT_IOSCHED|CONFIG_LOCALVERSION|CONFIG_LOCALVERSION_AUTO|CONFIG_SHADOW_CALL_STACK|CONFIG_TCP_CONG_BBR" out/.config
-          echo "=== Diffing defconfig vs olddefconfig ==="
-          diff <(grep -E "^CONFIG_|^# .*is not set" out/.config.selene_defconfig | sort) \
-               <(grep -E "^CONFIG_|^# .*is not set" out/.config | sort) | head -50 || true
           set +e
           make O=out ARCH=arm64 \
             CC=clang HOSTCC=gcc \

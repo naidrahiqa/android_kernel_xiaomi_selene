@@ -190,9 +190,7 @@ Kontek 4.14 yang sudah ditangani upstream `kernel_compat.mk` + `compat/kernel_co
 ### Device Debugging Findings (2026-08-25, LOS20-unofficial hasan build)
 Full live-debugging session via ADB on Redmi 10 2022 + LineageOS 20 (20.0-20250905-UNOFFICIAL-selene). Kernel 4.14.356-Phrolova boots clean: 0 panic, root/hooks OK. Temuan penting:
 
-**ARTIFACT MISMATCH (kritis):** Kernel yang ter-flash menunjukkan config era lama (`cfq` default, tanpa dirty-ratio cmdline, `# USER_NS is not set`, `vmalloc=496M`) padahal source CI run-nya (`574a7669`, verified via `git show`) memuat semuanya (`bfq`, dirty-ratio, `USER_NS=y`, `vmalloc=320M`). Repro lokal `make selene_defconfig` menghasilkan config benar → **tree sehat; artefak yang dipakai user bukan dari run tersebut** (stale release asset / salah download zip lama). MITIGASI:
-- Selalu verifikasi pasca-flash: `zcat /proc/config.gz | grep -E 'DEFAULT_IOSCHED|USER_NS'`.
-- CI wajib punya verification gate + upload `.config` sebagai artifact (v0.9.3).
+**ARTIFACT MISMATCH (root cause ditemukan 2026-09-02):** `/proc/config.gz` SELALU menampilkan config vendor lama, meski binary di-build dengan config baru. Root cause: `kernel/Makefile` line 125 punya patch Xiaomi/MTK yang hardcode `config_data.gz` dari `arch/arm64/configs/stock_defconfig` (config vendor), bukan dari `$(KCONFIG_CONFIG)` (`.config` yang benar). **FIX:** ganti `stock_defconfig` → `$(KCONFIG_CONFIG)` di `kernel/Makefile`. `/proc/config.gz` sekarang akurat. **Sebelum fix, jangan verifikasi config via `/proc/config.gz`** — pakai `out/.config` di CI atau extract binary.
 
 **ROM bug — soft reboot loop:** `NearbyService.onBootPhase` (A13 code di system_server) memanggil `ContextHubManager` tanpa guard → `Log.wtf("No service published for: contexthub")` tiap boot phase 600 karena vendor selene tidak punya HAL contexthub. Berkorelasi dengan SYSTEM_RESTART di dropbox. **Bukan bug kernel.** Report ke builder ROM.
 
