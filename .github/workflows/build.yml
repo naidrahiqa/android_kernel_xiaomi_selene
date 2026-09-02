@@ -178,20 +178,7 @@ jobs:
           echo "Extracting from: $IMG"
           echo "Image size: $(stat -c%s "$IMG") bytes"
 
-          if echo "$IMG" | grep -q "Image.gz-dtb"; then
-            echo "Image.gz-dtb detected — extracting gzip portion first"
-            gzip -d < "$IMG" > /tmp/kernel-raw 2>/dev/null || true
-            if [ -s /tmp/kernel-raw ]; then
-              scripts/extract-ikconfig /tmp/kernel-raw > /tmp/binary-config 2>/dev/null || true
-            fi
-          elif echo "$IMG" | grep -q "Image.gz"; then
-            gzip -d < "$IMG" > /tmp/kernel-raw 2>/dev/null || true
-            if [ -s /tmp/kernel-raw ]; then
-              scripts/extract-ikconfig /tmp/kernel-raw > /tmp/binary-config 2>/dev/null || true
-            fi
-          else
-            scripts/extract-ikconfig "$IMG" > /tmp/binary-config 2>/dev/null || true
-          fi
+          scripts/extract-ikconfig "$IMG" > /tmp/binary-config 2>/dev/null || true
 
           if [ ! -s /tmp/binary-config ] || [ $(wc -l < /tmp/binary-config) -lt 100 ]; then
             echo "::warning::IKCONFIG extraction failed or incomplete (lines: $(wc -l < /tmp/binary-config 2>/dev/null || echo 0))"
