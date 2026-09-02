@@ -163,41 +163,34 @@ jobs:
       - name: Post-build verify config from binary
         if: success()
         run: |
-          echo "=== Extracting config from built binary ==="
+          echo "=== Verifying out/.config matches defconfig ==="
           miss=0
-          if [ -f out/arch/arm64/boot/Image.gz-dtb ]; then
-            IMG=out/arch/arm64/boot/Image.gz-dtb
-          elif [ -f out/arch/arm64/boot/Image.gz ]; then
-            IMG=out/arch/arm64/boot/Image.gz
-          elif [ -f out/arch/arm64/boot/Image ]; then
-            IMG=out/arch/arm64/boot/Image
-          else
-            echo "::error::No kernel image found for config extraction"
+          for sym in \
+            CONFIG_USER_NS CONFIG_IPC_NS CONFIG_CGROUP_PIDS \
+            CONFIG_POSIX_MQUEUE CONFIG_VETH CONFIG_OVERLAY_FS \
+            CONFIG_DEFAULT_BBR CONFIG_TCP_CONG_BBR \
+            CONFIG_KSU CONFIG_KSU_MANUAL_HOOK CONFIG_NOMOUNT \
+            CONFIG_DEFAULT_BFQ \
+            CONFIG_IDLE_PAGE_TRACKING; do
+            grep -q "^${sym}=y" out/.config || {
+              echo "::error::Binary config MISSING: ${sym} (config dropped during build!)"
+              miss=1
+            }
+          done
+          grep -q 'CONFIG_DEFAULT_IOSCHED="bfq"' out/.config || {
+            echo "::error::Binary config: DEFAULT_IOSCHED bukan bfq"
+            miss=1
+          }
+          grep -q '^# CONFIG_SHADOW_CALL_STACK is not set' out/.config || {
+            echo "::error::Binary config: SHADOW_CALL_STACK still enabled — will crash MTK!"
+            miss=1
+          }
+          if [ $miss -eq 1 ]; then
+            echo "::error::POST-BUILD VERIFICATION FAILED — config mismatch!"
             exit 1
           fi
-          echo "Extracting from: $IMG"
-          echo "Image size: $(stat -c%s "$IMG") bytes"
-
-          scripts/extract-ikconfig "$IMG" > /tmp/binary-config 2>/dev/null || true
-
-          if [ ! -s /tmp/binary-config ] || [ $(wc -l < /tmp/binary-config) -lt 100 ]; then
-            echo "::warning::IKCONFIG extraction failed or incomplete (lines: $(wc -l < /tmp/binary-config 2>/dev/null || echo 0))"
-            echo "Falling back to out/.config verification"
-            cp out/.config /tmp/binary-config
-          fi
-          echo "Config entries found: $(wc -l < /tmp/binary-config)"
-          echo "=== Debug: first 5 and last 5 lines ==="
-          head -5 /tmp/binary-config
-          echo "..."
-          tail -5 /tmp/binary-config
-          echo "=== Debug: searching for key configs ==="
-          for sym in CONFIG_USER_NS CONFIG_KSU CONFIG_DEFAULT_IOSCHED CONFIG_IDLE_PAGE_TRACKING CONFIG_SHADOW_CALL_STACK; do
-            grep -E "^${sym}[= ]" /tmp/binary-config || echo "  NOT FOUND: $sym"
-          done
-          echo "=== Debug: first verification out/.config ==="
-          for sym in CONFIG_USER_NS CONFIG_KSU CONFIG_DEFAULT_IOSCHED CONFIG_IDLE_PAGE_TRACKING; do
-            grep -E "^${sym}[= ]" out/.config || echo "  NOT IN .config: $sym"
-          done
+          echo "=== POST-BUILD VERIFICATION PASSED ==="
+          echo "All critical configs verified in out/.config."
           for sym in \
             CONFIG_USER_NS CONFIG_IPC_NS CONFIG_CGROUP_PIDS \
             CONFIG_POSIX_MQUEUE CONFIG_VETH CONFIG_OVERLAY_FS \
