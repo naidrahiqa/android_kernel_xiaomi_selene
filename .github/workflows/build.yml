@@ -165,8 +165,13 @@ jobs:
         run: |
           echo "=== Extracting config from built binary ==="
           miss=0
-          IMG=$(ls out/arch/arm64/boot/Image.gz-dtb out/arch/arm64/boot/Image.gz out/arch/arm64/boot/Image 2>/dev/null | head -1)
-          if [ -z "$IMG" ]; then
+          if [ -f out/arch/arm64/boot/Image.gz-dtb ]; then
+            IMG=out/arch/arm64/boot/Image.gz-dtb
+          elif [ -f out/arch/arm64/boot/Image.gz ]; then
+            IMG=out/arch/arm64/boot/Image.gz
+          elif [ -f out/arch/arm64/boot/Image ]; then
+            IMG=out/arch/arm64/boot/Image
+          else
             echo "::error::No kernel image found for config extraction"
             exit 1
           fi
@@ -188,13 +193,12 @@ jobs:
             scripts/extract-ikconfig "$IMG" > /tmp/binary-config 2>/dev/null || true
           fi
 
-          if [ ! -s /tmp/binary-config ]; then
-            echo "::warning::IKCONFIG extraction failed — falling back to out/.config verification only"
-            echo "Binary config extraction not available. Verifying out/.config instead."
+          if [ ! -s /tmp/binary-config ] || [ $(wc -l < /tmp/binary-config) -lt 100 ]; then
+            echo "::warning::IKCONFIG extraction failed or incomplete (lines: $(wc -l < /tmp/binary-config 2>/dev/null || echo 0))"
+            echo "Falling back to out/.config verification"
             cp out/.config /tmp/binary-config
           fi
           echo "Config entries found: $(wc -l < /tmp/binary-config)"
-          head -5 /tmp/binary-config
           for sym in \
             CONFIG_USER_NS CONFIG_IPC_NS CONFIG_CGROUP_PIDS \
             CONFIG_POSIX_MQUEUE CONFIG_VETH CONFIG_OVERLAY_FS \
