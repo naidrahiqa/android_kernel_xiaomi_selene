@@ -114,6 +114,7 @@ jobs:
           KBUILD_BUILD_USER: "Naidrahiqa"
           KBUILD_BUILD_HOST: "Endeavour"
         run: |
+          rm -rf out
           set +e
           make O=out ARCH=arm64 \
             CC=clang HOSTCC=gcc \
@@ -158,6 +159,59 @@ jobs:
         with:
           name: kernel-config
           path: out/.config
+
+      - name: Post-build verify config from binary
+        if: success()
+        run: |
+          echo "=== Extracting config from built binary ==="
+          miss=0
+          IMG=$(ls out/arch/arm64/boot/Image.gz-dtb out/arch/arm64/boot/Image.gz out/arch/arm64/boot/Image 2>/dev/null | head -1)
+          if [ -z "$IMG" ]; then
+            echo "::error::No kernel image found for config extraction"
+            exit 1
+          fi
+          echo "Extracting from: $IMG"
+          scripts/extract-ikconfig "$IMG" > /tmp/binary-config 2>/dev/null
+          if [ ! -s /tmp/binary-config ]; then
+            echo "::error::Failed to extract config from binary (IKCONFIG missing?)"
+            exit 1
+          fi
+          for sym in \
+            CONFIG_USER_NS CONFIG_IPC_NS CONFIG_CGROUP_PIDS \
+            CONFIG_POSIX_MQUEUE CONFIG_VETH CONFIG_OVERLAY_FS \
+            CONFIG_DEFAULT_BBR CONFIG_TCP_CONG_BBR \
+            CONFIG_KSU CONFIG_KSU_MANUAL_HOOK CONFIG_NOMOUNT \
+            CONFIG_DEFAULT_BFQ \
+            CONFIG_IDLE_PAGE_TRACKING; do
+            grep -q "^${sym}=y" /tmp/binary-config || {
+              echo "::error::Binary config MISSING: ${sym} (config dropped during build!)"
+              miss=1
+            }
+          done
+          grep -q 'CONFIG_DEFAULT_IOSCHED="bfq"' /tmp/binary-config || {
+            echo "::error::Binary config: DEFAULT_IOSCHED bukan bfq"
+            miss=1
+          }
+          grep -q '^# CONFIG_SHADOW_CALL_STACK is not set' /tmp/binary-config || {
+            echo "::error::Binary config: SHADOW_CALL_STACK still enabled — will crash MTK!"
+            miss=1
+          }
+          if [ $miss -eq 1 ]; then
+            echo "::error::POST-BUILD VERIFICATION FAILED — binary config mismatch!"
+            echo "=== Binary config vs expected ==="
+            diff <(grep -E "SHADOW_CALL|IDLE_PAGE|DEFAULT_IOSCHED|USER_NS|KSU" /tmp/binary-config) \
+                 <(echo "CONFIG_USER_NS=y
+CONFIG_IDLE_PAGE_TRACKING=y
+CONFIG_KSU=y
+CONFIG_KSU_MANUAL_HOOK=y
+CONFIG_NOMOUNT=y
+CONFIG_DEFAULT_BFQ=y
+CONFIG_DEFAULT_IOSCHED=\"bfq\"
+# CONFIG_SHADOW_CALL_STACK is not set") || true
+            exit 1
+          fi
+          echo "=== POST-BUILD VERIFICATION PASSED ==="
+          echo "Binary config matches expected values."
 
       - name: Package AnyKernel3
         if: success() && (hashFiles('out/arch/arm64/boot/Image*') != '')
