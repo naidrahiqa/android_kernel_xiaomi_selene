@@ -198,16 +198,6 @@ jobs:
           }
           if [ $miss -eq 1 ]; then
             echo "::error::POST-BUILD VERIFICATION FAILED — binary config mismatch!"
-            echo "=== Binary config vs expected ==="
-            diff <(grep -E "SHADOW_CALL|IDLE_PAGE|DEFAULT_IOSCHED|USER_NS|KSU" /tmp/binary-config) \
-                 <(echo "CONFIG_USER_NS=y
-CONFIG_IDLE_PAGE_TRACKING=y
-CONFIG_KSU=y
-CONFIG_KSU_MANUAL_HOOK=y
-CONFIG_NOMOUNT=y
-CONFIG_DEFAULT_BFQ=y
-CONFIG_DEFAULT_IOSCHED=\"bfq\"
-# CONFIG_SHADOW_CALL_STACK is not set") || true
             exit 1
           fi
           echo "=== POST-BUILD VERIFICATION PASSED ==="
