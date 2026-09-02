@@ -199,9 +199,17 @@ jobs:
             cp out/.config /tmp/binary-config
           fi
           echo "Config entries found: $(wc -l < /tmp/binary-config)"
-          echo "=== Debug: searching for key configs in binary ==="
+          echo "=== Debug: first 5 and last 5 lines ==="
+          head -5 /tmp/binary-config
+          echo "..."
+          tail -5 /tmp/binary-config
+          echo "=== Debug: searching for key configs ==="
           for sym in CONFIG_USER_NS CONFIG_KSU CONFIG_DEFAULT_IOSCHED CONFIG_IDLE_PAGE_TRACKING CONFIG_SHADOW_CALL_STACK; do
             grep -E "^${sym}[= ]" /tmp/binary-config || echo "  NOT FOUND: $sym"
+          done
+          echo "=== Debug: first verification out/.config ==="
+          for sym in CONFIG_USER_NS CONFIG_KSU CONFIG_DEFAULT_IOSCHED CONFIG_IDLE_PAGE_TRACKING; do
+            grep -E "^${sym}[= ]" out/.config || echo "  NOT IN .config: $sym"
           done
           for sym in \
             CONFIG_USER_NS CONFIG_IPC_NS CONFIG_CGROUP_PIDS \
