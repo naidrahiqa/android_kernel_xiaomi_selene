@@ -1,6 +1,6 @@
 # Phrolova Kernel — Roadmap
 
-## Versi Saat Ini: v0.9.10 (IKCONFIG Fix + Security Hardening + Defconfig Improvements)
+## Versi Saat Ini: v0.9.11 (I/O Performance Tuning)
 
 ---
 
@@ -27,10 +27,11 @@ Target: Benchmark gain + responsivitas.
 - [x] **MTK scheduler** — CPULOAD, RQAVG_US, SYSHINT (schedutil visibility)
 - [x] **Boost engines** — GBE, EARA_AI, Task Turbo, Touch Boost, IO Boost
 - [x] **ZRAM resize** — 3GB→2GB (kurang CPU compression thrash)
-- [x] **KSM disabled** — save CPU cycles
+- [x] **KSM disabled** — save CPU cycles (v0.9.11, re-disabled after accidental re-enable)
+- [x] **Dirty writeback tuning** — expire 30s→15s, writeback 5s→3s (v0.9.11)
 - [x] **Stack protector disabled** — `CC_STACKPROTECTOR_STRONG=n`
 - [x] **HID bloat** — 25→4 drivers
-- [x] **Simple LMK v1.0.1** — 200MB threshold, 500ms, race fix
+- [x] **Simple LMK v1.0.2** — 280MB threshold, 150ms check, runtime tunable (v0.9.11)
 - [x] **BFQ tuning** — slice_idle 8→2ms, fifo_expire_sync 250→150ms (v0.9.7)
 - [x] **ZRAM ZSTD level** — compression level 3→5 (v0.9.7)
 - [x] **MTK stock configs** — PERF_OBSERVER, PERF_TRACKER, RESYM, SWPM, QOS_V1, RAM_CONSOLE (v0.9.7)

@@ -12,11 +12,12 @@
 #include <linux/kthread.h>
 #include <linux/freezer.h>
 
-#define SIMPLE_LMK_VERSION "1.0.1"
-#define LMK_DEFAULT_MIN_FREE	200
-#define LMK_CHECK_INTERVAL_MS	500
+#define SIMPLE_LMK_VERSION "1.0.2"
+#define LMK_DEFAULT_MIN_FREE	280
+#define LMK_CHECK_INTERVAL_MS	150
 
 static unsigned long lmk_min_free_mb = LMK_DEFAULT_MIN_FREE;
+static unsigned long lmk_check_interval = LMK_CHECK_INTERVAL_MS;
 static unsigned long lmk_debug = 0;
 static bool lmk_enabled = true;
 
@@ -105,7 +106,7 @@ static int lmk_do_check(void *data)
 		}
 
 		set_current_state(TASK_INTERRUPTIBLE);
-		schedule_timeout(msecs_to_jiffies(LMK_CHECK_INTERVAL_MS));
+		schedule_timeout(msecs_to_jiffies(lmk_check_interval));
 	}
 	return 0;
 }
@@ -120,6 +121,23 @@ static ssize_t min_free_mb_store(struct kobject *kobj, struct kobj_attribute *at
 {
 	int ret = kstrtoul(buf, 10, &lmk_min_free_mb);
 	return ret ? ret : count;
+}
+
+static ssize_t check_interval_ms_show(struct kobject *kobj, struct kobj_attribute *attr,
+				      char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%lu\n", lmk_check_interval);
+}
+
+static ssize_t check_interval_ms_store(struct kobject *kobj, struct kobj_attribute *attr,
+				       const char *buf, size_t count)
+{
+	int ret = kstrtoul(buf, 10, &lmk_check_interval);
+	if (ret)
+		return ret;
+	if (lmk_check_interval < 50)
+		lmk_check_interval = 50;
+	return count;
 }
 
 static ssize_t enabled_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
@@ -151,11 +169,13 @@ static ssize_t kill_now_store(struct kobject *kobj, struct kobj_attribute *attr,
 }
 
 static struct kobj_attribute min_free_attr = __ATTR_RW(min_free_mb);
+static struct kobj_attribute check_interval_attr = __ATTR_RW(check_interval_ms);
 static struct kobj_attribute enabled_attr = __ATTR_RW(enabled);
 static struct kobj_attribute kill_now_attr = __ATTR_WO(kill_now);
 
 static struct attribute *lmk_attrs[] = {
 	&min_free_attr.attr,
+	&check_interval_attr.attr,
 	&enabled_attr.attr,
 	&kill_now_attr.attr,
 	NULL,
@@ -186,8 +206,8 @@ static int __init simple_lmk_init(void)
 		return PTR_ERR(lmk_task);
 	}
 
-	pr_info("simple_lmk: v%s loaded (min_free=%luMB)\n",
-		SIMPLE_LMK_VERSION, lmk_min_free_mb);
+	pr_info("simple_lmk: v%s loaded (min_free=%luMB, check_interval=%lums)\n",
+		SIMPLE_LMK_VERSION, lmk_min_free_mb, lmk_check_interval);
 	return 0;
 }
 
@@ -209,3 +229,4 @@ MODULE_VERSION(SIMPLE_LMK_VERSION);
 
 module_param_named(debug, lmk_debug, ulong, 0664);
 module_param_named(min_free_mb, lmk_min_free_mb, ulong, 0664);
+module_param_named(check_interval_ms, lmk_check_interval, ulong, 0664);

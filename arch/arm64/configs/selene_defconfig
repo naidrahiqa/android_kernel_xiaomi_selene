@@ -77,7 +77,7 @@ CONFIG_ZSMALLOC=y
 # CONFIG_MITIGATE_SPECTRE_BRANCH_HISTORY is not set
 CONFIG_ARM64_LSE_ATOMICS=y
 CONFIG_RANDOMIZE_BASE=y
-CONFIG_CMDLINE="console=tty0 console=ttyMT3,921600n1 root=/dev/ram vmalloc=320M slub_max_order=2 vm.dirty_background_ratio=5 vm.dirty_ratio=15 "
+CONFIG_CMDLINE="console=tty0 console=ttyMT3,921600n1 root=/dev/ram vmalloc=320M slub_max_order=2 vm.dirty_background_ratio=5 vm.dirty_ratio=15 vm.dirty_writeback_centisecs=300 vm.dirty_expire_centisecs=1500 "
 # CONFIG_EFI is not set
 CONFIG_BUILD_ARM64_APPENDED_DTB_IMAGE=y
 CONFIG_BUILD_ARM64_DTB_OVERLAY_IMAGE=y
@@ -86,7 +86,7 @@ CONFIG_BUILD_ARM64_DTB_OVERLAY_IMAGE_NAMES="mediatek/selene"
 # CONFIG_CORE_DUMP_DEFAULT_ELF_HEADERS is not set
 CONFIG_COMPAT=y
 # CONFIG_COMPAT_VDSO is not set
-CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y
+# CONFIG_WQ_POWER_EFFICIENT_DEFAULT is not set
 CONFIG_CPU_FREQ=y
 CONFIG_CPU_FREQ_STAT=y
 CONFIG_CPU_FREQ_MTK=y
@@ -669,8 +669,8 @@ CONFIG_MQ_IOSCHED_KYBER=y
 CONFIG_DEFAULT_BFQ=y
 CONFIG_DEFAULT_IOSCHED="bfq"
 
-# KSM — Kernel Samepage Merging (save RAM on 4GB variant, runtime tunable)
-CONFIG_KSM=y
+# KSM disabled — save CPU cycles during app transitions (tunable at runtime)
+# CONFIG_KSM is not set
 
 # SQUASHFS — Custom ROM vendor partition compatibility
 CONFIG_SQUASHFS=y

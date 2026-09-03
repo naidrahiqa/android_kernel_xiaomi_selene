@@ -11,6 +11,30 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.9.11 — I/O Performance Tuning
+
+- **Simple LMK v1.0.2:** `drivers/staging/android/simple_lmk.c`
+  - Check interval: 500ms → **150ms** (3.3x faster memory reclaim)
+  - min_free threshold: 200MB → **280MB** (earlier kill, more free memory for app launch)
+  - New sysfs: `/sys/kernel/simple_lmk/check_interval_ms` (runtime tunable, min 50ms)
+  - Module param: `check_interval_ms` (runtime tunable via `/sys/module/simple_lmk/parameters/`)
+  - **Alasan:** 500ms check interval terlalu lambat — memory pressure build up sebelum LMK kill → app launch delay. 200MB threshold terlalu konservatif untuk 4GB RAM device.
+
+- **Dirty writeback tuning:** `arch/arm64/configs/selene_defconfig` (boot cmdline)
+  - `vm.dirty_writeback_centisecs=300` (3s, default 5s) — faster page flush
+  - `vm.dirty_expire_centisecs=1500` (15s, default 30s) — less bursty writeback
+  - **Alasan:** 30s expire interval menyebabkan bursty writeback saat app switch → I/O stall → stuttering.
+
+- **WQ_POWER_EFFICIENT_DEFAULT disabled:** `arch/arm64/configs/selene_defconfig`
+  - Workqueues sekarang prioritaskan responsivitas over power saving
+  - **Alasan:** Power-efficient workqueues add latency to I/O completion work → app transition lag.
+
+- **KSM disabled:** `arch/arm64/configs/selene_defconfig`
+  - CONFIG_KSM=n — save CPU cycles during app transitions
+  - **Alasan:** KSM scan consuming CPU cycles saat app switching → stuttering. RAM savings minimal di 4GB device dengan ZRAM.
+
+- **PHROLOVA_BASE bumped:** 0.9.10 → 0.9.11.
+
 ## v0.9.10 — IKCONFIG Fix + Security Hardening
 
 - **OpenELA 4.14.357 security patches:** cherry-pick dari `openela/kernel-lts` linux-4.14.y
