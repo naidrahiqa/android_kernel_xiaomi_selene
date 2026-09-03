@@ -56,8 +56,14 @@ jobs:
           source .github/scripts/version.sh "${{ env.PHROLOVA_VARIANT }}" "${{ env.PHROLOVA_BASE }}"
           echo "PHROLOVA_VERSION=${PHROLOVA_VERSION}" >> $GITHUB_OUTPUT
           echo "PHROLOVA_TAG=${PHROLOVA_TAG}" >> $GITHUB_OUTPUT
+          echo "LOCALVERSION=${LOCALVERSION}" >> $GITHUB_OUTPUT
+          echo "DATE_TAG=${DATE_TAG}" >> $GITHUB_OUTPUT
+          echo "GIT_HASH=${GIT_HASH}" >> $GITHUB_OUTPUT
           echo "version=${PHROLOVA_VERSION}" >> $GITHUB_ENV
           echo "tag=${PHROLOVA_TAG}" >> $GITHUB_ENV
+          echo "localversion=${LOCALVERSION}" >> $GITHUB_ENV
+          echo "date_tag=${DATE_TAG}" >> $GITHUB_ENV
+          echo "git_hash=${GIT_HASH}" >> $GITHUB_ENV
 
       - name: Extract ReSukiSU info
         id: ksu
@@ -111,18 +117,21 @@ jobs:
       - name: Build kernel (selene_defconfig)
         id: build
         env:
-          KBUILD_BUILD_USER: "Naidrahiqa"
-          KBUILD_BUILD_HOST: "Endeavour"
+          KBUILD_BUILD_USER: "naidrahiqa"
+          KBUILD_BUILD_HOST: "naidrahiqa-E5475g"
+          LOCALVERSION: ${{ steps.version.outputs.LOCALVERSION }}
         run: |
           rm -rf out
           make O=out ARCH=arm64 \
             CC=clang HOSTCC=gcc \
             CROSS_COMPILE=aarch64-linux-gnu- \
+            LOCALVERSION="${{ steps.version.outputs.LOCALVERSION }}" \
             selene_defconfig 2>&1 | tee build.log
           set +e
           make O=out ARCH=arm64 \
             CC=clang HOSTCC=gcc \
             CROSS_COMPILE=aarch64-linux-gnu- \
+            LOCALVERSION="${{ steps.version.outputs.LOCALVERSION }}" \
             -j$(nproc) 2>&1 | tee -a build.log
           MAKE_EXIT=${PIPESTATUS[0]}
           echo "MAKE_EXIT_CODE=${MAKE_EXIT}" >> $GITHUB_ENV
@@ -170,13 +179,13 @@ jobs:
           cp out/arch/arm64/boot/Image.gz-dtb ak3/ 2>/dev/null || \
           cp out/arch/arm64/boot/Image.gz ak3/ 2>/dev/null || \
           cp out/arch/arm64/boot/Image ak3/
-          cd ak3 && zip -r9 ../Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}.zip . -x .git/\*
+          cd ak3 && zip -r9 ../Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ env.DATE_TAG }}-${{ env.GIT_HASH }}.zip . -x .git/\*
 
       - name: Upload artifact
         if: success() && steps.final-check.outputs.status == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: Phrolova-selene
+          name: Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.DATE_TAG }}-${{ steps.version.outputs.GIT_HASH }}
           path: Phrolova-selene-*.zip
 
       - name: Final check
@@ -227,7 +236,7 @@ jobs:
           name: Phrolova ${{ steps.version.outputs.PHROLOVA_VERSION }}
           body_path: release_body.md
           files: |
-            Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}.zip
+            Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.DATE_TAG }}-${{ steps.version.outputs.GIT_HASH }}.zip
             nm
           fail_on_unmatched_files: false
         env:

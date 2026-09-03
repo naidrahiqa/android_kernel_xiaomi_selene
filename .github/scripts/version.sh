@@ -38,12 +38,17 @@ esac
 
 PHROLOVA_TAG="${PHROLOVA_VERSION}"
 
+# Git short hash for version string
+GIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+# Local version: Phrolova🎻-YYYYMMDD-<hash>
+export LOCALVERSION="-Phrolova🎻-${DATE_TAG}-${GIT_HASH}"
+
 export PHROLOVA_VERSION
 export PHROLOVA_TAG
 export PHROLOVA_VARIANT_NAME
 export PHROLOVA_BASE="4.14"
 export PHROLOVA_CODENAME="Phrolova"
 
-export LOCALVERSION="-Phrolova-${PHROLOVA_VERSION}"
 export RELEASE_DATE=$(date +"%d %B %Y")
 export RELEASE_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")

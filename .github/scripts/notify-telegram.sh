@@ -93,7 +93,7 @@ function tg_photo() {
 function build_start() {
 	local msg="🎻 Phrolova · <code>${VERSION}</code>
 ━━━━━━━━━━━━━━━━━━━━
-selene · Redmi 10 2022 · linux 4.14.356 · Non-GKI
+selene · Redmi 10 2022 · MT6768 · Non-GKI
 ReSukiSU <code>${KSU_VER_TAG}</code> (KSU_VERSION <code>${KSU_VER_NUM}</code>) · Manual Hook
 
 ⏳ Building...
@@ -113,7 +113,7 @@ function build_success() {
 
 	local msg="🎻 Phrolova · <code>${VERSION}</code>
 ━━━━━━━━━━━━━━━━━━━━
-selene · Redmi 10 2022 · linux 4.14.356 · Non-GKI
+selene · Redmi 10 2022 · MT6768 · Non-GKI
 ReSukiSU <code>${KSU_VER_TAG}</code> (KSU_VERSION <code>${KSU_VER_NUM}</code>) · Manual Hook
 NoMount v20 (module v2.0.0)"
 

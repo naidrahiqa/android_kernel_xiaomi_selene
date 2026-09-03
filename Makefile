@@ -5,6 +5,10 @@ SUBLEVEL = 357
 EXTRAVERSION =
 NAME = Petit Gorille
 
+KBUILD_BUILD_USER := naidrahiqa
+KBUILD_BUILD_HOST := naidrahiqa-E5475g
+KBUILD_BUILD_TIMESTAMP := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
 # More info can be located in ./README

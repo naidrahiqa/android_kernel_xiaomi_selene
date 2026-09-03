@@ -30,6 +30,12 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 | Linux Container | `.opencode/skills/linux-container/SKILL.md` | Droidspaces-OSS integration, namespace/cgroup kernel requirements, verification |
 | Skill Creator | `.opencode/skills/skill-creator/SKILL.md` | Membuat atau update SKILL.md baru |
 | Git Worktrees | `.opencode/skills/using-git-worktrees/SKILL.md` | Isolasi workspace via git worktree untuk fitur baru |
+| Patch Analysis | `.opencode/skills/patch-analysis/SKILL.md` | Critical analysis sebelum apply kernel patch — risiko, dependency, testing plan |
+| MTK Config Extract | `.opencode/skills/mtk-config-extract/SKILL.md` | Ekstraksi config dari MediaTek defconfig/vendor (bukan Qualcomm/QPST) |
+| Kernel Build Debug | `.opencode/skills/kernel-build-debug/SKILL.md` | Debug build error 4.14 + Clang 24: compile error, link error, undefined symbol |
+| Cherry-pick Safe | `.opencode/skills/cherry-pick-safe/SKILL.md` | Safe cherry-pick workflow: cek conflict, test build, rollback plan |
+| Defconfig Diff | `.opencode/skills/defconfig-diff/SKILL.md` | Analisis perubahan defconfig: impact, dependency, risk assessment |
+| Release Checklist | `.opencode/skills/release-checklist/SKILL.md` | Pre-release verification: build, test, CI, notification, documentation |
 
 **Cara pakai:** Saat dapat task, load **Selene Kernel** skill dulu — dia mencakup semua aspek project. Skill lain hanya untuk task spesifik.
 
@@ -46,6 +52,32 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
   - Compiled into kernel (`CONFIG_NOMOUNT=y`), keyring-based userspace control.
 - **Build variants:** Single universal kernel — works on MIUI/HyperOS and AOSP-based ROMs (LineageOS, crDroid, etc.). Satu zip buat semua.
 - **Bootloader:** UBL'd. Device testing via ADB available.
+
+## Commit Style
+
+Gunakan **conventional commits** untuk semua commit:
+
+| Prefix | Contoh |
+|---|---|
+| `kernel:` | `kernel: port ALPS05403709 s2idle guard` |
+| `fix:` | `fix: IKCONFIG /proc/config.gz shows stale vendor config` |
+| `feat:` | `feat: defconfig improvements — ARM64 crypto, conntrack, PM` |
+| `defconfig:` | `defconfig: enable CONFIG_PM_SLEEP + CONFIG_CPU_IDLE` |
+| `ci:` | `ci: simplify post-build verification` |
+| `docs:` | `docs: update CHANGELOG/ROADMAP for v0.9.11` |
+| `release:` | `release: v0.9.11 stable — ALPS05403709 fix` |
+| `cherry-pick:` | `cherry-pick: from Ronald826/4.14-baxter` |
+
+**Rules:**
+- Gunakan `kernel:` untuk perubahan kode kernel (C/ASM)
+- Gunakan `defconfig:` untuk perubahan defconfig
+- Gunakan `fix:` untuk bug fixes
+- Gunakan `feat:` untuk fitur baru
+- Gunakan `ci:` untuk perubahan CI/workflow
+- Gunakan `docs:` untuk dokumentasi
+- Gunakan `release:` untuk release commits
+- Gunakan `cherry-pick:` untuk cherry-picks dari external repo
+- **JANGAN** gunakan generic message seperti "update" atau "fix bug"
 
 ## Source of Truth
 
@@ -101,16 +133,18 @@ make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
 - Toolchain: Greenforce Clang 24.0.0 (`CC=clang HOSTCC=gcc`)
 - ReSukiSU: ReSukiSU main @ `0b5efe9e01` via `drivers/kernelsu` symlink (manual hook, non-GKI)
 - CI matrix: **Single build** (universal kernel, 1 zip fits all)
-- Telegram notifications: ObsidianKernel-style format with credits/download links
+- Telegram notifications: Professional format with device info, version string, credits/download links
   - Start/success/failed (error log ke `TELEGRAM_ERROR_CHANNEL_ID` channel terpisah)
 - Version: `.github/scripts/version.sh` (nightly/stable/hotfix)
   - Nightly: `v{base}-nightly.YYYYMMDD` — base version dinaikin tiap ada fitur baru
   - Stable: `v{base}` — rilis stabil
   - Hotfix: `v{base+1}` — patch untuk stable
   - Trigger manual via `workflow_dispatch` bisa set `base_version` (e.g. 0.3.0)
+  - **LOCALVERSION:** `-Phrolova🎻-YYYYMMDD-<git_hash>` (baked into kernel binary)
+- Build info: `KBUILD_BUILD_USER="naidrahiqa"`, `KBUILD_BUILD_HOST="naidrahiqa-E5475g"` (baked into kernel)
 - Changelog: `.github/scripts/generate-changelog.sh` (commit-type based)
-- Artifact naming: `Phrolova-selene-{tag}.zip`
-- Release body: clean table format with device info + changelog + flash instructions
+- Artifact naming: `Phrolova-selene-{tag}-{date}-{hash}.zip`
+- Release body: Professional table format with device info + changelog + flash instructions + credits
 - **KSU auto-extract:** `.github/scripts/get_ksu_info.sh` parses `resukisu/kernel/Kbuild` for `KSU_VERSION_NUM`, `KSU_TAG`, `KSU_COMMIT`, `KSU_BRANCH`. CI passes these as env vars to notify-telegram.sh. Fallback: script auto-extracts from Kbuild if env vars absent.
 
 ## Known Gotchas (Hard-Won Context)
@@ -275,7 +309,6 @@ MTK vendor drivers di tree ini punya bugs yang bikin kernel hardening configs cr
 - **Logic:** Compare repo file vs vanilla 4.14.186 — if identical → replace with target version. If different (Xiaomi modified) → skip.
 - **Skip list:** `net/wireguard/`, `resukisu/`, `fs/nomount.*`, `lib/string.c`, `selene_defconfig`, `arch/arm64/lib/{memcpy,memmove,memset}.S`, `arch/arm64/crypto/aes-modes.S`, `include/uapi/linux/netfilter/xt_*.h`, `drivers/goodix/`, `drivers/fpc1020/`, `drivers/misc/mediatek*/`
 - **Target versions:** Configurable via `workflow_dispatch` input. Default: latest stable below 350.
-- **Known issue:** 4.14.357+ has blank screen issue on MTK devices (screen blank, system alive, need power cycle).
 
 ## Escalation
 
