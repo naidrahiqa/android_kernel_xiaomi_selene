@@ -179,7 +179,7 @@ jobs:
           cp out/arch/arm64/boot/Image.gz-dtb ak3/ 2>/dev/null || \
           cp out/arch/arm64/boot/Image.gz ak3/ 2>/dev/null || \
           cp out/arch/arm64/boot/Image ak3/
-          cd ak3 && zip -r9 ../Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ env.DATE_TAG }}-${{ env.GIT_HASH }}.zip . -x .git/\*
+          cd ak3 && zip -r9 ../Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.DATE_TAG }}-${{ steps.version.outputs.GIT_HASH }}.zip . -x .git/\*
 
       - name: Upload artifact
         if: success() && steps.final-check.outputs.status == 'success'
