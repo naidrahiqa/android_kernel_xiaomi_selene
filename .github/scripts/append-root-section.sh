@@ -7,14 +7,14 @@ if [ -f "out/.config" ]; then
   LOCALVERSION=$(grep "^CONFIG_LOCALVERSION=" out/.config | cut -d'"' -f2)
   KERNEL_VERSION="4.14.357${LOCALVERSION}"
 elif [ -f "out/include/generated/utsrelease.h" ]; then
-  KERNEL_VERSION=$(grep -oP '"\K[^"]+' out/include/generated/utsrelease.h)
+  KERNEL_VERSION=$(grep -o '"[^"]*"' out/include/generated/utsrelease.h | tr -d '"')
 fi
 KERNEL_VERSION="${KERNEL_VERSION:-4.14.357-Phrolova🎻}"
 
 # Get KSU info
 if [ -f "resukisu/kernel/Kbuild" ]; then
-  KSU_VERSION=$(grep "KSU_VERSION_NUM" resukisu/kernel/Kbuild | grep -oP ':=\s*\K\d+')
-  KSU_TAG=$(grep "KSU_TAG_NAME" resukisu/kernel/Kbuild | grep -oP ':=\s*\K\S+')
+  KSU_VERSION=$(grep "KSU_VERSION_NUM" resukisu/kernel/Kbuild | sed 's/.*:= *//')
+  KSU_TAG=$(grep "KSU_TAG_NAME" resukisu/kernel/Kbuild | sed 's/.*:= *//')
 fi
 KSU_VERSION="${KSU_VERSION:-35114}"
 KSU_TAG="${KSU_TAG:-v4.2.0-rc1}"
