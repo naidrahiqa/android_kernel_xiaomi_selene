@@ -55,6 +55,19 @@ Format:
 
 - **PHROLOVA_BASE bumped:** 0.9.9 → 0.9.10.
 
+- **ARM64 crypto extensions enabled:** `arch/arm64/configs/selene_defconfig`
+  - CONFIG_ARM64_CRYPTO=y, CONFIG_CRYPTO_AES_ARM64_CE=y, CONFIG_CRYPTO_AES_ARM64_CE_BLK=y
+  - Hardware-accelerated AES/SHA for dm-crypt, WireGuard, fscrypt, TLS
+  - Reference: stock_defconfig lines 5221-5231
+
+- **NETFILTER_XT_MATCH_CONNTRACK enabled:** `arch/arm64/configs/selene_defconfig`
+  - Connection tracking match for iptables stateful firewall rules
+  - Required for proper NAT/firewall functionality
+
+- **PM_SLEEP + CPU_IDLE explicitly enabled:** `arch/arm64/configs/selene_defconfig`
+  - CONFIG_PM_SLEEP=y, CONFIG_CPU_IDLE=y with MTK menu governor
+  - Ensures proper suspend/resume and idle power management
+
 - **CVE inventory created:** `docs/CVE-INVENTORY.md`
   - CVE-2026-31431 (CopyFail) — CVSS 7.8 HIGH, mitigated via `algif_aead` not compiled.
   - OpenELA 4.14.357 patches tracked.

@@ -1,6 +1,6 @@
 # Phrolova Kernel — Roadmap
 
-## Versi Saat Ini: v0.9.10 (IKCONFIG Fix + Security Hardening)
+## Versi Saat Ini: v0.9.10 (IKCONFIG Fix + Security Hardening + Defconfig Improvements)
 
 ---
 
