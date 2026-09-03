@@ -179,14 +179,14 @@ jobs:
           cp out/arch/arm64/boot/Image.gz-dtb ak3/ 2>/dev/null || \
           cp out/arch/arm64/boot/Image.gz ak3/ 2>/dev/null || \
           cp out/arch/arm64/boot/Image ak3/
-          cd ak3 && zip -r9 ../Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.DATE_TAG }}-${{ steps.version.outputs.GIT_HASH }}.zip . -x .git/\*
+          cd ak3 && zip -r9 ../selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.GIT_HASH }}.zip . -x .git/\*
 
       - name: Upload artifact
         if: success() && steps.final-check.outputs.status == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.DATE_TAG }}-${{ steps.version.outputs.GIT_HASH }}
-          path: Phrolova-selene-*.zip
+          name: selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.GIT_HASH }}
+          path: selene-*.zip
 
       - name: Final check
         id: final-check
@@ -236,7 +236,7 @@ jobs:
           name: Phrolova ${{ steps.version.outputs.PHROLOVA_VERSION }}
           body_path: release_body.md
           files: |
-            Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.DATE_TAG }}-${{ steps.version.outputs.GIT_HASH }}.zip
+            selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.GIT_HASH }}.zip
             nm
           fail_on_unmatched_files: false
         env:
