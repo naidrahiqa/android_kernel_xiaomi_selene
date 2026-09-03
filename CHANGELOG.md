@@ -11,7 +11,7 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
-## v0.9.9 — Security Hardening + OpenELA 4.14.357
+## v0.9.10 — IKCONFIG Fix + Security Hardening
 
 - **OpenELA 4.14.357 security patches:** cherry-pick dari `openela/kernel-lts` linux-4.14.y
   - `70649db160` — ima: Fix use-after-free on a dentry's dname.name ✅ KEPT
@@ -52,6 +52,8 @@ Format:
   - `/proc/config.gz` always showed stale vendor config, NOT the actual build config
   - Fix: change to `$(KCONFIG_CONFIG)` — now reads from actual `.config` used for compilation
   - Root cause of "config mismatch" reports since v0.9.3
+
+- **PHROLOVA_BASE bumped:** 0.9.9 → 0.9.10.
 
 - **CVE inventory created:** `docs/CVE-INVENTORY.md`
   - CVE-2026-31431 (CopyFail) — CVSS 7.8 HIGH, mitigated via `algif_aead` not compiled.

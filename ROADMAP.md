@@ -1,6 +1,6 @@
 # Phrolova Kernel — Roadmap
 
-## Versi Saat Ini: v0.9.9 (Security Hardening + OpenELA 4.14.357)
+## Versi Saat Ini: v0.9.10 (IKCONFIG Fix + Security Hardening)
 
 ---
 
