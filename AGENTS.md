@@ -16,7 +16,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 | Finishing Branch | `.opencode/skills/finishing-a-development-branch/SKILL.md` | Integrasi kerja setelah implementasi selesai — merge, PR, cleanup |
 | Kernel Source Merge | `.opencode/skills/kernel-source-merge/SKILL.md` | Merge/compare MiCode base vs Ronald826 reference |
 | Kernel Update | `.opencode/skills/kernel-update/SKILL.md` | Upgrade/downgrade kernel version (4.14.x), CVE patching |
-| Kernel Sublevel Update | `.agents/skills/kernel-sublevel-update/SKILL.md` | Update sublevel (356→357) + cherry-pick security patches dari OpenELA/kernel.org |
+| Kernel Sublevel Update | `.opencode/skills/kernel-sublevel-update/SKILL.md` | Update sublevel (356→357) + cherry-pick security patches dari OpenELA/kernel.org |
 | ReSukiSU Integration | `.opencode/skills/resukisu-integration/SKILL.md` | ReSukiSU integration, manual hooks (non-GKI), KSU_VERSION pin, manager APK handling |
 | NoMount | `.opencode/skills/nomount/SKILL.md` | maxsteeel/nomount systemless path redirection, iterate_dir hook fix, VFS injection |
 | Build System Fixes | `.opencode/skills/build-system-fixes/SKILL.md` | Kconfig CRLF, Clang IAS, stpcpy, LTO, ZSTD, UAPI headers, 4.14 gotcha collection |
@@ -36,6 +36,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 | Cherry-pick Safe | `.opencode/skills/cherry-pick-safe/SKILL.md` | Safe cherry-pick workflow: cek conflict, test build, rollback plan |
 | Defconfig Diff | `.opencode/skills/defconfig-diff/SKILL.md` | Analisis perubahan defconfig: impact, dependency, risk assessment |
 | Release Checklist | `.opencode/skills/release-checklist/SKILL.md` | Pre-release verification: build, test, CI, notification, documentation |
+| Project Identity | `.opencode/skills/project-identity/SKILL.md` | Project branding, author identity, notification format rules |
 
 **Cara pakai:** Saat dapat task, load **Selene Kernel** skill dulu — dia mencakup semua aspek project. Skill lain hanya untuk task spesifik.
 
