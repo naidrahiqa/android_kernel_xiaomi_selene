@@ -43,7 +43,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 ## Konteks Project
 
 - **Device:** Redmi 10 2022, codename **selene**, MediaTek Helio G88 (MT6768).
-- **Kernel:** Linux 4.14.356 (yuki-saisei base), **non-GKI**. Banyak API beda drastis dari 5.x/6.x — jangan apply patch GKI 5.10+ tanpa cek dulu.
+- **Kernel:** Linux 4.14.357 (yuki-saisei base), **non-GKI**. Banyak API beda drastis dari 5.x/6.x — jangan apply patch GKI 5.10+ tanpa cek dulu.
 - **Root solution:** ReSukiSU (`ReSukiSU/ReSukiSU`, fork SukiSU-Ultra, main @ `0b5efe9e01` = v4.2.0-rc1 + 32 commits, **KSU_VERSION 35114**).
   - **Hook mode: manual hook (`CONFIG_KSU_MANUAL_HOOK=y`)** — TP-hook (syscall table) cuma GKI 5.10+; di non-GKI 4.14 wajib manual hook. Patch manual di: `fs/exec.c` (`ksu_handle_execveat`), `fs/open.c` (`ksu_handle_faccessat`), `fs/stat.c` (`ksu_handle_stat`/`ksu_handle_newfstat_ret`/`ksu_handle_fstat64_ret`), `kernel/reboot.c` (`ksu_handle_sys_reboot`). setuid/initrc/read via LSM (`KSU_MANUAL_HOOK_AUTO_SETUID_HOOK`/`AUTO_INITRC_HOOK`) + input via input_handler (`AUTO_INPUT_HOOK`) — otomatis, default y (<6.8). `manual_hook_check.mk` meng-verify tiap hook saat build — hook hilang = compile error.
   - Kbuild di-patch lokal: fallback version pin tanpa `.git` (`KSU_LOCAL_VERSION := 4414`, tag `v4.2.0-rc1`, sha `0b5efe9e01`, branch `main`). `CONFIG_KPROBES` tidak dibutuhkan; `CONFIG_EXT4_FS=y` dipertahankan.
@@ -90,7 +90,7 @@ Gunakan **conventional commits** untuk semua commit:
 ## Dokumentasi Project
 
 - [CHANGELOG.md](CHANGELOG.md) — Record cherry-pick & versi rilis kernel.
-- [docs/OPTIMIZATIONS.md](docs/OPTIMIZATIONS.md) — Detail optimasi BBR, ZSTD ZRAM, & BFQ I/O.
+- [docs/OPTIMIZATIONS.md](docs/OPTIMIZATIONS.md) — Detail optimasi BBR, ZSTD ZRAM, & I/O scheduling (Deadline).
 - [docs/HOOK_MODES.md](docs/HOOK_MODES.md) — Perbandingan hook mode root solution: ReSukiSU manual hook (non-GKI) vs TP-hook (GKI2).
 - [FIX_PROMPT.md](FIX_PROMPT.md) — Panduan perbaikan cepat jika terjadi masalah kompilasi.
 
@@ -309,7 +309,7 @@ MTK vendor drivers di tree ini punya bugs yang bikin kernel hardening configs cr
 - **Source:** kernel.org (≤4.14.336) / OpenELA LTS (>4.14.336)
 - **Logic:** Compare repo file vs vanilla 4.14.186 — if identical → replace with target version. If different (Xiaomi modified) → skip.
 - **Skip list:** `net/wireguard/`, `resukisu/`, `fs/nomount.*`, `lib/string.c`, `selene_defconfig`, `arch/arm64/lib/{memcpy,memmove,memset}.S`, `arch/arm64/crypto/aes-modes.S`, `include/uapi/linux/netfilter/xt_*.h`, `drivers/goodix/`, `drivers/fpc1020/`, `drivers/misc/mediatek*/`
-- **Target versions:** Configurable via `workflow_dispatch` input. Default: latest stable below 350.
+- **Target versions:** Configurable via `workflow_dispatch` input. Default: latest stable ≤ 4.14.357 (above 4.14.357 = blank screen issue on MTK, gate memblokir di workflow).
 
 ## Escalation
 

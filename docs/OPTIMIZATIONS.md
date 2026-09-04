@@ -42,21 +42,16 @@ Dokumen ini mencatat seluruh optimasi performa, kompresi memori, dan pengatur la
 
 ---
 
-## 3. Storage & Disk I/O Scheduling (BFQ)
+## 3. Storage & Disk I/O Scheduling (Deadline)
 
 ### Konfigurasi Kernel:
-- `CONFIG_IOSCHED_BFQ=y`
-- `CONFIG_BFQ_GROUP_IOSCHED=y`
-- `CONFIG_DEFAULT_BFQ=y`
-- `CONFIG_DEFAULT_IOSCHED="bfq"`
+- `CONFIG_DEFAULT_IOSCHED="deadline"`
+- `# CONFIG_IOSCHED_BFQ is not set` (BFQ disabled — blk-mq only, eMMC pakai legacy block layer)
 
 ### Penjelasan & Manfaat:
-- **BFQ (Budget Fair Queueing):** I/O Scheduler berbasis BLK-MQ yang mengalokasikan bandwidth storage secara adil berdasarkan bobot proses.
-- **Mencegah UI Lag:** Saat ada background write/install aplikasi yang intensif, BFQ memberikan prioritas tinggi pada proses UI interaktif dan layar sentuh, sehingga perangkat tidak terasa patah-patah (*stutter-free*).
-
-### BFQ Default Tuning (v0.9.7):
-- `slice_idle` 8ms → 2ms: eMMC 5.1 gak butuh idle sepanjang HDD. 2ms kurangi latency multi-queue saat game load asset.
-- `fifo_expire_sync` 250ms → 150ms: tighter sync expiry, background I/O gak block game I/O.
+- **Deadline:** I/O Scheduler legacy yang menjamin setiap request dieksekusi sebelum *deadline*-nya, dengan prioritas read di atas write — cocok untuk eMMC 5.1 yang memakai legacy block layer (bukan blk-mq).
+- **Latency terjamin:** Request yang sudah mendekati deadline langsung dinaikkan prioritasnya, mencegah UI lag saat ada background write/install intensif.
+- **Kenapa bukan BFQ:** BFQ berbasis blk-mq — eMMC selene pakai legacy block layer, jadi BFQ tidak terpakai dan malah menambah overhead. (v0.9.12: BFQ→deadline)
 - Runtime tunable via `/sys/block/*/queue/iosched/` — user bisa override kapan saja.
 
 ---
