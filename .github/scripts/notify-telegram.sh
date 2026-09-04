@@ -121,9 +121,7 @@ NoMount v20 (module v2.0.0)"
 		msg="${msg}
 
 changelog
-${changelog_items}
-- fix screen going black under thermal load: backlight cooler had no floor, added 10%
-- fix fast charge throttle: thermal HAL was clamping QC/HVDCP to 1.5A even at safe temps"
+${changelog_items}"
 	fi
 
 	msg="${msg}

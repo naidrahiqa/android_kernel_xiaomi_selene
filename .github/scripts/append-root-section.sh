@@ -3,18 +3,19 @@ set -e
 
 # Get kernel version string from out/.config or binary
 KERNEL_VERSION=""
-if [ -f "out/.config" ]; then
+if [ -f "out/include/generated/utsrelease.h" ]; then
+  KERNEL_VERSION=$(grep -o '"[^"]*"' out/include/generated/utsrelease.h | tr -d '"')
+elif [ -f "out/.config" ]; then
   LOCALVERSION=$(grep "^CONFIG_LOCALVERSION=" out/.config | cut -d'"' -f2)
   KERNEL_VERSION="4.14.357${LOCALVERSION}"
-elif [ -f "out/include/generated/utsrelease.h" ]; then
-  KERNEL_VERSION=$(grep -o '"[^"]*"' out/include/generated/utsrelease.h | tr -d '"')
 fi
 KERNEL_VERSION="${KERNEL_VERSION:-4.14.357-Phrolova🎻}"
 
-# Get KSU info
+# Get KSU info — Kbuild pins KSU_LOCAL_VERSION; KSU_VERSION = 30000 + local + 700
 if [ -f "resukisu/kernel/Kbuild" ]; then
-  KSU_VERSION=$(grep "KSU_VERSION_NUM" resukisu/kernel/Kbuild | sed 's/.*:= *//')
-  KSU_TAG=$(grep "KSU_TAG_NAME" resukisu/kernel/Kbuild | sed 's/.*:= *//')
+  KSU_LOCAL=$(grep "^KSU_LOCAL_VERSION" resukisu/kernel/Kbuild | sed 's/.*:= *//')
+  [ -n "$KSU_LOCAL" ] && KSU_VERSION=$((30000 + KSU_LOCAL + 700))
+  KSU_TAG=$(grep "^KSU_TAG_NAME" resukisu/kernel/Kbuild | sed 's/.*:= *//')
 fi
 KSU_VERSION="${KSU_VERSION:-35114}"
 KSU_TAG="${KSU_TAG:-v4.2.0-rc1}"
@@ -48,7 +49,7 @@ cat >> release_body.md << EOF
 
 - ✅ Boot, Audio, Touch, WiFi/BT/Data, Charging, Fingerprint, Sensors, Camera
 - ✅ Root (ReSukiSU + NoMount)
-- ✅ BBR TCP congestion, ZSTD ZRAM, BFQ I/O scheduler
+- ✅ BBR TCP congestion, ZSTD ZRAM, Deadline I/O scheduler
 - ✅ ARM64 crypto extensions (hardware AES)
 - ❌ IR blaster, VoLTE, Video recording, NFC (untested)
 

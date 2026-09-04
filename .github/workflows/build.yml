@@ -145,15 +145,14 @@ jobs:
             CONFIG_POSIX_MQUEUE CONFIG_VETH CONFIG_OVERLAY_FS \
             CONFIG_DEFAULT_BBR CONFIG_TCP_CONG_BBR \
             CONFIG_KSU CONFIG_KSU_MANUAL_HOOK CONFIG_NOMOUNT \
-            CONFIG_DEFAULT_BFQ \
             CONFIG_IDLE_PAGE_TRACKING; do
             grep -q "^${sym}=y" out/.config || {
               echo "::error::Config hilang dari .config: ${sym}"
               miss=1
             }
           done
-          grep -q 'CONFIG_DEFAULT_IOSCHED="bfq"' out/.config || {
-            echo "::error::DEFAULT_IOSCHED bukan bfq"
+          grep -q 'CONFIG_DEFAULT_IOSCHED="deadline"' out/.config || {
+            echo "::error::DEFAULT_IOSCHED bukan deadline — eMMC pakai legacy block layer, bukan blk-mq"
             miss=1
           }
           grep -q '^# CONFIG_TCP_CONG_BIC is not set' out/.config || {
@@ -181,13 +180,6 @@ jobs:
           cp out/arch/arm64/boot/Image ak3/
           cd ak3 && zip -r9 ../selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.GIT_HASH }}.zip . -x .git/\*
 
-      - name: Upload artifact
-        if: success() && steps.final-check.outputs.status == 'success'
-        uses: actions/upload-artifact@v4
-        with:
-          name: selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.GIT_HASH }}
-          path: selene-*.zip
-
       - name: Final check
         id: final-check
         if: always()
@@ -206,6 +198,13 @@ jobs:
             HAS_ERROR=1
           fi
           echo "status=$([ "$HAS_ERROR" -eq 1 ] && echo "failed" || echo "success")" >> $GITHUB_OUTPUT
+
+      - name: Upload artifact
+        if: steps.final-check.outputs.status == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.GIT_HASH }}
+          path: selene-*.zip
 
       - name: Generate Changelog
         if: steps.final-check.outputs.status == 'success'

@@ -47,7 +47,7 @@ export LOCALVERSION="-Phrolova🎻-${DATE_TAG}-${GIT_HASH}"
 export PHROLOVA_VERSION
 export PHROLOVA_TAG
 export PHROLOVA_VARIANT_NAME
-export PHROLOVA_BASE="4.14"
+export PHROLOVA_BASE="$BASE_VERSION"
 export PHROLOVA_CODENAME="Phrolova"
 
 export RELEASE_DATE=$(date +"%d %B %Y")

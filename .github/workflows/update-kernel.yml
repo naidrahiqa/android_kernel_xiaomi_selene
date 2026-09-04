@@ -33,8 +33,8 @@ jobs:
             echo "::error::Only 4.14.x versions are supported"
             exit 1
           fi
-          if [ "$SUBLEVEL" -gt 350 ]; then
-            echo "::error::4.14.357+ has blank screen issue on MTK. Use ≤4.14.349."
+          if [ "$SUBLEVEL" -gt 357 ]; then
+            echo "::error::Versions above 4.14.357 have blank screen issue on MTK. Use ≤4.14.357."
             exit 1
           fi
 
