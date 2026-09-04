@@ -11,6 +11,58 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## v0.9.12 — UX Performance Hotfix (Critical Memory + Scheduler Fixes)
+
+### CRITICAL — Memory Management Fixes
+- **vmalloc 320M → 496M:** `arch/arm64/configs/selene_defconfig` (boot cmdline)
+  - Stock value. 320M too low for MT6768 with camera/GPU/KSU/NoMount → allocation failures
+- **slub_max_order 2 → 0:** `arch/arm64/configs/selene_defconfig` (boot cmdline)
+  - Stock value. Higher order causes memory allocation stalls under pressure
+- **ZRAM_SIZE_OVERRIDE 2 → 1:** `arch/arm64/configs/selene_defconfig`
+  - 2x (8GB) causes heavy CPU compression overhead → frame drops. 1x (4GB) is sweet spot
+- **ZONE_MOVABLE_CMA=y:** `arch/arm64/configs/selene_defconfig`
+  - Stock value. Allows CMA regions to be used for movable pages when idle → 64-128MB recovered
+- **EMERGENCY_MEMORY=y:** `arch/arm64/configs/selene_defconfig`
+  - Stock value. Last-resort memory reserve for emergency kernel allocations
+- **MTK_M4U=y:** `arch/arm64/configs/selene_defconfig`
+  - Stock value. Multimedia IOMMU for camera/video/GPU DMA buffer management
+- **SWAP=y:** `arch/arm64/configs/selene_defconfig`
+  - Explicitly enable swap for ZRAM
+
+### CRITICAL — Scheduler Fixes
+- **PELT_HALFLIFE_16 → 32:** `arch/arm64/configs/selene_defconfig`
+  - Stock value. 16ms causes task bouncing A75↔A55 → jitter. 32ms provides smoother scheduling
+- **HZ_300 → 250:** `arch/arm64/configs/selene_defconfig`
+  - Stock value. Reduces timer interrupt overhead, better thermal headroom
+- **SCHED_HRTICK=y:** `arch/arm64/configs/selene_defconfig`
+  - Stock value. High-resolution preemption tick for better interactive latency
+
+### HIGH — Disable Counter-Productive Boost Engines
+- **MTK_TASK_TURBO disabled:** `arch/arm64/configs/selene_defconfig`
+  - Boost→throttle cycle worse than steady performance. Stock disables this
+- **MTK_IO_BOOST disabled:** `arch/arm64/configs/selene_defconfig`
+  - eMMC is bottleneck, not CPU. Boosting CPU for I/O wastes power and adds heat
+
+### MEDIUM — SLAB Allocator Tuning
+- **SLAB_MERGE_DEFAULT=y:** `arch/arm64/configs/selene_defconfig`
+  - Stock value. Merges similar slab caches → reduces memory fragmentation
+- **SLUB_CPU_PARTIAL=y:** `arch/arm64/configs/selene_defconfig`
+  - Stock value. Per-CPU partial slab lists → reduces lock contention on 8-core SoC
+
+### MEDIUM — Simple LMK v1.0.3
+- **min_free 280 → 400MB:** `drivers/staging/android/simple_lmk.c`
+  - 280MB too low for 4GB device. Android needs 400-600MB free for smooth operation
+- **check_interval 150 → 100ms:** `drivers/staging/android/simple_lmk.c`
+  - Faster memory pressure response
+
+### LOW — Dirty Writeback Tuning
+- **dirty_ratio 15 → 10:** `arch/arm64/configs/selene_defconfig` (boot cmdline)
+  - Smoother writes on eMMC 5.1
+- **dirty_expire_centisecs 1500 → 1000:** `arch/arm64/configs/selene_defconfig` (boot cmdline)
+  - 15s → 10s dirty page expiry for less bursty I/O
+
+### PHROLOVA_BASE bumped: 0.9.11 → 0.9.12
+
 ## v0.9.11 — I/O Performance Tuning
 
 - **Simple LMK v1.0.2:** `drivers/staging/android/simple_lmk.c`
