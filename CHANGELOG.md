@@ -11,7 +11,19 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
-## v0.9.12 — UX Performance Hotfix (Critical Memory + Scheduler Fixes)
+## v0.9.12 — UX Performance Hotfix (Critical Memory + Scheduler + I/O Fixes)
+
+### CRITICAL — I/O Scheduler Fix
+- **BFQ disabled:** `arch/arm64/configs/selene_defconfig`
+  - BFQ is blk-mq only, but eMMC driver uses legacy block layer → BFQ never loaded
+  - Device was stuck on `noop` (zero I/O prioritization) — root cause of I/O lag
+- **Default scheduler → deadline:** `arch/arm64/configs/selene_defconfig`
+  - Deadline is optimal for eMMC 5.1: FIFO + expiry + backward seek penalty
+  - Much better interactive latency than noop
+- **MQ schedulers disabled:** `arch/arm64/configs/selene_defconfig`
+  - `CONFIG_MQ_IOSCHED_KYBER=n` — blk-mq scheduler, incompatible with legacy eMMC
+- **read_ahead_kb=256:** `arch/arm64/configs/selene_defconfig` (boot cmdline)
+  - 128→256 for better sequential read on eMMC 5.1
 
 ### CRITICAL — Memory Management Fixes
 - **vmalloc 320M → 496M:** `arch/arm64/configs/selene_defconfig` (boot cmdline)
