@@ -132,7 +132,7 @@ function build_success() {
 Changelog:
 ${changelog_items}
 
-thx to <a href='https://github.com/25ji-Telegram-de/android_kernel_xiaomi_selene'>yuki-saisei</a>"
+<a href='${REPO_URL}/blob/phrolova/CHANGELOG.md'>Full Changelog</a>"
 
 	local BUTTONS='{"inline_keyboard":[[{"text":"📱 ReSukiSU APK","url":"https://t.me/ReSukiSU/5"}],[{"text":"⬇ Kernel Download","url":"'"${REPO_URL}/releases/tag/${TAG}"'"}],[{"text":"📦 NoMount (mandatory)","url":"https://github.com/maxsteeel/nomount/releases"}]]}'
 
