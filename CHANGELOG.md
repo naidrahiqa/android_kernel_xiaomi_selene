@@ -30,6 +30,16 @@ Format:
 - **Docs:** `docs/CVE-INVENTORY.md` rewritten with full scan table + attack-surface candidates (`USERFAULTFD`, `NF_TABLES` — pending dependency audit); `ROADMAP.md` synced to actual v0.9.12 state; proper `README` added.
 - **Sumber:** openela/kernel-lts linux-4.14.y
 
+## v0.9.13 — Multitasking & Simple LMK Tuning
+
+- **Simple LMK v1.0.4:** `drivers/staging/android/simple_lmk.c`
+  - `min_free`: 400MB → **200MB** (mencegah background app di-kill terlalu awal saat multitasking)
+  - `check_interval`: 100ms → **300ms** (memberi jeda bagi kompresi memory/ZRAM sebelum menjatuhkan SIGKILL)
+  - **Alasan:** Threshold 400MB pada RAM 4GB terlalu agresif — menyebabkan aplikasi yang baru ditinggalkan langsung di-kill sehingga sering relog/reload saat switch task.
+  - **Sumber:** Internal Phrolova tuning.
+
+- **PHROLOVA_BASE bumped:** 0.9.12 → 0.9.13.
+
 ## v0.9.12 — UX Performance Hotfix (Critical Memory + Scheduler + I/O Fixes)
 
 ### CRITICAL — I/O Scheduler Fix

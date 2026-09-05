@@ -12,9 +12,9 @@
 #include <linux/kthread.h>
 #include <linux/freezer.h>
 
-#define SIMPLE_LMK_VERSION "1.0.3"
-#define LMK_DEFAULT_MIN_FREE	400
-#define LMK_CHECK_INTERVAL_MS	100
+#define SIMPLE_LMK_VERSION "1.0.4"
+#define LMK_DEFAULT_MIN_FREE	200
+#define LMK_CHECK_INTERVAL_MS	300
 
 static unsigned long lmk_min_free_mb = LMK_DEFAULT_MIN_FREE;
 static unsigned long lmk_check_interval = LMK_CHECK_INTERVAL_MS;

@@ -1,6 +1,6 @@
 # Phrolova Kernel — Roadmap
 
-## Versi Saat Ini: v0.9.12 (UX Performance Hotfix — Critical Memory + Scheduler Fixes)
+## Versi Saat Ini: v0.9.13 (Multitasking & Simple LMK Tuning)
 
 ---
 
