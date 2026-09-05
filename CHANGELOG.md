@@ -576,9 +576,9 @@ Format:
 ---
 
 ## M0 — Repo setup
-- Repo di-init sebagai git. Base of truth = `yuki-saisei` (4.14.356) — rebased from MiCode `selene-r-oss-update`.
-- `ronald826` remote ditambahkan sebagai reference-only (cherry-picks, JANGAN di-merge mentah).
-- `micode` remote = vendor patches (Xiaomi/MTK driver updates).
+- Repo di-init sebagai git. Base of truth = [`25ji-Telegram-de/android_kernel_xiaomi_selene`](https://github.com/25ji-Telegram-de/android_kernel_xiaomi_selene) (branch `yuki-saisei`, 4.14.356) — rebased from MiCode `selene-r-oss-update`.
+- [`ronald826`](https://github.com/Ronald826/xiaomi_kernel_selene) remote ditambahkan sebagai reference-only (cherry-picks, JANGAN di-merge mentah).
+- [`micode`](https://github.com/MiCode/Xiaomi_Kernel_OpenSource) remote = vendor patches (Xiaomi/MTK driver updates).
 - AGENTS.md, PRD.md, PROMPT.md, .opencode/skills terpasang dari scaffold.
 - Push target = `origin` -> `naidrahiqa/phrolova_kernel_xiaomi_selene`.
 - ReSukiSU: `resukisu` -> fork `naidrahiqa/ReSukiSU`, `resukisu-upstream` -> `ReSukiSU/ReSukiSU`.

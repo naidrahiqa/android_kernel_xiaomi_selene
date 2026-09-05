@@ -82,11 +82,11 @@ Gunakan **conventional commits** untuk semua commit:
 
 ## Source of Truth
 
-- Base kernel: `yuki-saisei` (4.14.356) — rebased from MiCode `selene-r-oss-update` + community patches.
-- Vendor patches: `MiCode/Xiaomi_Kernel_OpenSource`, branch `selene-r-oss-update` (Xiaomi/MTK vendor drivers).
-- Reference-only: `Ronald826/xiaomi_kernel_selene`, branch `4.14-baxter_EXPERIMENTAL` (cherry-picks, jangan merge mentah).
-- ReSukiSU: `ReSukiSU/ReSukiSU` main @ `0b5efe9e01` (local copy di `resukisu/kernel/`).
-- NoMount: `maxsteeel/nomount` (source di `fs/nomount.c` + `fs/nomount.h`).
+- Base kernel: [`25ji-Telegram-de/android_kernel_xiaomi_selene`](https://github.com/25ji-Telegram-de/android_kernel_xiaomi_selene) (branch `yuki-saisei`, 4.14.356) — rebased from MiCode `selene-r-oss-update` + community patches.
+- Vendor patches: [`MiCode/Xiaomi_Kernel_OpenSource`](https://github.com/MiCode/Xiaomi_Kernel_OpenSource), branch `selene-r-oss-update` (Xiaomi/MTK vendor drivers).
+- Reference-only: [`Ronald826/xiaomi_kernel_selene`](https://github.com/Ronald826/xiaomi_kernel_selene), branch `4.14-baxter_EXPERIMENTAL` (cherry-picks, jangan merge mentah).
+- ReSukiSU: [`ReSukiSU/ReSukiSU`](https://github.com/ReSukiSU/ReSukiSU) main @ `0b5efe9e01` (local copy di `resukisu/kernel/`).
+- NoMount: [`maxsteeel/nomount`](https://github.com/maxsteeel/nomount) (source di `fs/nomount.c` + `fs/nomount.h`).
 
 ## Dokumentasi Project
 
