@@ -115,6 +115,18 @@ function build_success() {
 		changelog_items=$(grep '^- ' "$changelog_file" 2>/dev/null | head -6)
 	fi
 
+	# If no changelog file or empty, generate from recent commits
+	if [ -z "$changelog_items" ]; then
+		changelog_items=$(git log --oneline -5 --no-decorate 2>/dev/null | while IFS= read -r line; do
+			local msg=$(echo "$line" | cut -d' ' -f2-)
+			# Skip docs commits
+			echo "$msg" | grep -qiE "^docs?[: ]|CHANGELOG|ROADMAP" && continue
+			# Clean prefix
+			local clean=$(echo "$msg" | sed -E 's/^(feat|fix|kernel|defconfig|ci|release)[: ]*//i')
+			[ -n "$clean" ] && echo "- ${clean}"
+		done | head -5)
+	fi
+
 	local BANNER_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY:-naidrahiqa/phrolova_kernel_xiaomi_selene}/phrolova/docs/assets/banner_landscape.jpg"
 
 	local msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
@@ -128,7 +140,7 @@ ReSukiSU <code>${KSU_VER_TAG}</code> · NoMount v20"
 ${changelog_items}"
 	fi
 
-	local BUTTONS='{"inline_keyboard":[[{"text":"⬇ Download Kernel","url":"'"${REPO_URL}/releases/tag/${TAG}"'"}],[{"text":"📦 NoMount Module","url":"https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip"},{"text":"📱 ReSukiSU Manager","url":"https://github.com/nicaboy/KernelSU-Next-Manager/releases"}]]}'
+	local BUTTONS='{"inline_keyboard":[[{"text":"⬇ Download Kernel","url":"'"${REPO_URL}/releases/tag/${TAG}"'"}],[{"text":"📦 NoMount Module v2.0.0","url":"https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip"}],[{"text":"📱 ReSukiSU Manager","url":"https://github.com/nicaboy/KernelSU-Next-Manager/releases"}]]}'
 
 	if tg_photo "$CHANNEL_ID" "$BANNER_URL" "$msg" "$BUTTONS"; then
 		echo "Success notification sent with banner."
