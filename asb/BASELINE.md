@@ -29,8 +29,8 @@ Baseline keamanan sebelum project ASB dimulai. Hasil scan sistematis pertama
 
 | Config | State | Catatan |
 |---|---|---|
-| `USERFAULTFD=y` | ⚠️ enabled | 4.14 tidak punya sysctl `vm.unprivileged_userfaultfd` (baru ada 5.2). Kandidat hardening #1 — butuh cek dependency vendor dulu |
-| `NF_TABLES=y` | ⚠️ enabled | netd Android pakai iptables legacy. Kandidat hardening #2 — cek `select` dependencies dulu |
+| `USERFAULTFD` | ✅ off | Disabled in v0.9.13 (prevents unprivileged local UAF/race condition exploits) |
+| `NF_TABLES` | ✅ off | Disabled in v0.9.13 (Android netd uses legacy iptables/xtables) |
 | `DEVMEM`, `BPF_SYSCALL`, `KEXEC`, `STRICT_DEVMEM` | ✅ off | — |
 | `COMPAT=y` | keep | wajib buat app 32-bit di arm64 |
 

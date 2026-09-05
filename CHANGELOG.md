@@ -38,6 +38,10 @@ Format:
   - **Alasan:** Threshold 400MB pada RAM 4GB terlalu agresif — menyebabkan aplikasi yang baru ditinggalkan langsung di-kill sehingga sering relog/reload saat switch task.
   - **Sumber:** Internal Phrolova tuning.
 
+- **Attack Surface Hardening:** `arch/arm64/configs/selene_defconfig`
+  - `# CONFIG_USERFAULTFD is not set` — mitigasi unprivileged local exploit (UAF / race condition di 4.14).
+  - `# CONFIG_NF_TABLES is not set` — menutup attack surface nftables subsystem (Android netd menggunakan legacy iptables/xtables).
+
 - **PHROLOVA_BASE bumped:** 0.9.12 → 0.9.13.
 
 ## v0.9.12 — UX Performance Hotfix (Critical Memory + Scheduler + I/O Fixes)
