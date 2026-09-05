@@ -111,20 +111,15 @@ Building...
 function build_success() {
 	local changelog_file="${1:-}"
 	local changelog_items=""
+
+	# Read from changelog file if provided
 	if [ -n "$changelog_file" ] && [ -f "$changelog_file" ]; then
-		changelog_items=$(grep '^- ' "$changelog_file" 2>/dev/null | head -6)
+		changelog_items=$(grep '^- ' "$changelog_file" 2>/dev/null | head -20)
 	fi
 
-	# If no changelog file or empty, generate from recent commits
-	if [ -z "$changelog_items" ]; then
-		changelog_items=$(git log --oneline -5 --no-decorate 2>/dev/null | while IFS= read -r line; do
-			local msg=$(echo "$line" | cut -d' ' -f2-)
-			# Skip docs commits
-			echo "$msg" | grep -qiE "^docs?[: ]|CHANGELOG|ROADMAP" && continue
-			# Clean prefix
-			local clean=$(echo "$msg" | sed -E 's/^(feat|fix|kernel|defconfig|ci|release)[: ]*//i')
-			[ -n "$clean" ] && echo "- ${clean}"
-		done | head -5)
+	# If no changelog file, try to read from CHANGELOG.md
+	if [ -z "$changelog_items" ] && [ -f "CHANGELOG.md" ]; then
+		changelog_items=$(awk '/^## v[0-9]/{if(found)exit; found=1; next} found && /^- /{print}' CHANGELOG.md 2>/dev/null | head -20)
 	fi
 
 	local BANNER_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY:-naidrahiqa/phrolova_kernel_xiaomi_selene}/phrolova/docs/assets/banner_landscape.jpg"
@@ -132,15 +127,14 @@ function build_success() {
 	local msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
 ━━━━━━━━━━━━━━━━━━━━
 <b>Redmi 10</b> · selene · MT6768 · Non-GKI
-ReSukiSU <code>${KSU_VER_TAG}</code> · NoMount v20"
+⚠️ ReSukiSU <code>${KSU_VER_TAG}</code> · NoMount v2.0.0
 
-	if [ -n "$changelog_items" ]; then
-		msg="${msg}
+Changelog:
+${changelog_items}
 
-${changelog_items}"
-	fi
+thx to <a href='https://github.com/25ji-Telegram-de/android_kernel_xiaomi_selene'>yuki-saisei</a>"
 
-	local BUTTONS='{"inline_keyboard":[[{"text":"⬇ Download Kernel","url":"'"${REPO_URL}/releases/tag/${TAG}"'"}],[{"text":"📦 NoMount Module v2.0.0","url":"https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip"}],[{"text":"📱 ReSukiSU Manager","url":"https://github.com/nicaboy/KernelSU-Next-Manager/releases"}]]}'
+	local BUTTONS='{"inline_keyboard":[[{"text":"📱 ReSukiSU APK","url":"https://t.me/ReSukiSU/5"}],[{"text":"⬇ Kernel Download","url":"'"${REPO_URL}/releases/tag/${TAG}"'"}],[{"text":"📦 NoMount (mandatory)","url":"https://github.com/maxsteeel/nomount/releases"}]]}'
 
 	if tg_photo "$CHANNEL_ID" "$BANNER_URL" "$msg" "$BUTTONS"; then
 		echo "Success notification sent with banner."
