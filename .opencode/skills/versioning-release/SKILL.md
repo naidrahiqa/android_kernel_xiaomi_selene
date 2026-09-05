@@ -38,34 +38,74 @@ Variabel yang di-export:
 - `PHROLOVA_TAG` — git tag (sama dengan version)
 - `LOCALVERSION` — embedded kernel version (`-Phrolova-v0.6.0-...`)
 
-## Changelog Generator
+## Changelog Format (CHANGELOG.md)
 
-Script: `.github/scripts/generate-changelog.sh`
+Gunakan `+` prefix untuk setiap item. Tulis apa yang berubah untuk user, BUKAN git commit messages:
 
-Arguments: `generate-changelog.sh <version> <tag> <variant>`
+```
++arm64: Use optimized memcmp.
++mm/slub.c: branch optimization in free slowpath
++binder: Set binder_debug_mask=0 to suppress logging
++fs: dcache: reduce sysctl_vfs_cache_pressure to 50
++sched/fair: Consider all running tasks in cpu for load balance
+```
 
-### Cara kerja
-1. `git describe --tags` untuk cari tag terakhir
-2. Collect commits antara tag terakhir..HEAD
-3. Kategorisasi berdasarkan keyword di commit message:
+**DO:**
+- Tulis apa yang dilakukan perubahan untuk user
+- Gunakan istilah teknis tapi bisa dipahami
+- Gabungkan perubahan terkait
 
-| Kategori | Keyword grep |
-|---|---|
-| 🚀 Features | `^feat` |
-| 🐛 Bug Fixes | `^fix` |
-| ⚡ Improvements | `^refactor`, `^perf`, `^impr`, `wireguard`, `defconfig`, `zram`, `bbr`, `bfq`, `ksm`, `cpufreq`, `wakelock`, `ci:`, `build:`, `arch:` |
+**DON'T:**
+- Copy git commit messages (e.g. "fix: simple_lmk v1.0.5")
+- Gunakan conventional commit prefixes (feat:, fix:, dll)
+- Tulis "update" atau "improve" tanpa spesifik
 
-### Kalau changelog kosong
-1. Cek `git describe --tags` — pastikan ada tag sebelumnya
-2. Cek range commit: `LAST_TAG..HEAD`
-3. Pastikan commit messages pake format yang di-grep (lihat tabel di atas)
-4. Kalau commit ga cocok kategori manapun, dia bakal masuk sebagai "Changes" (fallback)
-5. Kalau bener-bener ga ada commit di range, muncul "No notable changes."
+## Telegram Notification Format
 
-### Nambah kategori
-Edit `generate-changelog.sh` — tambah keyword ke variable `IMPROVE`:
-```bash
-IMPROVE=$(git log ... --grep="^keyword1\|keyword2" -i ...)
+Script: `.github/scripts/notify-telegram.sh`
+
+### Build Start
+```
+🎻 Phrolova · {version}
+━━━━━━━━━━━━━━━━━━━━
+Building...
+{commit_hash} {commit_message}
+Build Log
+```
+
+### Build Success
+```
+🎻 Phrolova · {version}
+━━━━━━━━━━━━━━━━━━━━
+Redmi 10 · selene · MT6768 · Non-GKI
+⚠️ ReSukiSU {ksu_tag} · NoMount v2.0.0
+
+Changelog:
++{change_1}
++{change_2}
++{change_3}
+
+Full Changelog
+
+[📱 ReSukiSU APK]
+[⬇ Kernel Download]
+[📦 NoMount (mandatory)]
+```
+
+### Build Failed
+```
+🎻 Phrolova · {version}
+━━━━━━━━━━━━━━━━━━━━
+❌ {ERROR_TYPE}
+Check Log
+```
+
+### Buttons (Inline Keyboard)
+Stack vertikal, JANGAN sejajar:
+```
+[📱 ReSukiSU APK]
+[⬇ Kernel Download]
+[📦 NoMount (mandatory)]
 ```
 
 ## Release Body (CI)
