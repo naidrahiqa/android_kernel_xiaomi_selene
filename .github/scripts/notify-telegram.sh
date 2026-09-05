@@ -76,13 +76,22 @@ function tg_send() {
 }
 
 function tg_photo() {
-	local target="$1" photo_url="$2" caption="$3"
+	local target="$1" photo_url="$2" caption="$3" buttons="${4:-}"
 	local resp
-	resp=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto" \
-		-d chat_id="${target}" \
-		-d photo="${photo_url}" \
-		-d caption="${caption}" \
-		-d parse_mode="HTML")
+	if [ -n "$buttons" ]; then
+		resp=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto" \
+			-d chat_id="${target}" \
+			-d photo="${photo_url}" \
+			-d caption="${caption}" \
+			-d parse_mode="HTML" \
+			-d reply_markup="${buttons}")
+	else
+		resp=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto" \
+			-d chat_id="${target}" \
+			-d photo="${photo_url}" \
+			-d caption="${caption}" \
+			-d parse_mode="HTML")
+	fi
 	if ! echo "$resp" | grep -q '"ok":true'; then
 		echo "Telegram photo API error: $(echo "$resp" | grep -o '"description":"[^"]*"' | cut -d\" -f4)"
 		return 1
@@ -119,13 +128,9 @@ ReSukiSU <code>${KSU_VER_TAG}</code> · NoMount v20"
 ${changelog_items}"
 	fi
 
-	msg="${msg}
+	local BUTTONS='{"inline_keyboard":[[{"text":"⬇ Download Kernel","url":"'"${REPO_URL}/releases/tag/${TAG}"'"}],[{"text":"📦 NoMount Module","url":"https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip"},{"text":"📱 ReSukiSU Manager","url":"https://github.com/nicaboy/KernelSU-Next-Manager/releases"}]]}'
 
-<a href='${REPO_URL}/releases/tag/${TAG}'>⬇ Download Kernel</a>
-
-#selene #Redmi10 #mt6768 #kernel #PhrolovaKernel"
-
-	if tg_photo "$CHANNEL_ID" "$BANNER_URL" "$msg"; then
+	if tg_photo "$CHANNEL_ID" "$BANNER_URL" "$msg" "$BUTTONS"; then
 		echo "Success notification sent with banner."
 	else
 		echo "Photo failed, falling back to text..."
