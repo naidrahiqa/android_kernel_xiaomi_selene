@@ -91,13 +91,9 @@ function tg_photo() {
 }
 
 function build_start() {
-	local msg="🎻 Phrolova Kernel!
-Update: ${DATE}
-Version: <code>${VERSION}</code> (${VARIANT_NAME}) · Linux 4.14 (Non-GKI)
-Device: Redmi 10 (selene) · MT6768
-By: naidrahiqa
-
-⏳ Building...
+	local msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
+━━━━━━━━━━━━━━━━━━━━
+Building...
 <code>${SHA}</code> ${COMMIT_MSG}
 <a href='${BUILD_URL}'>Build Log</a>"
 	tg_send "$CHANNEL_ID" "$msg" && echo "Start notification sent." || echo "Start notification FAILED."
@@ -107,46 +103,31 @@ function build_success() {
 	local changelog_file="${1:-}"
 	local changelog_items=""
 	if [ -n "$changelog_file" ] && [ -f "$changelog_file" ]; then
-		changelog_items=$(grep '^- ' "$changelog_file" 2>/dev/null | head -8)
+		changelog_items=$(grep '^- ' "$changelog_file" 2>/dev/null | head -6)
 	fi
 
 	local BANNER_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY:-naidrahiqa/phrolova_kernel_xiaomi_selene}/phrolova/docs/assets/banner_landscape.jpg"
 
-	local msg="🎻 Phrolova Kernel!
-Update: ${DATE}
-Version: <code>${VERSION}</code> (${VARIANT_NAME}) · Linux 4.14 (Non-GKI)
-Device: Redmi 10 (selene) · MT6768
-ReSukiSU <code>${KSU_VER_TAG}</code> (KSU_VERSION <code>${KSU_VER_NUM}</code>) · Manual Hook
-By: naidrahiqa"
+	local msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
+━━━━━━━━━━━━━━━━━━━━
+<b>Redmi 10</b> · selene · MT6768 · Non-GKI
+ReSukiSU <code>${KSU_VER_TAG}</code> · NoMount v20"
 
 	if [ -n "$changelog_items" ]; then
 		msg="${msg}
 
-Changelog:
 ${changelog_items}"
 	fi
 
 	msg="${msg}
 
-Works: boot, audio, touch, wifi/bt/data, charging, fingerprint, sensors, camera, root
-Untested: ir blaster, volte, video rec, nfc
+⚡ Works: boot, audio, touch, wifi/bt, charging, fingerprint, sensors, camera
+❓ Untested: ir blaster, volte, video rec, nfc
+ℹ️ Stock dtbo works
 
-Download: <a href='${REPO_URL}/releases/tag/${TAG}'>GitHub Releases</a>
-Manager: <a href='https://github.com/nicaboy/KernelSU-Next-Manager/releases'>KernelSU-Next Manager</a> | NoMount: <a href='https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip'>Module v2.0.0</a>
+<a href='${REPO_URL}/releases/tag/${TAG}'>⬇ Download Kernel</a>
 
-Credits:
-<a href='https://github.com/25ji-Telegram-de/android_kernel_xiaomi_selene'>yuki-saisei</a> (Base kernel)
-<a href='https://github.com/ReSukiSU/ReSukiSU'>ReSukiSU</a> (Root solution)
-<a href='https://github.com/maxsteeel/nomount'>maxsteeel</a> (NoMount)
-<a href='https://github.com/greenforce-project/greenforce_clang'>greenforce-project</a> (Clang 24)
-<a href='https://github.com/osm0sis/AnyKernel3'>osm0sis</a> (AnyKernel3)
-<a href='https://github.com/MiCode/Xiaomi_Kernel_OpenSource'>MiCode</a> (Stock kernel)
-
-<a href='https://github.com/naidrahiqa'>Support me: github.com/naidrahiqa</a>
-
-<a href='${REPO_URL}'>Phrolova Kernel</a>
-
-#PhrolovaKernel #selene #Redmi10 #MT6768 #KernelSU #NoMount"
+#selene #Redmi10 #mt6768 #kernel #PhrolovaKernel"
 
 	if tg_photo "$CHANNEL_ID" "$BANNER_URL" "$msg"; then
 		echo "Success notification sent with banner."
@@ -179,21 +160,20 @@ function build_failed() {
 			failed_step="Build kernel (make error)"
 		fi
 
-		error_context=$(grep -iE "(\.c:[0-9]+:|\.S:[0-9]+:|error:|fatal error:|clang: error:)" "$error_log" | grep -v "sub-make" | head -25)
+		error_context=$(grep -iE "(\.c:[0-9]+:|\.S:[0-9]+:|error:|fatal error:|clang: error:)" "$error_log" | grep -v "sub-make" | head -20)
 		if [ -z "$error_context" ]; then
-			error_context=$(tail -15 "$error_log")
+			error_context=$(tail -12 "$error_log")
 		fi
 	fi
 
-	local simple_msg="🎻 Phrolova Kernel!
-Version: <code>${VERSION}</code> · <code>${SHA}</code>
-❌ <b>${error_type}</b> · ${failed_step}
+	local simple_msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
+━━━━━━━━━━━━━━━━━━━━
+❌ <b>${error_type}</b>
 <a href='${BUILD_URL}'>Check Log</a>"
 	tg_send "$CHANNEL_ID" "$simple_msg" && echo "Fail notification sent to channel." || echo "Fail notification to channel FAILED."
 
 	if [ -n "$ERROR_CHANNEL_ID" ]; then
-		local detail_msg="🎻 Phrolova Kernel — Error Log
-Version: <code>${VERSION}</code> · <code>${SHA}</code>
+		local detail_msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
 <b>${error_type}</b> · ${failed_step}
 
 <pre><code>${error_context}</code></pre>
