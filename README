@@ -1,18 +1,95 @@
-Linux kernel
-============
+# Phrolova Kernel — Xiaomi Redmi 10 2022 (selene)
 
-This file was moved to Documentation/admin-guide/README.rst
+Custom **Linux 4.14.357** kernel for Redmi 10 2022 (MediaTek Helio G88 / MT6768).
+Performance-first, stability-tested on device. **Single universal build** — works on
+MIUI/HyperOS and AOSP-based ROMs (LineageOS, crDroid, etc.).
 
-Please notice that there are several guides for kernel developers and users.
-These guides can be rendered in a number of formats, like HTML and PDF.
+## Features
 
-In order to build the documentation, use ``make htmldocs`` or
-``make pdfdocs``.
+- **ReSukiSU root** (manual hook, non-GKI 4.14) — multi-manager support (ReSukiSU / KernelSU / MKSU / RKSU / SukiSU-Ultra managers)
+- **NoMount** systemless path redirection (v20, keyring-based) — module v2.0.0+ required
+- **TCP BBR** congestion control (default; vendor BIC override neutralized)
+- **ZRAM ZSTD** swap (4GB, level 5)
+- **Deadline I/O scheduler** default (optimal for eMMC 5.1 legacy block layer)
+- **Kprofiles** sysfs power profile manager + **Simple LMK** v1.0.3
+- **FPSGO v3** gaming framework, Kernel Mode NEON crypto, TTL target (hotspot fix)
+- **WireGuard** support, Droidspaces container-runtime compatible
 
-There are various text files in the Documentation/ subdirectory,
-several of them using the Restructured Text markup notation.
-See Documentation/00-INDEX for a list of what is contained in each file.
+## Security Posture
 
-Please read the Documentation/process/changes.rst file, as it contains the
-requirements for building and running the kernel, and information about
-the problems which may result by upgrading your kernel.
+Perf-first kernel: FORTIFY_SOURCE, HARDENED_USERCOPY, STRICT_KERNEL_RWX, VMAP_STACK,
+SECCOMP enabled. Spectre mitigations and slab hardening are deliberately off —
+several hardening configs crash MTK vendor drivers (documented in AGENTS.md).
+CVE tracking: [docs/CVE-INVENTORY.md](docs/CVE-INVENTORY.md).
+
+## Build (Greenforce Clang 24.0.0)
+
+```bash
+# Deps
+sudo apt-get install -y bc bison build-essential flex \
+  libssl-dev libelf-dev zstd python3 \
+  binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu zip
+
+# Toolchain
+bash <(wget -qO- https://raw.githubusercontent.com/greenforce-project/greenforce_clang/refs/heads/main/get_clang.sh)
+export PATH="$(pwd)/greenforce-clang/bin:$PATH"
+
+# ReSukiSU symlink (required before build)
+ln -sf "$(realpath resukisu/kernel)" drivers/kernelsu
+
+# Build
+make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
+  CROSS_COMPILE=aarch64-linux-gnu- selene_defconfig
+make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
+  CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc)
+```
+
+Output: `out/arch/arm64/boot/Image.gz` → packaged as `Phrolova-selene-{tag}.zip`.
+
+## Flash
+
+1. Bootloader **unlocked** (UBL) — required.
+2. Download the latest `Phrolova-selene-*.zip` from
+   [Releases](../../releases) (or Telegram channel).
+3. Flash via custom recovery (TWRP/OrangeFox) or `adb reboot recovery` +
+   AnyKernel3 zip. A/B slot aware (`block=auto`).
+4. Install a matching manager: ReSukiSU manager (recommended —
+   [nightly.link build-manager](https://nightly.link/ReSukiSU/ReSukiSU/workflows/build-manager/main)
+   / t.me/ReSukiSU) or any multi-manager build.
+5. NoMount users: install **NoMount module v2.0.0+** (v1.x uses netlink detection
+   → false negative on v20 kernels). Verify: `nm version` returns `20`.
+
+## CI/CD
+
+GitHub Actions builds on push to `phrolova` (docs-only pushes skipped).
+Versioning: nightly `v{base}-nightly.YYYYMMDD` / stable `v{base}` / hotfix `v{base+1}`
+via `.github/scripts/version.sh`. Telegram notifications on start/success/fail.
+
+## Branches
+
+| Branch | Purpose |
+|---|---|
+| `selene-r-oss-update` | Base (MiCode origin) |
+| `m1-cherrypick` | Cherry-picks dari Ronald826 |
+| `phrolova` | Main development branch |
+
+## Documentation
+
+- [CHANGELOG.md](CHANGELOG.md) — cherry-pick & release record
+- [ROADMAP.md](ROADMAP.md) — roadmap + security posture
+- [AGENTS.md](AGENTS.md) — build gotchas & integration notes
+- [docs/OPTIMIZATIONS.md](docs/OPTIMIZATIONS.md) — BBR / ZSTD ZRAM / I/O details
+- [docs/HOOK_MODES.md](docs/HOOK_MODES.md) — manual hook vs TP-hook
+- [docs/CVE-INVENTORY.md](docs/CVE-INVENTORY.md) — CVE tracking
+
+## Credits
+
+- Base: [MiCode/Xiaomi_Kernel_OpenSource](https://github.com/MiCode/Xiaomi_Kernel_OpenSource) (`selene-r-oss-update`)
+- Reference: yuki-saisei, [Ronald826/xiaomi_kernel_selene](https://github.com/Ronald826/xiaomi_kernel_selene)
+- Root: [ReSukiSU/ReSukiSU](https://github.com/ReSukiSU/ReSukiSU) (SukiSU-Ultra fork)
+- Systemless: [maxsteeel/nomount](https://github.com/maxsteeel/nomount)
+- LTS patches: [OpenELA kernel-lts](https://github.com/openela/kernel-lts)
+
+## License
+
+GPL-2.0 (inherited from Linux kernel) — see [COPYING](COPYING).

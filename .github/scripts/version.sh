@@ -3,7 +3,7 @@
 # Usage: source version.sh [variant] [base_version]
 #
 # Variants:
-#   0 = nightly  → v{base}-nightly.YYYYMMDD  (base defaults to 0.1.0)
+#   0 = nightly  → v{base}-nightly.YYYYMMDD  (base defaults to 0.9.12)
 #   1 = stable   → v{base}
 #   2 = hotfix   → v{base+1}
 #

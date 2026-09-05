@@ -22,17 +22,17 @@
 Target: Benchmark gain + responsivitas.
 
 - [x] **Workqueue tuning** — `WQ_POWER_EFFICIENT_DEFAULT=n` (big core utilization)
-- [x] **vmalloc reduction** — 496M→320M (freed 176MB RAM)
-- [x] **Slab allocator** — `slub_max_order=2` (kurang overhead)
+- [x] **vmalloc restore** — 320M→496M (v0.9.12: kembali ke stock — 320M terlalu kecil untuk MT6768 dengan camera/GPU/KSU/NoMount)
+- [x] **Slab allocator** — `slub_max_order=0` (v0.9.12: kembali ke stock — order tinggi bikin allocation stall under memory pressure)
 - [x] **MTK scheduler** — CPULOAD, RQAVG_US, SYSHINT (schedutil visibility)
-- [x] **Boost engines** — GBE, EARA_AI, Task Turbo, Touch Boost, IO Boost
-- [x] **ZRAM resize** — 3GB→2GB (kurang CPU compression thrash)
+- [x] **Boost engines** — GBE, EARA_AI, Touch Boost tetap on; MTK_TASK_TURBO & MTK_IO_BOOST di-disable (v0.9.12: boost→throttle cycle + eMMC bottleneck, bukan CPU)
+- [x] **ZRAM resize** — 3GB→2GB→1x/4GB (v0.9.12: 2x bikin CPU compression overhead → frame drops)
 - [x] **KSM disabled** — save CPU cycles (v0.9.11, re-disabled after accidental re-enable)
 - [x] **Dirty writeback tuning** — expire 30s→15s, writeback 5s→3s (v0.9.11)
 - [x] **Stack protector disabled** — `CC_STACKPROTECTOR_STRONG=n`
 - [x] **HID bloat** — 25→4 drivers
 - [x] **Simple LMK v1.0.2** — 280MB threshold, 150ms check, runtime tunable (v0.9.11)
-- [x] **BFQ tuning** — slice_idle 8→2ms, fifo_expire_sync 250→150ms (v0.9.7)
+- [x] **BFQ tuning** — slice_idle 8→2ms, fifo_expire_sync 250→150ms (v0.9.7); **BFQ disabled v0.9.12** — blk-mq only, eMMC legacy block layer → default scheduler = deadline
 - [x] **ZRAM ZSTD level** — compression level 3→5 (v0.9.7)
 - [x] **MTK stock configs** — PERF_OBSERVER, PERF_TRACKER, RESYM, SWPM, QOS_V1, RAM_CONSOLE (v0.9.7)
 - [ ] **GPU frequency table** — adjust Mali G52 MC2 freq steps (hardcoded, skip for now)
@@ -83,7 +83,7 @@ Target: Cutting-edge / long-term.
 | WireGuard | ✓ | ✗ |
 | BBR | ✓ | ✓ |
 | ZRAM ZSTD | ✓ | ✓ |
-| BFQ | ✓ | ✓ |
+| BFQ | ✗ (deadline — v0.9.12, eMMC legacy) | ✓ |
 | FPSGO | ✓ | ✓ |
 | SCHEDUTIL | ✓ | ✓ |
 | Kprofiles | ✓ | ✗ |
@@ -95,8 +95,8 @@ Target: Cutting-edge / long-term.
 | CI/CD | ✓ | n/a |
 | Toolchain | Greenforce Clang 24 | Gino Clang 22 |
 | CC_STACKPROTECTOR | NONE (perf) | STRONG |
-| vmalloc | 320MB | 496MB |
-| ZRAM | 2GB ZSTD | ? |
+| vmalloc | 496MB (stock, v0.9.12) | 496MB |
+| ZRAM | 4GB (1x) ZSTD | ? |
 | Security mitigations | Minimal (perf-first) | Stock |
 | Build Type | Universal | Universal |
 
@@ -123,8 +123,8 @@ Target: Cutting-edge / long-term.
 
 Mitigasi ringan yang ga ngaruh performa:
 
-- [x] **`CONFIG_DEBUG_LIST=y`** — detect corrupted list operations (v0.9.8, auto-selected by BUG_ON_DATA_CORRUPTION)
-- [x] **`CONFIG_BUG_ON_DATA_CORRUPTION=y`** — panic on data corruption (v0.9.8)
+- [x] ~~**`CONFIG_DEBUG_LIST=y`**~~ — reverted v0.9.8: MTK vendor drivers punya benign list corruption → bootloop
+- [x] ~~**`CONFIG_BUG_ON_DATA_CORRUPTION=y`**~~ — reverted v0.9.8: MTK vendor drivers punya benign list corruption → bootloop
 - [ ] **Enable `ARM64_SSBD`** — Speculative Store Bypass Disable
   - Overhead: 2-5% on memory-intensive workloads
   - Covers: CVE-2018-3639
@@ -150,9 +150,9 @@ Mitigasi ringan yang ga ngaruh performa:
 
 ### Phase S4 — Kernel Self Protection (v0.9.x)
 
-- [x] **`CONFIG_INIT_ON_ALLOC_DEFAULT_ON=y`** — zero-initialize heap allocations (v0.9.8)
-- [x] **`CONFIG_SLAB_FREELIST_HARDENED=y`** — random freelist for slab (v0.9.4)
-- [x] **`CONFIG_SLAB_FREELIST_RANDOM=y`** — randomize slab freelist order (v0.9.4)
+- [x] ~~**`CONFIG_INIT_ON_ALLOC_DEFAULT_ON=y`**~~ — reverted v0.9.8: vendor drivers depend on uninitialized memory → bootloop
+- [x] ~~**`CONFIG_SLAB_FREELIST_HARDENED=y`**~~ — reverted v0.9.8: CCCI/CLDMA modem driver use-after-free → kernel panic ~81 menit uptime
+- [x] ~~**`CONFIG_SLAB_FREELIST_RANDOM=y`**~~ — reverted v0.9.8: bareng FREELIST_HARDENED (modem crash)
 - [x] **`CONFIG_STRICT_KERNEL_RWX=y`** — mark kernel text as read-only (v0.9.8, auto-selected by ARM64)
 - [ ] **`CONFIG_RANDOMIZE_KSTACK_OFFSET=y`** — randomize kernel stack offset
   - Not available in 4.14 (5.13+ feature)

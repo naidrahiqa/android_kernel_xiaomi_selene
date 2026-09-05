@@ -265,7 +265,7 @@ Full live-debugging session via ADB on Redmi 10 2022 + LineageOS 20 (20.0-202509
 - Referensi: `.opencode/skills/selene-kernel/references/ak3.md`.
 
 ### Droidspaces Container Runtime
-- **Fully compatible** with kernel 4.14.356 non-GKI + KernelSU.
+- **Fully compatible** with kernel 4.14.357 non-GKI + KernelSU.
 - [Droidspaces-OSS](https://github.com/ravindu644/Droidspaces-OSS): lightweight LXC-like container runtime for Android/Linux. Run full Linux distros (Ubuntu, Debian, Alpine) natively.
 - Requirements: root (KernelSU recommended), kernel 3.10+ with namespace/cgroup support.
 - Single static binary ~400KB, zero dependencies, musl libc.

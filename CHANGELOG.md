@@ -11,6 +11,15 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## 2026-09-05 — OpenELA linux-4.14.y Systematic CVE Scan (docs only, no code change)
+
+- **Scan range:** `a76b6a6556` (LTS: Update to 4.14.356) → `1e6347375d` (LTS: Update to 4.14.357 = OpenELA HEAD)
+- **Result:** window contains exactly 5 patches — 1 applied (IMA `70649db160`), 1 applied-then-reverted (inet_defrag `81cba5e105`, WiFi GSO crash), 3 skipped (clk ×2 `30c9d27783`/`a7cd6312e4` different impl, ocfs2 `b418fc71a9` not enabled). **Delta vs OpenELA = 0 patches.**
+- **EOL status:** OpenELA final commit = 4.14.357 sublevel bump; kernel.org EOL'd 4.14.y @ .336. Both upstream sources frozen — future 4.14 CVEs = manual triage only.
+- **Housekeeping:** `.elts/` (40 files, stale OpenELA tool-state copied from upstream checkout) removed from git.
+- **Docs:** `docs/CVE-INVENTORY.md` rewritten with full scan table + attack-surface candidates (`USERFAULTFD`, `NF_TABLES` — pending dependency audit); `ROADMAP.md` synced to actual v0.9.12 state; proper `README` added.
+- **Sumber:** openela/kernel-lts linux-4.14.y
+
 ## v0.9.12 — UX Performance Hotfix (Critical Memory + Scheduler + I/O Fixes)
 
 ### CRITICAL — I/O Scheduler Fix
