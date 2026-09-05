@@ -1,0 +1,115 @@
+# Monthly ASB triage — Phrolova-ASB
+# Crawl Android Security Bulletin terbaru → list CVE kernel yang relevan →
+# buat/refresh folder asb/YYYY-MM/ + issue GitHub buat tracking.
+#
+# CATATAN JUJUR: parsing HTML bulletin itu rapuh (Google suka ubah format).
+# Workflow ini bukan pengganti review manual — dia "reminder engine":
+#   - deteksi bulan ASB terbaru dari source.android.com
+#   - buat folder + STATUS.md template + issue kalau belum ada
+#   - maintainer (Naidra) yang isi tabel CVE manual, pakai skill patch-analysis
+#
+# Trigger: cron bulanan + manual dispatch.
+
+name: asb-triage
+
+on:
+  schedule:
+    - cron: '0 6 5 * *'  # tiap tanggal 5, 06:00 UTC (ASB rilis awal bulan)
+  workflow_dispatch:
+    inputs:
+      asb_month:
+        description: 'Bulan ASB (YYYY-MM). Kosong = otodeteksi bulan berjalan.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Determine ASB month
+        id: month
+        run: |
+          INPUT="${{ github.event.inputs.asb_month }}"
+          if [[ -n "$INPUT" ]]; then
+            M="$INPUT"
+          else
+            M="$(date +%Y-%m)"
+          fi
+          echo "month=$M" >> "$GITHUB_OUTPUT"
+          echo "ASB month: $M"
+
+      - name: Create/refresh month folder
+        id: folder
+        run: |
+          M="${{ steps.month.outputs.month }}"
+          DIR="asb/$M"
+          mkdir -p "$DIR"
+          if [[ ! -f "$DIR/STATUS.md" ]]; then
+            cat > "$DIR/STATUS.md" <<EOF
+          # ASB $M — Triage Status
+
+          Bulletin: https://source.android.com/docs/security/bulletin/$M
+
+          | CVE | Komponen/file | Eksposur kita | Status | Sumber patch | Catatan |
+          |---|---|---|---|---|---|
+          | (isi manual — lihat section Kernel di bulletin) | | | open | | |
+
+          ## Checklist
+          - [ ] Daftar semua CVE section Kernel dari bulletin
+          - [ ] Grep subsystem di selene_defconfig (n.a. screening)
+          - [ ] Evaluasi + apply yang relevan (asb/triage.sh)
+          - [ ] CI + device test
+          - [ ] Update docs/CVE-INVENTORY.md + CHANGELOG.md
+          EOF
+            echo "created=$DIR/STATUS.md" >> "$GITHUB_OUTPUT"
+          else
+            echo "created=existing" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit month folder if new
+        if: steps.folder.outputs.created != 'existing'
+        run: |
+          git config user.name "Phrolova-ASB bot"
+          git config user.email "naidrahiqa@users.noreply.github.com"
+          git add asb/
+          git commit -m "asb: open triage window for ${{ steps.month.outputs.month }}" || echo "nothing to commit"
+          git push
+
+      - name: Open tracking issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const m = '${{ steps.month.outputs.month }}';
+            const title = `ASB ${m}: kernel triage`;
+            // idempotent: skip kalau issue bulan ini sudah ada
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', per_page: 100
+            });
+            if (existing.data.some(i => i.title === title)) {
+              console.log('Issue sudah ada, skip.');
+              return;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              title,
+              body: [
+                'Tracking triage ASB ' + m + '.',
+                '',
+                '- Bulletin: https://source.android.com/docs/security/bulletin/' + m,
+                '- Status table: `asb/' + m + '/STATUS.md`',
+                '- Proses: lihat `asb/README.md` (workflow bulanan)',
+                '',
+                'Ingat: **CI-first & device-tested** sebelum patch masuk sebagai `applied`.'
+              ].join('\n'),
+              labels: ['security', 'asb']
+            });

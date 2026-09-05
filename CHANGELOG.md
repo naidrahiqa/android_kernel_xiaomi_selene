@@ -11,6 +11,16 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## 2026-09-05 — Phrolova-ASB project scaffold (docs/CI only, no kernel code change)
+
+- Project ASB-backport dibuat di `asb/` — model CVE-Patcher (DivestOS → AXP.OS) di-scale ke satu device:
+  - `asb/README.md` — charter: vokabulari status (applied / n.a. / skip:<alasan> / reverted / open), sumber patch (CIP 4.19-cip → ACK 4.19/5.4 → mainline → mining AXP.OS), workflow bulanan, aturan hard (CI-first + device-tested, no fake sublevel — pakai tag ASB di LOCALVERSION, vendor-driver landmine list)
+  - `asb/BASELINE.md` — baseline keamanan: full OpenELA scan (delta = 0), CVE mitigated/deferred, exposure surface (USERFAULTFD / NF_TABLES = kandidat hardening)
+  - `asb/triage.sh` — helper apply-1-patch + template baris STATUS.md
+  - `.github/workflows/asb-triage.yml` — cron bulanan (tgl 5): buat folder triage `asb/YYYY-MM/` + issue tracking. Reminder engine — parsing isi bulletin tetap manual
+- **Alasan:** semua upstream 4.14 mati (kernel.org EOL @.336, OpenELA frozen @.357, ACK deprecated @.336 tanpa ASB merges) — security fix ke depan cuma bisa lewat manual backport. Backlog ASB Jan 2024 → Agu 2026 = 32 bulan belum ditriage.
+- **Sumber konsep:** DivestOS CVE-Patcher / AXP.OS (docs update 2026-05-27), model SLTS CIP (4.14 tidak pernah jadi SLTS CIP)
+
 ## 2026-09-05 — OpenELA linux-4.14.y Systematic CVE Scan (docs only, no code change)
 
 - **Scan range:** `a76b6a6556` (LTS: Update to 4.14.356) → `1e6347375d` (LTS: Update to 4.14.357 = OpenELA HEAD)
