@@ -5,6 +5,7 @@
 #include <linux/sched/mm.h>
 #include <linux/mm.h>
 #include <linux/mmzone.h>
+#include <linux/vmstat.h>
 #include <linux/oom.h>
 #include <linux/kobject.h>
 #include <linux/sysfs.h>
