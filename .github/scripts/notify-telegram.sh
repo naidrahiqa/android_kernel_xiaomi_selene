@@ -121,10 +121,6 @@ ${changelog_items}"
 
 	msg="${msg}
 
-⚡ Works: boot, audio, touch, wifi/bt, charging, fingerprint, sensors, camera
-❓ Untested: ir blaster, volte, video rec, nfc
-ℹ️ Stock dtbo works
-
 <a href='${REPO_URL}/releases/tag/${TAG}'>⬇ Download Kernel</a>
 
 #selene #Redmi10 #mt6768 #kernel #PhrolovaKernel"
