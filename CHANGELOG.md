@@ -576,8 +576,9 @@ Format:
 ---
 
 ## M0 — Repo setup
-- Repo di-init sebagai git. Base of truth = `micode` remote (branch `selene-r-oss-update`).
-- `ronald826` remote ditambahkan sebagai reference-only (JANGAN di-merge mentah).
+- Repo di-init sebagai git. Base of truth = `yuki-saisei` (4.14.356) — rebased from MiCode `selene-r-oss-update`.
+- `ronald826` remote ditambahkan sebagai reference-only (cherry-picks, JANGAN di-merge mentah).
+- `micode` remote = vendor patches (Xiaomi/MTK driver updates).
 - AGENTS.md, PRD.md, PROMPT.md, .opencode/skills terpasang dari scaffold.
 - Push target = `origin` -> `naidrahiqa/phrolova_kernel_xiaomi_selene`.
 - ReSukiSU: `resukisu` -> fork `naidrahiqa/ReSukiSU`, `resukisu-upstream` -> `ReSukiSU/ReSukiSU`.
@@ -595,11 +596,12 @@ Format:
 - 💡 Rekomendasi: kerja git/checkout/build di WSL (fs Linux) kalau bentrok
   nama reserved file lain muncul.
 
-## M1 — Source diff report (MiCode vs Ronald826, LATEST ONLY)
+## M1 — Source diff report (MiCode vs yuki-saisei, LATEST ONLY)
 > ⚠️ Kedua ref **shallow (depth 1)** → ini perbandingan *tree state* terbaru,
 > BUKAN per-commit history. Cherry-pick per-commit (step skill) butuh
 > `git fetch` lebih dalam untuk `ronald826` saat beneran apply nanti.
 > Status: **report only, belum ada yang di-apply.**
+> Note: yuki-saisei sudah include patches dari Ronald826 + community.
 
 ### arch/arm64/configs/ (defconfig)
 - `cselene_defconfig` (Ronald826, +5193): custom selene defconfig.
@@ -635,6 +637,7 @@ Format:
 ### Catatan ReSukiSU (utk M4)
 - Ronald826 **TIDAK** punya trace KernelSU/ReSukiSU → integrasi M4 murni dari
   remote `resukisu` / `resukisu-upstream`, bukan dari Ronald826.
+- yuki-saisei = base kernel (4.14.356) — ReSukiSU diintegrasikan di branch `phrolova`.
 
 ## M1 — Applied cherry-picks (branch: `m1-cherrypick`)
 > Base `selene-r-oss-update` (6a5cdd275) TIDAK diubah; semua CP ada di branch

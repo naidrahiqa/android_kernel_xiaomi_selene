@@ -14,7 +14,7 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 | CI/CD (GitHub Actions) | `.opencode/skills/ci-cd-github-actions/SKILL.md` | Setup/modify GitHub Actions workflows, Telegram notif, release automation |
 | Versioning & Release | `.opencode/skills/versioning-release/SKILL.md` | Version scheme (nightly/stable/hotfix), changelog buat release, troubleshooting body kosong |
 | Finishing Branch | `.opencode/skills/finishing-a-development-branch/SKILL.md` | Integrasi kerja setelah implementasi selesai — merge, PR, cleanup |
-| Kernel Source Merge | `.opencode/skills/kernel-source-merge/SKILL.md` | Merge/compare MiCode base vs Ronald826 reference |
+| Kernel Source Merge | `.opencode/skills/kernel-source-merge/SKILL.md` | Merge/compare MiCode base vs yuki-saisei (4.14.356) reference |
 | Kernel Update | `.opencode/skills/kernel-update/SKILL.md` | Upgrade/downgrade kernel version (4.14.x), CVE patching |
 | Kernel Sublevel Update | `.opencode/skills/kernel-sublevel-update/SKILL.md` | Update sublevel (356→357) + cherry-pick security patches dari OpenELA/kernel.org |
 | ReSukiSU Integration | `.opencode/skills/resukisu-integration/SKILL.md` | ReSukiSU integration, manual hooks (non-GKI), KSU_VERSION pin, manager APK handling |
@@ -82,8 +82,9 @@ Gunakan **conventional commits** untuk semua commit:
 
 ## Source of Truth
 
-- Base kernel: `MiCode/Xiaomi_Kernel_OpenSource`, branch `selene-r-oss-update`.
-- Reference-only: `Ronald826/xiaomi_kernel_selene`, branch `4.14-baxter_EXPERIMENTAL` (jangan merge mentah).
+- Base kernel: `yuki-saisei` (4.14.356) — rebased from MiCode `selene-r-oss-update` + community patches.
+- Vendor patches: `MiCode/Xiaomi_Kernel_OpenSource`, branch `selene-r-oss-update` (Xiaomi/MTK vendor drivers).
+- Reference-only: `Ronald826/xiaomi_kernel_selene`, branch `4.14-baxter_EXPERIMENTAL` (cherry-picks, jangan merge mentah).
 - ReSukiSU: `ReSukiSU/ReSukiSU` main @ `0b5efe9e01` (local copy di `resukisu/kernel/`).
 - NoMount: `maxsteeel/nomount` (source di `fs/nomount.c` + `fs/nomount.h`).
 
