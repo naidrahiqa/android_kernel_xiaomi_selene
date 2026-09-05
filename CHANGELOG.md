@@ -46,6 +46,20 @@ Format:
 
 ## v0.9.12 — UX Performance Hotfix (Critical Memory + Scheduler + I/O Fixes)
 
+### CRITICAL — LMK Rewrite (v1.0.5)
+- **simple_lmk.c rewritten:** `drivers/staging/android/simple_lmk.c`
+  - **Bug fix:** `si_mem_available()` returned 1.87GB (including cached) but ZRAM needed MOVABLE pages (0 free) → LMK thought memory was safe → 59 allocation failures, 0 kills → ZRAM crash → reboot loop
+  - **Fix:** Now uses `global_zone_page_state(NR_FREE_PAGES)` for actual free page count
+  - **Batch kill:** Kills up to 32 processes per check loop until memory above threshold (was: 1 kill per 300ms)
+  - **min_free 200→500MB:** Much more aggressive for 6GB RAM — triggers LMK before movable pages exhaust
+  - **check_interval 300→100ms:** Faster response to memory pressure
+
+### CRITICAL — CMDLINE Fix
+- **CONFIG_CMDLINE_EXTEND=y:** `arch/arm64/configs/selene_defconfig`
+  - Was `FROM_BOOTLOADER` (default) → bootloader cmdline completely replaced kernel cmdline
+  - All boot params (vmalloc=496M, slub_max_order=0, dirty ratios, read_ahead_kb) were silently ignored
+  - Fix: EXTEND appends our params to bootloader cmdline
+
 ### CRITICAL — I/O Scheduler Fix
 - **BFQ disabled:** `arch/arm64/configs/selene_defconfig`
   - BFQ is blk-mq only, but eMMC driver uses legacy block layer → BFQ never loaded

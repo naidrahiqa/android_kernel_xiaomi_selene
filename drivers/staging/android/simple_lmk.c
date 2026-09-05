@@ -4,6 +4,7 @@
 #include <linux/sched/signal.h>
 #include <linux/sched/mm.h>
 #include <linux/mm.h>
+#include <linux/mmzone.h>
 #include <linux/oom.h>
 #include <linux/kobject.h>
 #include <linux/sysfs.h>
@@ -12,9 +13,11 @@
 #include <linux/kthread.h>
 #include <linux/freezer.h>
 
-#define SIMPLE_LMK_VERSION "1.0.4"
-#define LMK_DEFAULT_MIN_FREE	200
-#define LMK_CHECK_INTERVAL_MS	300
+#define SIMPLE_LMK_VERSION "1.0.5"
+#define LMK_DEFAULT_MIN_FREE	500
+#define LMK_CHECK_INTERVAL_MS	100
+#define LMK_KILL_BATCH		8
+#define LMK_MAX_KILLS_PER_CHECK	32
 
 static unsigned long lmk_min_free_mb = LMK_DEFAULT_MIN_FREE;
 static unsigned long lmk_check_interval = LMK_CHECK_INTERVAL_MS;
@@ -23,6 +26,12 @@ static bool lmk_enabled = true;
 
 static struct task_struct *lmk_task;
 static struct kobject *lmk_kobj;
+
+static unsigned long lmk_get_free_mb(void)
+{
+	unsigned long free_pages = global_zone_page_state(NR_FREE_PAGES);
+	return free_pages >> (20 - PAGE_SHIFT);
+}
 
 static struct task_struct *lmk_find_best_victim(void)
 {
@@ -84,24 +93,31 @@ static void lmk_kill_process(struct task_struct *p)
 
 static int lmk_do_check(void *data)
 {
-	unsigned long avail_mb;
+	unsigned long free_mb;
 	struct task_struct *victim;
+	int kills;
 
 	while (!kthread_should_stop()) {
 		set_current_state(TASK_RUNNING);
 
 		if (lmk_enabled) {
-			avail_mb = si_mem_available() >> (20 - PAGE_SHIFT);
+			free_mb = lmk_get_free_mb();
 
-			if (avail_mb < lmk_min_free_mb) {
-				if (lmk_debug)
-					pr_debug("simple_lmk: low memory %luMB < %luMB\n",
-						 avail_mb, lmk_min_free_mb);
-				victim = lmk_find_best_victim();
-				if (victim) {
+			if (free_mb < lmk_min_free_mb) {
+				kills = 0;
+				while (free_mb < lmk_min_free_mb &&
+				       kills < LMK_MAX_KILLS_PER_CHECK) {
+					victim = lmk_find_best_victim();
+					if (!victim)
+						break;
 					lmk_kill_process(victim);
 					put_task_struct(victim);
+					kills++;
+					free_mb = lmk_get_free_mb();
 				}
+				if (lmk_debug)
+					pr_debug("simple_lmk: free=%luMB threshold=%luMB killed=%d\n",
+						 free_mb, lmk_min_free_mb, kills);
 			}
 		}
 
@@ -111,7 +127,8 @@ static int lmk_do_check(void *data)
 	return 0;
 }
 
-static ssize_t min_free_mb_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+static ssize_t min_free_mb_show(struct kobject *kobj, struct kobj_attribute *attr,
+				char *buf)
 {
 	return scnprintf(buf, PAGE_SIZE, "%lu\n", lmk_min_free_mb);
 }
