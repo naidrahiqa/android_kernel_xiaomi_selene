@@ -48,7 +48,7 @@ Target: New functionality beyond base kernel.
 - [ ] **KSU WebUI Manager** — built-in kernel manager via KernelSU (kmod)
 - [ ] **WireGuard** — update ke versi terbaru
 - [ ] **Backport task_tgid_nr** — untuk kompatibilitas KernelSU terbaru
-- [ ] **Optimasi F2FS** — mount options, GC tuning
+- [x] **Optimasi F2FS** — enabled POSIX ACL & multi-compression algorithms (LZO, LZ4, ZSTD) di `selene_defconfig` (v0.9.13)
 
 ## Fase 4 — Pengalaman Pengguna (v0.9.0)
 
