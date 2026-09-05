@@ -54,11 +54,16 @@ Format:
   - **min_free 200→500MB:** Much more aggressive for 6GB RAM — triggers LMK before movable pages exhaust
   - **check_interval 300→100ms:** Faster response to memory pressure
 
-### CRITICAL — CMDLINE Fix
+### CRITICAL — CMDLINE Fix + Optimal VM Tuning
 - **CONFIG_CMDLINE_EXTEND=y:** `arch/arm64/configs/selene_defconfig`
   - Was `FROM_BOOTLOADER` (default) → bootloader cmdline completely replaced kernel cmdline
   - All boot params (vmalloc=496M, slub_max_order=0, dirty ratios, read_ahead_kb) were silently ignored
   - Fix: EXTEND appends our params to bootloader cmdline
+- **vm.min_free_kbytes=131072 (128MB):** kernel reserve for 6GB RAM (was 9MB — way too low)
+- **vm.vfs_cache_pressure=75:** retain dentry/inode caches longer (was 200 — too aggressive, caused slow app launch)
+- **vm.swappiness=100:** optimal for ZRAM (Android recommends 100-160)
+- **vm.dirty_ratio=15, dirty_background_ratio=5:** faster flush to ZRAM
+- **vm.page-cluster=0:** disable readahead for ZRAM (saves memory)
 
 ### CRITICAL — I/O Scheduler Fix
 - **BFQ disabled:** `arch/arm64/configs/selene_defconfig`
