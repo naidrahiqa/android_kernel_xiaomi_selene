@@ -20,43 +20,68 @@ description: Project identity and branding rules. Use when generating commit mes
 - Emoji: 🎻 (always use in notifications/headers)
 - Hashtags: `#selene #Redmi10 #mt6768 #kernel #PhrolovaKernel`
 
-## Notification Format (Telegram Channel)
+## Notification Routing & Format
 
-### Build Start
-```
-🎻 Phrolova · {version}
-━━━━━━━━━━━━━━━━━━━━
-Building...
-{commit_hash} {commit_message}
-Build Log
-```
+### Target Destinations
+1. **Gambar Kiri — Supergroup Naidrahiqa Stuff (`TELEGRAM_GROUP_ID` = `-1004414006944`)**:
+   - **Topic `⁉️ Selene CI` (`TELEGRAM_TOPIC_CI` = `47`)**: HANYA NOTIFIKASI (Start & Success), **TANPA FILE ZIP**.
+   - **Topic `🔍 log` (`TELEGRAM_TOPIC_LOG` = `8`)**: Cuplikan error log build jika gagal.
+2. **Gambar Kanan — Private Channels**:
+   - **Channel `Nai project update` (`TELEGRAM_CHANNEL_ID` = `-1003752197403`)**: Mengirim **file kernel `.zip` AnyKernel3** via `sendDocument` + caption rilis lengkap.
+   - **Channel `Nai Error Dump` (`TELEGRAM_ERROR_CHANNEL_ID` = `-1003945405514`)**: Full error dump.
 
-### Build Success
-```
-🎻 Phrolova · {version}
+### 1. Topic `⁉️ Selene CI` #47 (Gambar Kiri — Notif Only)
+* **Build Start:**
+```html
+🎻 <b>Phrolova</b> · <code>{version}</code>
 ━━━━━━━━━━━━━━━━━━━━
-Redmi 10 · selene · MT6768 · Non-GKI
-⚠️ ReSukiSU {ksu_tag} · NoMount v2.0.0
+🔨 <b>Building...</b>
+<code>{commit_hash}</code> {commit_message}
+<a href='{build_url}'>Build Log</a>
+```
+* **Build Success:**
+```html
+🎻 <b>Phrolova</b> · <code>{version}</code>
+━━━━━━━━━━━━━━━━━━━━
+<b>Redmi 10</b> · selene · MT6768 · Non-GKI
+⚠️ ReSukiSU <code>{ksu_tag}</code> · NoMount v2.0.0
 
 Changelog:
-+{change_1}
-+{change_2}
-+{change_3}
+- {change_1}
+- {change_2}
 
-Full Changelog
+📦 <i>File kernel telah dikirim ke channel rilis.</i>
+<a href='{changelog_url}'>Full Changelog</a>
 
 [📱 ReSukiSU APK]
-[⬇ Kernel Download]
-[📦 NoMount (mandatory)]
+[⬇ GitHub Release]
+[📦 NoMount]
 ```
 
-### Build Failed
-```
-🎻 Phrolova · {version}
+### 2. Channel `Nai project update` (Gambar Kanan — File .ZIP Document)
+* **Dokumen AnyKernel3:** Lampiran file `selene-{tag}-{hash}.zip`
+* **Caption:**
+```html
+🎻 <b>Phrolova Kernel</b> · <code>{version}</code>
 ━━━━━━━━━━━━━━━━━━━━
-❌ {ERROR_TYPE}
-Check Log
+<b>Device:</b> Redmi 10 (selene) · MT6768 · Non-GKI
+<b>Root:</b> ReSukiSU <code>{ksu_tag}</code>
+<b>Redirection:</b> NoMount v2.0.0
+<b>Size:</b> {file_size}
+<b>Commit:</b> <code>{commit_hash}</code> {commit_message}
+
+Changelog:
+- {change_1}
+- {change_2}
+
+⚠️ <i>Flash via AnyKernel3 recovery (TWRP/OrangeFox).</i>
 ```
+
+### 3. Error Handling
+* **Topic `⁉️ Selene CI` #47:** Pesan singkat `❌ ERROR_TYPE` + link log.
+* **Topic `🔍 log` #8:** Cuplikan 3000 karakter terakhir `build.log`.
+* **Channel `Nai Error Dump`:** Pesan detail dengan block `<pre><code>...error_context...</code></pre>`.
+
 
 ## Changelog Format (CHANGELOG.md)
 

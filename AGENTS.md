@@ -135,8 +135,13 @@ make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
 - Toolchain: Greenforce Clang 24.0.0 (`CC=clang HOSTCC=gcc`)
 - ReSukiSU: ReSukiSU main @ `0b5efe9e01` via `drivers/kernelsu` symlink (manual hook, non-GKI)
 - CI matrix: **Single build** (universal kernel, 1 zip fits all)
-- Telegram notifications: Professional format with device info, version string, credits/download links
-  - Start/success/failed (error log ke `TELEGRAM_ERROR_CHANNEL_ID` channel terpisah)
+- Telegram notifications: Dual-target routing (Supergroup forum topics + private release channels):
+  - **Kiri (Supergroup `Naidrahiqa Stuff`, `-1004414006944`):**
+    - Topic `⁉️ Selene CI` (`message_thread_id=47`): HANYA NOTIFIKASI (start & success), **TANPA FILE ZIP**.
+    - Topic `🔍 log` (`message_thread_id=8`): Cuplikan log build error jika gagal.
+  - **Kanan (Private Channels):**
+    - Channel `Nai project update` (`-1003752197403`): Mengirim file kernel `.zip` AnyKernel3 via `sendDocument` + caption rilis.
+    - Channel `Nai Error Dump` (`-1003945405514`): Full compiler error log dump.
 - Version: `.github/scripts/version.sh` (nightly/stable/hotfix)
   - Nightly: `v{base}-nightly.YYYYMMDD` — base version dinaikin tiap ada fitur baru
   - Stable: `v{base}` — rilis stabil
