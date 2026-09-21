@@ -1,39 +1,31 @@
 #!/bin/bash
 # Telegram Notification - Phrolova Kernel
-# Usage: bash notify-telegram.sh <status> <version> <tag> [file]
+# Usage: bash notify-telegram.sh <status> <version> <tag> [changelog_or_log] [zip_file]
 # Status: start | success | failed
 #
-# Required GitHub Secrets:
-#   TELEGRAM_BOT_TOKEN        - Bot token from @BotFather
-#   TELEGRAM_CHANNEL_ID       - Main channel (build start + success)
-#   TELEGRAM_ERROR_CHANNEL_ID - Error channel (build failed)
+# Target Channels / Topics:
+#   Left (Supergroup Naidrahiqa Stuff):
+#     TELEGRAM_GROUP_ID       - Chat ID supergroup (-1004414006944)
+#     TELEGRAM_TOPIC_CI       - Thread ID topic ⁉️ Selene CI (47) [NOTIF ONLY, NO ZIP]
+#     TELEGRAM_TOPIC_LOG      - Thread ID topic 🔍 log (8) [Build error log]
+#
+#   Right (Private Channels):
+#     TELEGRAM_CHANNEL_ID     - Chat ID channel Nai project update (-1003752197403) [KIRIM FILE .ZIP KERNEL]
+#     TELEGRAM_ERROR_CHANNEL_ID - Chat ID channel Nai Error Dump (-1003945405514) [Full error dump]
 
 STATUS="${1:-unknown}"
 VERSION="${2:-unknown}"
 TAG="${3:-$VERSION}"
 
-VARIANT_NAME="Stable"
-case "$VERSION" in
-	*nightly*) VARIANT_NAME="Nightly" ;;
-	*hotfix*)  VARIANT_NAME="Hotfix" ;;
-esac
-
 BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
+GROUP_ID="${TELEGRAM_GROUP_ID:-}"
+TOPIC_CI="${TELEGRAM_TOPIC_CI:-47}"
+TOPIC_LOG="${TELEGRAM_TOPIC_LOG:-8}"
 CHANNEL_ID="${TELEGRAM_CHANNEL_ID:-}"
 ERROR_CHANNEL_ID="${TELEGRAM_ERROR_CHANNEL_ID:-}"
 
 if [ -z "$BOT_TOKEN" ]; then
 	echo "TELEGRAM_BOT_TOKEN not set. Skipping."
-	exit 0
-fi
-
-if [ "$STATUS" != "failed" ] && [ -z "$CHANNEL_ID" ]; then
-	echo "TELEGRAM_CHANNEL_ID not set. Skipping."
-	exit 0
-fi
-
-if [ "$STATUS" == "failed" ] && [ -z "$ERROR_CHANNEL_ID" ] && [ -z "$CHANNEL_ID" ]; then
-	echo "Neither TELEGRAM_ERROR_CHANNEL_ID nor TELEGRAM_CHANNEL_ID set. Skipping."
 	exit 0
 fi
 
@@ -61,10 +53,15 @@ else
 fi
 
 function tg_send() {
-	local target="$1" message="$2"
+	local target="$1" message="$2" thread_id="${3:-}"
+	local extra_args=()
+	if [ -n "$thread_id" ]; then
+		extra_args+=(-d "message_thread_id=${thread_id}")
+	fi
 	local resp
 	resp=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
 		-d chat_id="${target}" \
+		"${extra_args[@]}" \
 		-d text="${message}" \
 		-d parse_mode="HTML" \
 		-d disable_web_page_preview=true)
@@ -76,24 +73,43 @@ function tg_send() {
 }
 
 function tg_photo() {
-	local target="$1" photo_url="$2" caption="$3" buttons="${4:-}"
-	local resp
-	if [ -n "$buttons" ]; then
-		resp=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto" \
-			-d chat_id="${target}" \
-			-d photo="${photo_url}" \
-			-d caption="${caption}" \
-			-d parse_mode="HTML" \
-			-d reply_markup="${buttons}")
-	else
-		resp=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto" \
-			-d chat_id="${target}" \
-			-d photo="${photo_url}" \
-			-d caption="${caption}" \
-			-d parse_mode="HTML")
+	local target="$1" photo_url="$2" caption="$3" thread_id="${4:-}" buttons="${5:-}"
+	local extra_args=()
+	if [ -n "$thread_id" ]; then
+		extra_args+=(-d "message_thread_id=${thread_id}")
 	fi
+	if [ -n "$buttons" ]; then
+		extra_args+=(-d "reply_markup=${buttons}")
+	fi
+	local resp
+	resp=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto" \
+		-d chat_id="${target}" \
+		-d photo="${photo_url}" \
+		-d caption="${caption}" \
+		-d parse_mode="HTML" \
+		"${extra_args[@]}")
 	if ! echo "$resp" | grep -q '"ok":true'; then
 		echo "Telegram photo API error: $(echo "$resp" | grep -o '"description":"[^"]*"' | cut -d\" -f4)"
+		return 1
+	fi
+	return 0
+}
+
+function tg_document() {
+	local target="$1" doc_path="$2" caption="$3" thread_id="${4:-}"
+	local extra_args=()
+	if [ -n "$thread_id" ]; then
+		extra_args+=(-F "message_thread_id=${thread_id}")
+	fi
+	local resp
+	resp=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument" \
+		-F chat_id="${target}" \
+		-F document=@"${doc_path}" \
+		-F caption="${caption}" \
+		-F parse_mode="HTML" \
+		"${extra_args[@]}")
+	if ! echo "$resp" | grep -q '"ok":true'; then
+		echo "Telegram document API error: $(echo "$resp" | grep -o '"description":"[^"]*"' | cut -d\" -f4)"
 		return 1
 	fi
 	return 0
@@ -102,29 +118,38 @@ function tg_photo() {
 function build_start() {
 	local msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
 ━━━━━━━━━━━━━━━━━━━━
-Building...
+🔨 <b>Building...</b>
 <code>${SHA}</code> ${COMMIT_MSG}
 <a href='${BUILD_URL}'>Build Log</a>"
-	tg_send "$CHANNEL_ID" "$msg" && echo "Start notification sent." || echo "Start notification FAILED."
+
+	# Kirim ke Gambar Kiri (Supergroup topic ⁉️ Selene CI)
+	local target_group="${GROUP_ID:-$CHANNEL_ID}"
+	if [ -n "$target_group" ]; then
+		tg_send "$target_group" "$msg" "$TOPIC_CI" && echo "Start notification sent to CI topic." || echo "Start notification to CI topic FAILED."
+	fi
 }
 
 function build_success() {
 	local changelog_file="${1:-}"
-	local changelog_items=""
+	local zip_file="${2:-}"
 
-	# Read from changelog file if provided
+	if [ -z "$zip_file" ] || [ ! -f "$zip_file" ]; then
+		zip_file=$(ls selene-*.zip 2>/dev/null | head -1)
+	fi
+
+	local changelog_items=""
 	if [ -n "$changelog_file" ] && [ -f "$changelog_file" ]; then
 		changelog_items=$(grep '^- ' "$changelog_file" 2>/dev/null | head -20)
 	fi
-
-	# If no changelog file, try to read from CHANGELOG.md
 	if [ -z "$changelog_items" ] && [ -f "CHANGELOG.md" ]; then
 		changelog_items=$(awk '/^## v[0-9]/{if(found)exit; found=1; next} found && /^- /{print}' CHANGELOG.md 2>/dev/null | head -20)
 	fi
 
-	local BANNER_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY:-naidrahiqa/phrolova_kernel_xiaomi_selene}/phrolova/docs/assets/banner_landscape.jpg"
+	local BANNER_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY:-naidrahiqa/android_kernel_xiaomi_selene}/phrolova/docs/assets/banner_landscape.jpg"
 
-	local msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
+	# 1. KIRIM NOTIFIKASI KE GAMBAR KIRI (Supergroup Naidrahiqa Stuff -> Topic ⁉️ Selene CI)
+	# HANYA NOTIFIKASI - SAMA SEKALI TIDAK MENGIRIM FILE ZIP KE SINI
+	local notif_msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
 ━━━━━━━━━━━━━━━━━━━━
 <b>Redmi 10</b> · selene · MT6768 · Non-GKI
 ⚠️ ReSukiSU <code>${KSU_VER_TAG}</code> · NoMount v2.0.0
@@ -132,15 +157,38 @@ function build_success() {
 Changelog:
 ${changelog_items}
 
+📦 <i>File kernel telah dikirim ke channel rilis.</i>
 <a href='${REPO_URL}/blob/phrolova/CHANGELOG.md'>Full Changelog</a>"
 
-	local BUTTONS='{"inline_keyboard":[[{"text":"📱 ReSukiSU APK","url":"https://t.me/ReSukiSU/5"}],[{"text":"⬇ Kernel Download","url":"'"${REPO_URL}/releases/tag/${TAG}"'"}],[{"text":"📦 NoMount (mandatory)","url":"https://github.com/maxsteeel/nomount/releases"}]]}'
+	local BUTTONS='{"inline_keyboard":[[{"text":"📱 ReSukiSU APK","url":"https://t.me/ReSukiSU/5"}],[{"text":"⬇ GitHub Release","url":"'"${REPO_URL}/releases/tag/${TAG}"'"}],[{"text":"📦 NoMount","url":"https://github.com/maxsteeel/nomount/releases"}]]}'
 
-	if tg_photo "$CHANNEL_ID" "$BANNER_URL" "$msg" "$BUTTONS"; then
-		echo "Success notification sent with banner."
-	else
-		echo "Photo failed, falling back to text..."
-		tg_send "$CHANNEL_ID" "$msg" && echo "Success notification sent (text fallback)." || echo "Success notification FAILED."
+	local target_group="${GROUP_ID:-$CHANNEL_ID}"
+	if [ -n "$target_group" ]; then
+		if tg_photo "$target_group" "$BANNER_URL" "$notif_msg" "$TOPIC_CI" "$BUTTONS"; then
+			echo "Success notification sent with banner to CI topic."
+		else
+			echo "Photo failed, falling back to text..."
+			tg_send "$target_group" "$notif_msg" "$TOPIC_CI" && echo "Success notification sent (text fallback) to CI topic." || echo "Success notification to CI topic FAILED."
+		fi
+	fi
+
+	# 2. KIRIM FILE KERNEL .ZIP KE GAMBAR KANAN (Private Channel 'Nai project update')
+	if [ -n "$CHANNEL_ID" ] && [ -n "$zip_file" ] && [ -f "$zip_file" ]; then
+		local file_size=$(du -h "$zip_file" | cut -f1)
+		local doc_caption="🎻 <b>Phrolova Kernel</b> · <code>${VERSION}</code>
+━━━━━━━━━━━━━━━━━━━━
+<b>Device:</b> Redmi 10 (selene) · MT6768 · Non-GKI
+<b>Root:</b> ReSukiSU <code>${KSU_VER_TAG}</code>
+<b>Redirection:</b> NoMount v2.0.0
+<b>Size:</b> ${file_size}
+<b>Commit:</b> <code>${SHA}</code> ${COMMIT_MSG}
+
+Changelog:
+${changelog_items}
+
+⚠️ <i>Flash via AnyKernel3 recovery (TWRP/OrangeFox).</i>"
+
+		tg_document "$CHANNEL_ID" "$zip_file" "$doc_caption" && echo "Kernel zip document sent to release channel." || echo "Failed to send kernel zip to release channel."
 	fi
 }
 
@@ -177,15 +225,33 @@ function build_failed() {
 ━━━━━━━━━━━━━━━━━━━━
 ❌ <b>${error_type}</b>
 <a href='${BUILD_URL}'>Check Log</a>"
-	tg_send "$CHANNEL_ID" "$simple_msg" && echo "Fail notification sent to channel." || echo "Fail notification to channel FAILED."
 
+	local target_group="${GROUP_ID:-$CHANNEL_ID}"
+	if [ -n "$target_group" ]; then
+		# Kirim ringkasan error ke topic ⁉️ Selene CI
+		tg_send "$target_group" "$simple_msg" "$TOPIC_CI" && echo "Fail notification sent to CI topic." || echo "Fail notification to CI topic FAILED."
+
+		# Kirim cuplikan log ke topic 🔍 log di supergroup
+		if [ -n "$TOPIC_LOG" ]; then
+			local log_lines=$(wc -l < "$error_log" 2>/dev/null || echo "0")
+			local log_tail=$(tail -c 3000 "$error_log" 2>/dev/null)
+			local topic_log_msg="📋 <b>Build Log (${log_lines} lines)</b>
+<b>Tag:</b> <code>${TAG}</code>
+<b>Step:</b> ${failed_step}
+
+<pre><code>${log_tail}</code></pre>"
+			tg_send "$target_group" "$topic_log_msg" "$TOPIC_LOG" && echo "Log sent to log topic." || echo "Log to log topic FAILED."
+		fi
+	fi
+
+	# Kirim ke Gambar Kanan (Private Channel 'Nai Error Dump')
 	if [ -n "$ERROR_CHANNEL_ID" ]; then
 		local detail_msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
 <b>${error_type}</b> · ${failed_step}
 
 <pre><code>${error_context}</code></pre>
 <a href='${BUILD_URL}'>Full Log</a>"
-		tg_send "$ERROR_CHANNEL_ID" "$detail_msg" && echo "Error log sent to error channel." || echo "Error log to error channel FAILED."
+		tg_send "$ERROR_CHANNEL_ID" "$detail_msg" && echo "Error log sent to Nai Error Dump." || echo "Error log to Nai Error Dump FAILED."
 	fi
 }
 
@@ -194,14 +260,14 @@ case "$STATUS" in
 		build_start
 		;;
 	success)
-		build_success "$4"
+		build_success "$4" "$5"
 		;;
 	failed)
 		build_failed "$4"
 		;;
 	*)
 		echo "Unknown status: $STATUS"
-		echo "Usage: notify-telegram.sh <start|success|failed> <version> <tag> [file]"
+		echo "Usage: notify-telegram.sh <start|success|failed> <version> <tag> [changelog_or_log] [zip_file]"
 		exit 1
 		;;
 esac

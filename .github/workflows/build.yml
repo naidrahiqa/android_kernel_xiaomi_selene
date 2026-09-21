@@ -82,6 +82,9 @@ jobs:
             "${{ steps.version.outputs.PHROLOVA_TAG }}"
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_GROUP_ID: ${{ secrets.TELEGRAM_GROUP_ID }}
+          TELEGRAM_TOPIC_CI: ${{ secrets.TELEGRAM_TOPIC_CI }}
+          TELEGRAM_TOPIC_LOG: ${{ secrets.TELEGRAM_TOPIC_LOG }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
           KSU_VERSION: ${{ steps.ksu.outputs.KSU_VERSION_NUM }}
           KSU_TAG: ${{ steps.ksu.outputs.KSU_TAG }}
@@ -245,12 +248,14 @@ jobs:
         if: always()
         run: |
           STATUS="${{ steps.final-check.outputs.status }}"
+          ZIP_FILE=$(ls selene-*.zip 2>/dev/null | head -1)
           if [ "$STATUS" = "success" ]; then
             bash .github/scripts/notify-telegram.sh \
               success \
               "${{ steps.version.outputs.PHROLOVA_VERSION }}" \
               "${{ steps.version.outputs.PHROLOVA_TAG }}" \
-              "changelog.md"
+              "changelog.md" \
+              "$ZIP_FILE"
           else
             bash .github/scripts/notify-telegram.sh \
               failed \
@@ -260,6 +265,9 @@ jobs:
           fi
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_GROUP_ID: ${{ secrets.TELEGRAM_GROUP_ID }}
+          TELEGRAM_TOPIC_CI: ${{ secrets.TELEGRAM_TOPIC_CI }}
+          TELEGRAM_TOPIC_LOG: ${{ secrets.TELEGRAM_TOPIC_LOG }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
           TELEGRAM_ERROR_CHANNEL_ID: ${{ secrets.TELEGRAM_ERROR_CHANNEL_ID }}
           KSU_VERSION: ${{ steps.ksu.outputs.KSU_VERSION_NUM }}
