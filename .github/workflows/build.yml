@@ -181,7 +181,7 @@ jobs:
           cp out/arch/arm64/boot/Image.gz-dtb ak3/ 2>/dev/null || \
           cp out/arch/arm64/boot/Image.gz ak3/ 2>/dev/null || \
           cp out/arch/arm64/boot/Image ak3/
-          cd ak3 && zip -r9 ../selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.GIT_HASH }}.zip . -x .git/\*
+          cd ak3 && zip -r9 ../Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.GIT_HASH }}.zip . -x .git/\*
 
       - name: Final check
         id: final-check
@@ -206,8 +206,8 @@ jobs:
         if: steps.final-check.outputs.status == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.GIT_HASH }}
-          path: selene-*.zip
+          name: Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.GIT_HASH }}
+          path: Phrolova-selene-*.zip
 
       - name: Generate Changelog
         if: steps.final-check.outputs.status == 'success'
@@ -238,7 +238,7 @@ jobs:
           name: Phrolova ${{ steps.version.outputs.PHROLOVA_VERSION }}
           body_path: release_body.md
           files: |
-            selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.GIT_HASH }}.zip
+            Phrolova-selene-${{ steps.version.outputs.PHROLOVA_TAG }}-${{ steps.version.outputs.GIT_HASH }}.zip
             nm
           fail_on_unmatched_files: false
         env:
@@ -248,7 +248,7 @@ jobs:
         if: always()
         run: |
           STATUS="${{ steps.final-check.outputs.status }}"
-          ZIP_FILE=$(ls selene-*.zip 2>/dev/null | head -1)
+          ZIP_FILE=$(ls Phrolova-selene-*.zip selene-*.zip 2>/dev/null | head -1)
           if [ "$STATUS" = "success" ]; then
             bash .github/scripts/notify-telegram.sh \
               success \

@@ -134,7 +134,7 @@ function build_success() {
 	local zip_file="${2:-}"
 
 	if [ -z "$zip_file" ] || [ ! -f "$zip_file" ]; then
-		zip_file=$(ls selene-*.zip 2>/dev/null | head -1)
+		zip_file=$(ls Phrolova-selene-*.zip selene-*.zip 2>/dev/null | head -1)
 	fi
 
 	local changelog_items=""
