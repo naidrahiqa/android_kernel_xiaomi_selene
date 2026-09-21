@@ -231,7 +231,7 @@ static void **nm_art_find_child(struct art_node *n, u8 c)
     switch (n->type) {
         case ART_NODE4: {
             struct art_node4 *n4 = (struct art_node4 *)n;
-            { int i; for (i = 0; i < n->num_children; i++) }
+            for (int i = 0; i < n->num_children; i++)
                 if (n4->keys[i] == c) return &n4->children[i];
             break;
         }
@@ -307,7 +307,7 @@ static void nm_art_add_child(void **ref, u8 c, void *child)
         n16->n = n4->n;
         n16->n.type = ART_NODE16;
         memcpy(n16->keys, n4->keys, 4);
-        { int i; for (i = 0; i < 4; i++) }
+        for (int i = 0; i < 4; i++)
             n16->children[i] = n4->children[i];
         n16->keys[4] = c;
         n16->children[4] = child;
@@ -326,7 +326,7 @@ static void nm_art_add_child(void **ref, u8 c, void *child)
         struct art_node48 *n48 = kzalloc(sizeof(*n48), GFP_KERNEL);
         n48->n = n16->n;
         n48->n.type = ART_NODE48;
-        { int i; for (i = 0; i < 16; i++) { }
+        for (int i = 0; i < 16; i++) {
             n48->child_index[n16->keys[i]] = i + 1;
             n48->children[i] = n16->children[i];
         }
@@ -349,7 +349,7 @@ static void nm_art_add_child(void **ref, u8 c, void *child)
         struct art_node256 *n256 = kzalloc(sizeof(*n256), GFP_KERNEL);
         n256->n = n48->n;
         n256->n.type = ART_NODE256;
-        { int i; for (i = 0; i < 256; i++) { }
+        for (int i = 0; i < 256; i++) {
             if (n48->child_index[i])
                 n256->children[i] = n48->children[n48->child_index[i] - 1];
         }
@@ -370,7 +370,7 @@ static void *nm_art_first_child(struct art_node *n)
     if (n->type == ART_NODE16) return ((struct art_node16 *)n)->children[0];
     void **children = n->type == ART_NODE48 ? ((struct art_node48 *)n)->children : ((struct art_node256 *)n)->children;
     int capacity = n->type == ART_NODE48 ? 48 : 256;
-    { int i; for (i = 0; i < capacity; i++) if (children[i]) return children[i]; }
+    for (int i = 0; i < capacity; i++) if (children[i]) return children[i];
     return NULL;
 }
 
@@ -457,18 +457,18 @@ static void nm_art_free_tree(void *node)
     struct art_node *n = node;
     if (n->type == ART_NODE4) {
         struct art_node4 *n4 = (struct art_node4 *)n;
-        { int i; for (i = 0; i < n->num_children; i++) nm_art_free_tree(n4->children[i]); }
+        for (int i = 0; i < n->num_children; i++) nm_art_free_tree(n4->children[i]);
     } else if (n->type == ART_NODE16) {
         struct art_node16 *n16 = (struct art_node16 *)n;
-        { int i; for (i = 0; i < n->num_children; i++) nm_art_free_tree(n16->children[i]); }
+        for (int i = 0; i < n->num_children; i++) nm_art_free_tree(n16->children[i]);
     } else if (n->type == ART_NODE48) {
         struct art_node48 *n48 = (struct art_node48 *)n;
-        { int i; for (i = 0; i < 256; i++) { }
+        for (int i = 0; i < 256; i++) {
             if (n48->child_index[i]) nm_art_free_tree(n48->children[n48->child_index[i] - 1]);
         }
     } else if (n->type == ART_NODE256) {
         struct art_node256 *n256 = (struct art_node256 *)n;
-        { int i; for (i = 0; i < 256; i++) { }
+        for (int i = 0; i < 256; i++) {
             if (n256->children[i]) nm_art_free_tree(n256->children[i]);
         }
     }
@@ -545,7 +545,7 @@ static inline int nm_uid_add(uid_t target)
     struct nm_uid_array *old, *new_arr;
     int count = 0;
     if ((old = rcu_dereference_protected(nomount_uids, lockdep_is_held(&nomount_rwsem)))) {
-        { int i; for (i = 0; i < (count = old->count); i++) if (old->uids[i] == target) return -EEXIST; }
+        for (int i = 0; i < (count = old->count); i++) if (old->uids[i] == target) return -EEXIST;
     }
 
     if (!(new_arr = kmalloc(sizeof(*new_arr) + (count + 1) * sizeof(uid_t), GFP_KERNEL))) return -ENOMEM;
@@ -563,7 +563,7 @@ static inline int nm_uid_del(uid_t target)
     int count, target_idx = -1;
 
     if (!(old = rcu_dereference_protected(nomount_uids, lockdep_is_held(&nomount_rwsem)))) return -ENOENT;
-    { int i; for (i = 0; i < (count = old->count); i++) if (old->uids[i] == target) { target_idx = i; break; } }
+    for (int i = 0; i < (count = old->count); i++) if (old->uids[i] == target) { target_idx = i; break; }
     if (target_idx < 0) return -ENOENT;
 
     if (count > 1) {
