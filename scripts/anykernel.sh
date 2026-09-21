@@ -5,14 +5,21 @@
 # begin properties
 properties() { '
 kernel.string=Phrolova Kernel — by @Naidrahiqa
-do.devicecheck=0
+do.devicecheck=1
 do.modules=0
 do.systemless=1
 do.cleanup=1
 do.cleanuponabort=0
 device.name1=selene
-device.name2=merlin
-device.name3=lancelot
+device.name2=selenes
+device.name3=selene_global
+device.name4=selenes_global
+device.name5=merlin
+device.name6=Merlin
+device.name7=merlinx
+device.name8=Merlinx
+device.name9=lancelot
+device.name10=Lancelot
 supported.versions=
 supported.patchlevels=
 '; } # end properties
@@ -29,7 +36,10 @@ set_perm_recursive 0 0 750 750 $RAMDISK/init* $RAMDISK/sbin;
 block=auto;
 is_slot_device=auto;
 ramdisk_compression=auto;
-patch_vbmeta_flag=auto;
+# CRITICAL for MediaTek:
+# Do NOT patch vbmeta — HyperOS/MIUI validates boot chain.
+# Patching vbmeta can cause verification failure → brick.
+patch_vbmeta_flag=0;
 
 # import functions/variables and setup patching - see for reference (DO NOT REMOVE)
 . tools/ak3-core.sh;
