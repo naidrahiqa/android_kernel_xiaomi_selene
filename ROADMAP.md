@@ -6,7 +6,7 @@
 
 ## Fase 1 — Foundation Stabil (done)
 
-- [x] ReSukiSU main @ 0b5efe9e01 (manual hook, non-GKI 4.14, KSU_VERSION 35114) — menggantikan KernelSU-Next
+- [x] ReSukiSU v4.2.0-rc2 @ 3576e6a525 (manual hook, non-GKI 4.14, KSU_VERSION 35144) — menggantikan KernelSU-Next
 - [x] NoMount path redirection
 - [x] TCP BBR + ZRAM ZSTD + BFQ
 - [x] CI/CD pipeline functional (Void Linux container)

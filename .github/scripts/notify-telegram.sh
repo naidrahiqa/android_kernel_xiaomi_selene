@@ -160,7 +160,7 @@ ${changelog_items}
 📦 <i>File kernel telah dikirim ke channel rilis.</i>
 <a href='${REPO_URL}/blob/phrolova/CHANGELOG.md'>Full Changelog</a>"
 
-	local BUTTONS='{"inline_keyboard":[[{"text":"📱 ReSukiSU APK","url":"https://t.me/ReSukiSU/5"}],[{"text":"⬇ GitHub Release","url":"'"${REPO_URL}/releases/tag/${TAG}"'"}],[{"text":"📦 NoMount","url":"https://github.com/maxsteeel/nomount/releases"}]]}'
+	local BUTTONS='{"inline_keyboard":[[{"text":"📱 ReSukiSU APK","url":"https://github.com/ReSukiSU/ReSukiSU/releases/tag/'"${KSU_VER_TAG}"'"}],[{"text":"⬇ GitHub Release","url":"'"${REPO_URL}/releases/tag/${TAG}"'"}],[{"text":"📦 NoMount","url":"https://github.com/maxsteeel/nomount/releases"}]]}'
 
 	local target_group="${GROUP_ID:-$CHANNEL_ID}"
 	if [ -n "$target_group" ]; then

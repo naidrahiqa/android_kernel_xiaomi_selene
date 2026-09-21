@@ -17,8 +17,8 @@ if [ -f "resukisu/kernel/Kbuild" ]; then
   [ -n "$KSU_LOCAL" ] && KSU_VERSION=$((30000 + KSU_LOCAL + 700))
   KSU_TAG=$(grep "^KSU_TAG_NAME" resukisu/kernel/Kbuild | sed 's/.*:= *//')
 fi
-KSU_VERSION="${KSU_VERSION:-35114}"
-KSU_TAG="${KSU_TAG:-v4.2.0-rc1}"
+KSU_VERSION="${KSU_VERSION:-35144}"
+KSU_TAG="${KSU_TAG:-v4.2.0-rc2}"
 
 cp changelog.md release_body.md
 
@@ -59,7 +59,7 @@ cat >> release_body.md << EOF
 
 | Component | Version | Link |
 |---|---|---|
-| ReSukiSU Manager | KSU_VERSION \`${KSU_VERSION}\` | [Nightly CI](https://t.me/ReSukiSU/5/276176) · [Telegram](https://t.me/ReSukiSU) |
+| ReSukiSU Manager | KSU_VERSION \`${KSU_VERSION}\` | [GitHub Release](https://github.com/ReSukiSU/ReSukiSU/releases/tag/${KSU_TAG}) |
 | NoMount Module | v2.0.0 (kernel v20) | [GitHub Release](https://github.com/maxsteeel/nomount/releases/download/v2.0.0/NoMount-v2.0.0-release.zip) |
 
 > **NoMount:** Kernel driver uses keyring (v20), NOT netlink. Module v1.x → false negative. Always use v2.0.0+.

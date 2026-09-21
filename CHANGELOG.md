@@ -11,6 +11,13 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## 2026-09-21 — ReSukiSU v4.2.0-rc2 Upstream (KSU_VERSION 35144)
+
+- **ReSukiSU v4.2.0-rc2 (`3576e6a525`, KSU_VERSION 35144):** `resukisu/kernel/`
+  - Synced driver with upstream ReSukiSU `v4.2.0-rc2` + latest fixes from `main` (commit `3d1185d878` avoid sleeping in rcu read lock during `copy_to_user`, commit `6ec8d9a8a8` drop session keyring ifdef).
+  - Pinned fallback version in `resukisu/kernel/Kbuild`: `KSU_LOCAL_VERSION := 4444`, `KSU_TAG_NAME := v4.2.0-rc2`, `KSU_COMMIT_SHA := 3576e6a525` (`30000 + 4444 + 700 = 35144`).
+  - Updated manager download link to official GitHub Releases (`https://github.com/ReSukiSU/ReSukiSU/releases/tag/v4.2.0-rc2`).
+
 ## 2026-09-05 — Phrolova-ASB project scaffold (docs/CI only, no kernel code change)
 
 - Project ASB-backport dibuat di `asb/` — model CVE-Patcher (DivestOS → AXP.OS) di-scale ke satu device:

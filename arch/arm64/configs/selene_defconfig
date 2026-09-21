@@ -484,7 +484,7 @@ CONFIG_CRYPTO_AES_ARM64_CE=y
 CONFIG_CRYPTO_AES_ARM64_CE_BLK=y
 CONFIG_FORCE_NR_CPUS=y
 
-# ReSukiSU (ReSukiSU/ReSukiSU, main @ 0b5efe9e01, KSU_VERSION 35114)
+# ReSukiSU (ReSukiSU/ReSukiSU, v4.2.0-rc2 @ 3576e6a525, KSU_VERSION 35144)
 # Manual hook mode (non-GKI 4.14): fs/exec.c, fs/open.c, fs/stat.c, kernel/reboot.c
 # setuid/initrc/input hooks otomatis via LSM/input_handler (AUTO_* default y, <6.8)
 CONFIG_KSU=y

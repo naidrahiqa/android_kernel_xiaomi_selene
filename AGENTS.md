@@ -44,10 +44,10 @@ Baca file ini dulu sebelum kerja di repo ini. **File ini orchestrator** — untu
 
 - **Device:** Redmi 10 2022, codename **selene**, MediaTek Helio G88 (MT6768).
 - **Kernel:** Linux 4.14.357 (yuki-saisei base), **non-GKI**. Banyak API beda drastis dari 5.x/6.x — jangan apply patch GKI 5.10+ tanpa cek dulu.
-- **Root solution:** ReSukiSU (`ReSukiSU/ReSukiSU`, fork SukiSU-Ultra, main @ `0b5efe9e01` = v4.2.0-rc1 + 32 commits, **KSU_VERSION 35114**).
+- **Root solution:** ReSukiSU (`ReSukiSU/ReSukiSU`, fork SukiSU-Ultra, `v4.2.0-rc2` @ `3576e6a525`, **KSU_VERSION 35144**).
   - **Hook mode: manual hook (`CONFIG_KSU_MANUAL_HOOK=y`)** — TP-hook (syscall table) cuma GKI 5.10+; di non-GKI 4.14 wajib manual hook. Patch manual di: `fs/exec.c` (`ksu_handle_execveat`), `fs/open.c` (`ksu_handle_faccessat`), `fs/stat.c` (`ksu_handle_stat`/`ksu_handle_newfstat_ret`/`ksu_handle_fstat64_ret`), `kernel/reboot.c` (`ksu_handle_sys_reboot`). setuid/initrc/read via LSM (`KSU_MANUAL_HOOK_AUTO_SETUID_HOOK`/`AUTO_INITRC_HOOK`) + input via input_handler (`AUTO_INPUT_HOOK`) — otomatis, default y (<6.8). `manual_hook_check.mk` meng-verify tiap hook saat build — hook hilang = compile error.
-  - Kbuild di-patch lokal: fallback version pin tanpa `.git` (`KSU_LOCAL_VERSION := 4414`, tag `v4.2.0-rc1`, sha `0b5efe9e01`, branch `main`). `CONFIG_KPROBES` tidak dibutuhkan; `CONFIG_EXT4_FS=y` dipertahankan.
-  - **Manager:** `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` (default) — manager KernelSU/MKSU/RKSU/SukiSU-Ultra bisa dipakai. Disarankan **ReSukiSU manager** (nightly.link build-manager / t.me/ReSukiSU) — match KSU_VERSION 35114.
+  - Kbuild di-patch lokal: fallback version pin tanpa `.git` (`KSU_LOCAL_VERSION := 4444`, tag `v4.2.0-rc2`, sha `3576e6a525`, branch `main`). `CONFIG_KPROBES` tidak dibutuhkan; `CONFIG_EXT4_FS=y` dipertahankan.
+  - **Manager:** `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` (default) — manager KernelSU/MKSU/RKSU/SukiSU-Ultra bisa dipakai. Disarankan **ReSukiSU manager** ([GitHub Release](https://github.com/ReSukiSU/ReSukiSU/releases/tag/v4.2.0-rc2)) — match KSU_VERSION 35144.
 - **Systemless path redirection:** NoMount (`maxsteeel/nomount`).
   - Virtual file injection + path redirection tanpa mount filesystem.
   - Compiled into kernel (`CONFIG_NOMOUNT=y`), keyring-based userspace control.
@@ -192,7 +192,7 @@ If switching to a different Clang version, check if this is still needed.
 - Without `-Wno-error`: `CONFIG_CC_STACKPROTECTOR_STRONG` fails, `CONFIG_BLK_INLINE_ENCRYPTION` broken.
 
 ### ReSukiSU Integration
-- Source: `resukisu/kernel/` (direct copy, not submodule). Current: main @ `0b5efe9e01` (v4.2.0-rc1 + 32 commits, 4414 commits, **KSU_VERSION 35114**).
+- Source: `resukisu/kernel/` (direct copy, not submodule). Current: `v4.2.0-rc2` @ `3576e6a525` (4444 commits, **KSU_VERSION 35144**).
 - Symlink: `ln -sf "$(realpath resukisu/kernel)" drivers/kernelsu` — created at CI time, not in git.
 - `drivers/Kconfig`: already has `source "drivers/kernelsu/Kconfig"` (line 223).
 - `drivers/Makefile`: already has `obj-$(CONFIG_KSU) += kernelsu/` (line 191).
@@ -204,8 +204,8 @@ If switching to a different Clang version, check if this is still needed.
   - `kernel/reboot.c` → `ksu_handle_sys_reboot` di `SYSCALL_DEFINE4(reboot)`
   - setuid/initrc(read)/input: **otomatis** via LSM/input_handler — `KSU_MANUAL_HOOK_AUTO_SETUID_HOOK`/`AUTO_INITRC_HOOK`/`AUTO_INPUT_HOOK` (default y, hanya untuk <6.8; kita 4.14 aman). Jangan patch `kernel/sys.c`/`fs/read_write.c`/`drivers/input/input.c` manual selama AUTO_* on.
   - `tools/manual_hook_check.mk` mem-verify SEMUA hook saat build (grep string di file kernel) — hook hilang/ekstra = compile error. Juga menolak hook lama (`ksu_vfs_read_hook`, `is_ksu_transition`, `ksu_handle_rename`).
-- **Versi di-pin via fallback di `Kbuild`** (patch lokal — upstream `$(error ...)` kalau bukan git submodule): `KSU_LOCAL_VERSION := 4414`, `KSU_TAG_NAME := v4.2.0-rc1`, `KSU_COMMIT_SHA := 0b5efe9e01`, `KSU_BRANCH_NAME := main`. Formula `KSU_VERSION = 30000 + commits + 700` → 35114. Jangan set ke 1 (manager tidak deteksi root).
-- **Manager:** `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` (default) — manager KernelSU/MKSU/RKSU/SukiSU-Ultra diterima. Rekomendasi: ReSukiSU manager (nightly.link build-manager / t.me/ReSukiSU) — match KSU_VERSION.
+- **Versi di-pin via fallback di `Kbuild`** (patch lokal — upstream `$(error ...)` kalau bukan git submodule): `KSU_LOCAL_VERSION := 4444`, `KSU_TAG_NAME := v4.2.0-rc2`, `KSU_COMMIT_SHA := 3576e6a525`, `KSU_BRANCH_NAME := main`. Formula `KSU_VERSION = 30000 + commits + 700` → 35144. Jangan set ke 1 (manager tidak deteksi root).
+- **Manager:** `CONFIG_KSU_MULTI_MANAGER_SUPPORT=y` (default) — manager KernelSU/MKSU/RKSU/SukiSU-Ultra diterima. Rekomendasi: ReSukiSU manager ([GitHub Release](https://github.com/ReSukiSU/ReSukiSU/releases/tag/v4.2.0-rc2)) — match KSU_VERSION 35144.
 - Compat layer: `tools/kernel_compat.mk` auto-detect API 4.14 (flex_array policydb, hashtab 3-arg, `struct selinux_ss`, status_lock global, dst) — tidak perlu port manual seperti KSU-Next dulu.
 - Build system: `Kbuild` (bukan Makefile) — `kernelsu-objs` multi-file, bukan unity build.
 

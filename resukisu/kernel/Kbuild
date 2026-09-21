@@ -40,7 +40,7 @@ ifdef CONFIG_ARM64
 kernelsu-objs += compat/apatch_conflict.o
 endif
 
-ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes 
+ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-missing-prototypes
 ccflags-y += $(call cc-disable-warning, int-conversion)
 ccflags-y += -Wno-declaration-after-statement -Wno-unused-function -Wno-unused-variable -Wno-missing-braces
 ccflags-y += -Wno-int-to-pointer-cast -Wno-declaration-after-statement
@@ -62,16 +62,17 @@ KSU_SRC := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 # Phrolova local patch: resukisu/kernel is a direct copy (not a git submodule).
 # Upstream Kbuild hard-errors in that case; we pin version info manually.
 # Update these pins when refreshing the snapshot from ReSukiSU/ReSukiSU main.
-KSU_LOCAL_VERSION := 4414
+KSU_LOCAL_VERSION := 4444
 KSU_VERSION := $(shell expr 30000 + $(KSU_LOCAL_VERSION) + 700)
 
-KSU_TAG_NAME    := v4.2.0-rc1
-KSU_COMMIT_SHA  := 0b5efe9e01
+KSU_TAG_NAME    := v4.2.0-rc2
+KSU_COMMIT_SHA  := 3576e6a525
 KSU_BRANCH_NAME := main
 
 ifdef KBUILD_EXTMOD
 include $(KSU_SRC)/tools/ddk_compatible.mk
 endif
+
 
 # call subst to process placeholders
 KSU_VERSION_FULL := $(subst ",,$(CONFIG_KSU_FULL_NAME_FORMAT))
@@ -157,7 +158,7 @@ ifdef CONFIG_KSU_TRACEPOINT_HOOK
       $(info -- Current Kernel Type: $(KERNEL_TYPE))
       $(info -- If you really want to continue, go to Kbuild and comment out this warning.)
       $(info -- Usually, this error occurs because you forgot to enable some kernel configurations.)
-      $(info -- Read: https://resukisu.github.io/guide/manual-integrate.html)
+      $(info -- Read: https://resukisu.org/guide/manual-integrate.html)
       $(error TP hooks are incompatible with Non-GKI/GKI 1.0 kernels.)
     endif
   endif
