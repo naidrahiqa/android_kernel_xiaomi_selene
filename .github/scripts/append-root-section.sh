@@ -17,7 +17,7 @@ if [ -f "resukisu/kernel/Kbuild" ]; then
   [ -n "$KSU_LOCAL" ] && KSU_VERSION=$((30000 + KSU_LOCAL + 700))
   KSU_TAG=$(grep "^KSU_TAG_NAME" resukisu/kernel/Kbuild | sed 's/.*:= *//')
 fi
-KSU_VERSION="${KSU_VERSION:-35144}"
+KSU_VERSION="${KSU_VERSION:-35160}"
 KSU_TAG="${KSU_TAG:-v4.2.0-rc2}"
 
 cp changelog.md release_body.md
