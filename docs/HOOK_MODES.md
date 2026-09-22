@@ -1,7 +1,7 @@
 # Perbandingan Hook Mode: ReSukiSU Manual Hook (non-GKI) vs TP-Hook (GKI2)
 
 Dokumen ini menjelaskan mekanisme hook root solution ReSukiSU (`v4.2.0-rc2` @
-`3576e6a525`, KSU_VERSION 35144) di Phrolova Kernel (Linux 4.14.357, non-GKI,
+`5cfdd725`, KSU_VERSION 35160) di Phrolova Kernel (Linux 4.14.357, non-GKI,
 MT6768 selene).
 
 **Kesimpulan singkat:** Kernel 4.14 non-GKI **wajib manual hook** — patch
@@ -110,20 +110,20 @@ Kprobes **tidak dibutuhkan** sama sekali. `CONFIG_EXT4_FS=y` dipertahankan
 
 ## 4. Kondisi di Phrolova (selene)
 
-- **Manual hook (sejak v0.9.0):** ReSukiSU `v4.2.0-rc2` @ `3576e6a525` (4444
-  commits, KSU_VERSION 35144) menggantikan KernelSU-Next hookless
+- **Manual hook (sejak v0.9.0):** ReSukiSU `v4.2.0-rc2` @ `5cfdd725` (4460
+  commits, KSU_VERSION 35160) menggantikan KernelSU-Next hookless
   (syscall table + tracepoint) yang dipakai sejak v0.8.0.
 - `CONFIG_KPROBES` tidak dibutuhkan dan tidak di-enable.
 - Kbuild di-patch lokal: fallback version pin tanpa `.git`
-  (`KSU_LOCAL_VERSION := 4444` → `KSU_VERSION = 30000 + 4444 + 700 = 35144`).
+  (`KSU_LOCAL_VERSION := 4460` → `KSU_VERSION = 30000 + 4460 + 700 = 35160`).
 - Manager: multi-manager (`CONFIG_KSU_MULTI_MANAGER_SUPPORT=y`). Rekomendasi
-  ReSukiSU manager — match KSU_VERSION 35144:
+  ReSukiSU manager — match KSU_VERSION 35160:
   - https://github.com/ReSukiSU/ReSukiSU/releases/tag/v4.2.0-rc2
   - https://t.me/ReSukiSU
 - Diagnosa cepat saat boot:
   ```bash
   dmesg | grep -i -E "ksu|resuki"
-  # "-- ReSukiSU version code: 35144" → versi benar
+  # "-- ReSukiSU version code: 35160" → versi benar
   # "ksu: ..." dari hook/setuid_hook.c dll → hook aktif
   ```
 

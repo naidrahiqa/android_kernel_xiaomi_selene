@@ -11,6 +11,16 @@ Format:
   Sumber: ronald826 / upstream / ref kernel MT6768 lain
 ```
 
+## 2026-09-22 — ReSukiSU v4.2.0-rc2 Upstream (KSU_VERSION 35160)
+
+- **ReSukiSU v4.2.0-rc2 (`5cfdd725`, KSU_VERSION 35160):** `resukisu/kernel/`
+  - Synced driver with upstream ReSukiSU `main` (commit `5cfdd725aa92`).
+  - Total upstream commit count: 4460 (`KSU_LOCAL_VERSION := 4460`).
+  - Pinned version in `resukisu/kernel/Kbuild`: `30000 + 4460 + 700 = 35160`.
+  - Updated `resukisu/uapi/supercall.h` to `KERNEL_SU_UAPI_VERSION = 4` (scoped su-session driver fd, `KSU_GET_INFO_FLAG_BUNDLED`).
+  - Removed deprecated `KSU_FEATURE_WEBVIEW_ZYGOTE_UMOUNT` from `resukisu/uapi/feature.h`.
+  - Added `.github/scripts/generate-ksu-notes.sh` helper.
+
 ## 2026-09-21 — ReSukiSU v4.2.0-rc2 Upstream (KSU_VERSION 35144)
 
 - **ReSukiSU v4.2.0-rc2 (`3576e6a525`, KSU_VERSION 35144):** `resukisu/kernel/`
