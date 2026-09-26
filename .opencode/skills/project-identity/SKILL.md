@@ -24,7 +24,7 @@ description: Project identity and branding rules. Use when generating commit mes
 
 ### Target Destinations
 1. **Gambar Kiri — Supergroup Naidrahiqa Stuff (`TELEGRAM_GROUP_ID` = `-1004414006944`)**:
-   - **Topic `⁉️ Selene CI` (`TELEGRAM_TOPIC_CI` = `47`)**: HANYA NOTIFIKASI (Start & Success), **TANPA FILE ZIP**.
+   - **Topic `⁉️ Selene CI` (`TELEGRAM_TOPIC_CI` = `47`)**: HANYA NOTIFIKASI dua fase (Start, Success **singkat tanpa link download**, Tested **lengkap + tombol ⬇️ Download** setelah tes booting aman), **TANPA FILE ZIP**.
    - **Topic `🔍 log` (`TELEGRAM_TOPIC_LOG` = `8`)**: Cuplikan error log build jika gagal.
 2. **Gambar Kanan — Private Channels**:
    - **Channel `Nai project update` (`TELEGRAM_CHANNEL_ID` = `-1003752197403`)**: Mengirim **file kernel `.zip` AnyKernel3** via `sendDocument` + caption rilis lengkap.
@@ -39,22 +39,33 @@ description: Project identity and branding rules. Use when generating commit mes
 <code>{commit_hash}</code> {commit_message}
 <a href='{build_url}'>Build Log</a>
 ```
-* **Build Success:**
+* **Build Success (singkat — TANPA link download, tanpa changelog):**
 ```html
 🎻 <b>Phrolova</b> · <code>{version}</code>
 ━━━━━━━━━━━━━━━━━━━━
+✅ <b>Build succeeded</b>
+📦 <code>{zip_name}</code>
+<code>{commit_hash}</code> {commit_message}
+<a href='{build_url}'>Build Log</a>
+
+<i>Belum diuji — pengumuman download menyusul setelah tes booting aman.</i>
+```
+* **Tested (HANYA setelah build dites di device & booting aman — workflow `notify-tested.yml`, status `tested`):**
+```html
+🎻 <b>Phrolova</b> · <code>{version}</code>
+━━━━━━━━━━━━━━━━━━━━
+✅ <b>Tested — booting aman</b>
 <b>Redmi 10</b> · selene · MT6768 · Non-GKI
+📦 <b>File:</b> <code>{zip_name}</code>
 ⚠️ ReSukiSU <code>{ksu_tag}</code> · NoMount v2.0.0
+🧪 <b>Catatan:</b> {notes}
 
 Changelog:
 - {change_1}
 - {change_2}
 
-📦 <i>File kernel telah dikirim ke channel rilis.</i>
-<a href='{changelog_url}'>Full Changelog</a>
-
+[⬇️ Download]
 [📱 ReSukiSU APK]
-[⬇ GitHub Release]
 [📦 NoMount]
 ```
 
@@ -78,7 +89,7 @@ Changelog:
 ```
 
 ### 3. Error Handling
-* **Topic `⁉️ Selene CI` #47:** Pesan singkat `❌ ERROR_TYPE` + link log.
+* **Topic `⁉️ Selene CI` #47:** Pesan singkat `❌ ERROR_TYPE` + link log. `MAKE_EXIT_CODE=0` → klasifikasi `CI STEP ERROR` (gagal di step verify/package/release, bukan kompilasi).
 * **Topic `🔍 log` #8:** Cuplikan 3000 karakter terakhir `build.log`.
 * **Channel `Nai Error Dump`:** Pesan detail dengan block `<pre><code>...error_context...</code></pre>`.
 

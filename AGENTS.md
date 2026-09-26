@@ -137,7 +137,7 @@ make O=out ARCH=arm64 CC=clang HOSTCC=gcc \
 - CI matrix: **Single build** (universal kernel, 1 zip fits all)
 - Telegram notifications: Dual-target routing (Supergroup forum topics + private release channels):
   - **Kiri (Supergroup `Naidrahiqa Stuff`, `-1004414006944`):**
-    - Topic `⁉️ Selene CI` (`message_thread_id=47`): HANYA NOTIFIKASI (start & success), **TANPA FILE ZIP**.
+    - Topic `⁉️ Selene CI` (`message_thread_id=47`): NOTIFIKASI dua fase — `success` = singkat **TANPA link download**, `tested` = lengkap + tombol ⬇️ Download (workflow `notify-tested.yml`, hanya setelah tes booting aman). **TANPA FILE ZIP**.
     - Topic `🔍 log` (`message_thread_id=8`): Cuplikan log build error jika gagal.
   - **Kanan (Private Channels):**
     - Channel `Nai project update` (`-1003752197403`): Mengirim file kernel `.zip` AnyKernel3 via `sendDocument` + caption rilis.
