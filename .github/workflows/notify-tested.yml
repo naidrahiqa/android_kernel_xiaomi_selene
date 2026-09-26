@@ -1,0 +1,116 @@
+name: Announce Tested Build
+
+# Kirim notif lengkap + tombol download ke topic ⁉️ Selene CI,
+# SETELAH build di-flash ke device dan tes booting aman.
+# Pakai: gh workflow run "Announce Tested Build" -f notes="booting aman, GPU ok"
+#        (tanpa -f tag = otomatis ambil build SUKSES terakhir)
+
+run-name: Announce tested ${{ inputs.tag || 'latest successful build' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Phrolova tag (mis. v0.9.13-nightly.20260926; kosongkan = build sukses terakhir)'
+        required: false
+        default: ''
+      notes:
+        description: 'Catatan testing (mis. booting aman, GPU ok, tidak ada reboot)'
+        required: false
+        default: ''
+
+jobs:
+  announce:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve build tag + download URL
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          TAG=""
+          ZIP_NAME=""
+          DL_URL=""
+
+          release_info() {
+            # $1 = tag; sets DL_URL + ZIP_NAME kalau release + asset zip ada
+            local t="$1"
+            gh release view "$t" --repo "$REPO" >/dev/null 2>&1 || return 1
+            DL_URL=$(gh release view "$t" --repo "$REPO" --json url --jq '.url')
+            ZIP_NAME=$(gh release view "$t" --repo "$REPO" --json assets \
+              --jq '[.assets[].name | select(startswith("Phrolova-selene"))][0] // empty')
+            TAG="$t"
+            return 0
+          }
+
+          if [ -n "$INPUT_TAG" ]; then
+            if ! release_info "$INPUT_TAG"; then
+              echo "::error::Release untuk tag '$INPUT_TAG' tidak ditemukan"
+              exit 1
+            fi
+          else
+            # Build SUKSES terakhir dari workflow build
+            RUN_ID=$(gh api "repos/$REPO/actions/runs?status=success&per_page=20" \
+              --jq '[.workflow_runs[] | select(.name == "Build Selene Kernel")][0].id // empty')
+            if [ -z "$RUN_ID" ]; then
+              echo "::error::Tidak ada build sukses yang ditemukan"
+              exit 1
+            fi
+            RUN_URL=$(gh api "repos/$REPO/actions/runs/$RUN_ID" --jq '.html_url // empty')
+            ART_NAME=$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" \
+              --jq '[.artifacts[] | select(.name | startswith("Phrolova-selene"))][0].name // empty')
+            if [ -z "$ART_NAME" ]; then
+              echo "::error::Run terakhir tidak punya artifact zip kernel"
+              exit 1
+            fi
+            ZIP_NAME="${ART_NAME}.zip"
+            # Tag dari nama artifact: Phrolova-selene-<tag>-<hash>
+            CAND_TAG=$(echo "$ART_NAME" | sed -E 's/^Phrolova-selene-(.*)-[0-9a-f]{7,9}$/\1/')
+            if [ "$CAND_TAG" != "$ART_NAME" ] && release_info "$CAND_TAG"; then
+              : # release ada — DL_URL + ZIP_NAME sudah terisi
+            else
+              TAG="$CAND_TAG"
+              DL_URL="$RUN_URL"
+            fi
+          fi
+
+          if [ -z "$DL_URL" ]; then
+            echo "::error::Gagal resolve download URL"
+            exit 1
+          fi
+
+          # PHROLOVA_VERSION == PHROLOVA_TAG (lihat version.sh)
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "dl_url=$DL_URL" >> "$GITHUB_OUTPUT"
+          echo "zip_name=${ZIP_NAME:-${TAG}.zip}" >> "$GITHUB_OUTPUT"
+          echo "Resolved: tag=$TAG zip=${ZIP_NAME:-${TAG}.zip}"
+          echo "Download: $DL_URL"
+
+      - name: Notify Telegram (tested)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_GROUP_ID: ${{ secrets.TELEGRAM_GROUP_ID || '-1004414006944' }}
+          TELEGRAM_TOPIC_CI: ${{ secrets.TELEGRAM_TOPIC_CI || '47' }}
+          TELEGRAM_TOPIC_LOG: ${{ secrets.TELEGRAM_TOPIC_LOG || '8' }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID || '-1003752197403' }}
+        run: |
+          bash .github/scripts/notify-telegram.sh \
+            tested \
+            "${{ steps.resolve.outputs.tag }}" \
+            "${{ steps.resolve.outputs.tag }}" \
+            "${{ inputs.notes }}" \
+            "${{ steps.resolve.outputs.dl_url }}" \
+            "${{ steps.resolve.outputs.zip_name }}"
+        continue-on-error: true

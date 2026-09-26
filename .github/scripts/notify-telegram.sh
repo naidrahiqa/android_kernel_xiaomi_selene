@@ -1,7 +1,12 @@
 #!/bin/bash
 # Telegram Notification - Phrolova Kernel
-# Usage: bash notify-telegram.sh <status> <version> <tag> [changelog_or_log] [zip_file]
-# Status: start | success | failed
+# Usage: bash notify-telegram.sh <status> <version> <tag> [arg4] [arg5] [arg6]
+# Status: start | success | failed | tested
+#   start   - build dimulai
+#   success - build SUKSES: notif singkat TANPA link download, tanpa changelog
+#   failed  - build gagal (ringkasan + log)
+#   tested  - build sudah DITES & BOOTING AMAN: notif lengkap + tombol download
+#             arg4 = catatan testing, arg5 = download URL, arg6 = nama zip (opsional)
 #
 # Target Channels / Topics:
 #   Left (Supergroup Naidrahiqa Stuff):
@@ -43,7 +48,7 @@ if [ -n "$KSU_VERSION" ] && [ -n "$KSU_TAG" ]; then
 else
 	KSU_SCRIPT="$(dirname "$0")/get_ksu_info.sh"
 	if [ -f "$KSU_SCRIPT" ]; then
-		eval "$("$KSU_SCRIPT")"
+		eval "$(bash "$KSU_SCRIPT")"
 		KSU_VER_NUM="${KSU_VERSION_NUM:-0}"
 		KSU_VER_TAG="${KSU_TAG:-unknown}"
 	else
@@ -53,10 +58,13 @@ else
 fi
 
 function tg_send() {
-	local target="$1" message="$2" thread_id="${3:-}"
+	local target="$1" message="$2" thread_id="${3:-}" buttons="${4:-}"
 	local extra_args=()
 	if [ -n "$thread_id" ]; then
 		extra_args+=(-d "message_thread_id=${thread_id}")
+	fi
+	if [ -n "$buttons" ]; then
+		extra_args+=(-d "reply_markup=${buttons}")
 	fi
 	local resp
 	resp=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
@@ -148,23 +156,20 @@ function build_success() {
 	local BANNER_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY:-naidrahiqa/android_kernel_xiaomi_selene}/phrolova/docs/assets/banner_landscape.jpg"
 
 	# 1. KIRIM NOTIFIKASI KE GAMBAR KIRI (Supergroup Naidrahiqa Stuff -> Topic ⁉️ Selene CI)
-	# HANYA NOTIFIKASI - SAMA SEKALI TIDAK MENGIRIM FILE ZIP KE SINI
+	# HANYA "build berhasil" — TANPA link download, tanpa changelog, tanpa tombol.
+	# Pengumuman download dikirim terpisah lewat status `tested` SETELAH device tes booting.
 	local notif_msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
 ━━━━━━━━━━━━━━━━━━━━
-<b>Redmi 10</b> · selene · MT6768 · Non-GKI
-⚠️ ReSukiSU <code>${KSU_VER_TAG}</code> · NoMount v2.0.0
+✅ <b>Build succeeded</b>
+📦 <code>$(basename "$zip_file")</code>
+<code>${SHA}</code> ${COMMIT_MSG}
+<a href='${BUILD_URL}'>Build Log</a>
 
-Changelog:
-${changelog_items}
-
-📦 <i>File kernel telah dikirim ke channel rilis.</i>
-<a href='${REPO_URL}/blob/phrolova/CHANGELOG.md'>Full Changelog</a>"
-
-	local BUTTONS='{"inline_keyboard":[[{"text":"📱 ReSukiSU APK","url":"https://github.com/ReSukiSU/ReSukiSU/releases/tag/'"${KSU_VER_TAG}"'"}],[{"text":"⬇ GitHub Release","url":"'"${REPO_URL}/releases/tag/${TAG}"'"}],[{"text":"📦 NoMount","url":"https://github.com/maxsteeel/nomount/releases"}]]}'
+<i>Belum diuji — pengumuman download menyusul setelah tes booting aman.</i>"
 
 	local target_group="${GROUP_ID:-$CHANNEL_ID}"
 	if [ -n "$target_group" ]; then
-		if tg_photo "$target_group" "$BANNER_URL" "$notif_msg" "$TOPIC_CI" "$BUTTONS"; then
+		if tg_photo "$target_group" "$BANNER_URL" "$notif_msg" "$TOPIC_CI"; then
 			echo "Success notification sent with banner to CI topic."
 		else
 			echo "Photo failed, falling back to text..."
@@ -192,13 +197,55 @@ ${changelog_items}
 	fi
 }
 
+function build_tested() {
+	local notes="${1:-booting aman}"
+	local download_url="${2:-${REPO_URL}/releases/tag/${TAG}}"
+	local zip_name="${3:-${TAG}.zip}"
+
+	local changelog_items=""
+	if [ -f "CHANGELOG.md" ]; then
+		changelog_items=$(awk '/^## v[0-9]/{if(found)exit; found=1; next} found && /^- /{print}' CHANGELOG.md 2>/dev/null | head -20)
+	fi
+
+	local BANNER_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY:-naidrahiqa/android_kernel_xiaomi_selene}/phrolova/docs/assets/banner_landscape.jpg"
+
+	local notif_msg="🎻 <b>Phrolova</b> · <code>${VERSION}</code>
+━━━━━━━━━━━━━━━━━━━━
+✅ <b>Tested — booting aman</b>
+<b>Redmi 10</b> · selene · MT6768 · Non-GKI
+📦 <b>File:</b> <code>${zip_name}</code>
+⚠️ ReSukiSU <code>${KSU_VER_TAG}</code> · NoMount v2.0.0
+🧪 <b>Catatan:</b> ${notes}
+
+Changelog:
+${changelog_items:-<i>No changes recorded</i>}"
+
+	local BUTTONS='{"inline_keyboard":[[{"text":"⬇️ Download","url":"'"${download_url}"'"}],[{"text":"📱 ReSukiSU APK","url":"https://github.com/ReSukiSU/ReSukiSU/releases/tag/'"${KSU_VER_TAG}"'"}],[{"text":"📦 NoMount","url":"https://github.com/maxsteeel/nomount/releases"}]]}'
+
+	local target_group="${GROUP_ID:-$CHANNEL_ID}"
+	if [ -n "$target_group" ]; then
+		if tg_photo "$target_group" "$BANNER_URL" "$notif_msg" "$TOPIC_CI" "$BUTTONS"; then
+			echo "Tested notification sent with banner to CI topic."
+		else
+			tg_send "$target_group" "$notif_msg" "$TOPIC_CI" "$BUTTONS" && echo "Tested notification sent to CI topic." || echo "Tested notification to CI topic FAILED."
+		fi
+	fi
+}
+
 function build_failed() {
 	local error_log="${1:-build.log}"
 	local error_context="No error context available."
 	local error_type="UNKNOWN ERROR"
 	local failed_step="Unknown step"
 
-	if [ -f "$error_log" ]; then
+	if [ "${MAKE_EXIT_CODE:-1}" -eq 0 ]; then
+		# make succeeded — a later pipeline step (verify/package/release) failed
+		error_type="CI STEP ERROR"
+		failed_step="Post-build step (verify/package/release)"
+		if [ -f "$error_log" ]; then
+			error_context=$(tail -12 "$error_log")
+		fi
+	elif [ -f "$error_log" ]; then
 		if grep -q "make\[" "$error_log" && grep -q "Error" "$error_log"; then
 			error_type="MAKE ERROR"
 		elif grep -q "fatal:" "$error_log"; then
@@ -265,9 +312,12 @@ case "$STATUS" in
 	failed)
 		build_failed "$4"
 		;;
+	tested)
+		build_tested "$4" "$5" "$6"
+		;;
 	*)
 		echo "Unknown status: $STATUS"
-		echo "Usage: notify-telegram.sh <start|success|failed> <version> <tag> [changelog_or_log] [zip_file]"
+		echo "Usage: notify-telegram.sh <start|success|failed|tested> <version> <tag> [arg4] [arg5] [arg6]"
 		exit 1
 		;;
 esac
